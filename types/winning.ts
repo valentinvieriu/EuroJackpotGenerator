@@ -4,8 +4,8 @@ export interface EurojackpotHistoricOdds {
     cycleYear: number;
     eventDate: number;
     eventWeekday: number;
-    gametableValidFrom: any;
-    gametableValidTo: any;
+    gametableValidFrom: number | null; // Timestamp or null
+    gametableValidTo: number | null;   // Timestamp or null
     key: string;
     variantNo: number;
   };
