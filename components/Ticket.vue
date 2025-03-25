@@ -1,25 +1,33 @@
 <template>
-  <div :class="['bg-gray-50 rounded p-4 shadow', isWinner ? 'bg-yellow-100' : '']">
-    <h3 class="font-semibold mb-2 text-gray-700">
-      Ticket {{ ticketNumber }}<span v-if="ticket.winClass"> - Winner class {{ ticket.winClass }}</span>
+  <div :class="[
+    'rounded-lg p-4 shadow-lg transition-all duration-300',
+    isWinner
+      ? 'bg-casino-blue-light border-2 border-casino-gold ring-2 ring-casino-gold-light/50 shadow-casino-gold/30'
+      : 'bg-casino-blue-dark border border-casino-blue-light/30'
+    ]">
+    <h3 class="font-semibold mb-3 text-gray-200">
+      Ticket #{{ ticketNumber }}
+      <span v-if="ticket.winClass" class="ml-2 font-bold text-casino-gold-light">
+        - Winner Class {{ ticket.winClass }}!
+      </span>
     </h3>
-    <div class="mb-2">
-      <span class="font-medium text-sm">Main Numbers:</span>
-      <div class="flex flex-wrap gap-1 mt-1">
+    <div class="mb-3">
+      <span class="font-medium text-sm text-gray-400 block mb-1">Main Numbers:</span>
+      <div class="flex flex-wrap gap-2">
         <TicketNumber
           v-for="number in ticket.mainNumbers"
-          :key="number"
+          :key="'main-' + number"
           :number="number"
           :isWinner="ticket.winningMainNumbers?.includes(number) || false"
         />
       </div>
     </div>
     <div>
-      <span class="font-medium text-sm">Euro Numbers:</span>
-      <div class="flex flex-wrap gap-1 mt-1">
+      <span class="font-medium text-sm text-gray-400 block mb-1">Euro Numbers:</span>
+      <div class="flex flex-wrap gap-2">
         <TicketNumber
           v-for="number in ticket.euroNumbers"
-          :key="number"
+          :key="'euro-' + number"
           :number="number"
           :isWinner="ticket.winningEuroNumbers?.includes(number) || false"
         />

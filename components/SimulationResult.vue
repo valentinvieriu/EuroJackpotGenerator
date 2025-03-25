@@ -1,16 +1,16 @@
 <template>
-  <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-    <h2 class="text-2xl font-semibold mb-4 text-green-600">Simulated Extraction</h2>
-    <div class="flex flex-col sm:flex-row justify-between">
-      <div class="mb-4 sm:mb-0">
-        <h3 class="font-semibold text-gray-700">Main Numbers:</h3>
-        <div class="flex flex-wrap gap-2">
+  <div class="bg-gradient-to-br from-casino-blue-light via-casino-blue to-casino-blue-dark rounded-lg shadow-xl p-6 mb-8 border border-casino-gold/50">
+    <h2 class="text-3xl font-semibold mb-6 text-center text-casino-gold-light tracking-wide">Simulated Extraction</h2>
+    <div class="flex flex-col md:flex-row justify-around items-center gap-6">
+      <div class="text-center">
+        <h3 class="font-semibold text-lg mb-3 text-gray-300 uppercase tracking-wider">Main Numbers</h3>
+        <div class="flex flex-wrap gap-3 justify-center">
           <TicketNumber v-for="number in result.mainNumbers" :key="number" :number="number" :is-winner="true" />
         </div>
       </div>
-      <div>
-        <h3 class="font-semibold text-gray-700">Euro Numbers:</h3>
-        <div class="flex flex-wrap gap-2">
+      <div class="text-center">
+        <h3 class="font-semibold text-lg mb-3 text-gray-300 uppercase tracking-wider">Euro Numbers</h3>
+        <div class="flex flex-wrap gap-3 justify-center">
           <TicketNumber v-for="number in result.euroNumbers" :key="number" :number="number" :is-winner="true" />
         </div>
       </div>
@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ticket } from '~/types/ticket';
+import type { Ticket } from '~/types/ticket';
 import TicketNumber from './TicketNumber.vue';
 
 interface Props {
