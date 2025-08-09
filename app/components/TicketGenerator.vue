@@ -4,6 +4,27 @@
     <div
       class="bg-casino-blue-dark rounded-lg shadow-xl p-6 mb-8 border border-casino-blue-light/30"
     >
+      <!-- Mode Switch -->
+      <div class="mb-6">
+        <div
+          class="inline-flex rounded-lg overflow-hidden border border-casino-blue-light/30"
+        >
+          <button
+            :class="tabClass('single')"
+            aria-pressed="mode === 'single'"
+            @click="setMode('single')"
+          >
+            Single Draw
+          </button>
+          <button
+            :class="tabClass('montecarlo')"
+            aria-pressed="mode === 'montecarlo'"
+            @click="setMode('montecarlo')"
+          >
+            Monte Carlo
+          </button>
+        </div>
+      </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 items-end">
         <!-- Ticket Type Selection -->
         <div>
@@ -59,45 +80,7 @@
         </div>
       </div>
 
-      <!-- Results Summary Section (Shown after simulation) -->
-      <div
-        v-if="simulationResult"
-        class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 items-end"
-      >
-        <!-- Total Winnings Display -->
-        <div class="text-right sm:text-left">
-          <label class="mb-2 block text-gray-400 text-sm font-medium"
-            >Total Winnings:</label
-          >
-          <div class="flex items-center justify-end sm:justify-start h-10">
-            <span class="text-xl font-semibold text-casino-gold"
-              >€{{ totalWinnings.toFixed(2) }}</span
-            >
-          </div>
-        </div>
-        <!-- Win/Loss Rate Display -->
-        <div class="text-right sm:text-left">
-          <label class="mb-2 block text-gray-400 text-sm font-medium"
-            >Profit / Loss:</label
-          >
-          <div class="flex items-center justify-end sm:justify-start h-10">
-            <span
-              :class="[
-                'text-xl font-semibold',
-                winLossRate >= 0 ? 'text-green-400' : 'text-red-400',
-              ]"
-            >
-              {{ winLossRate >= 0 ? '+' : ''
-              }}{{ profitLossAmount.toFixed(2) }}€ ({{
-                winLossRate.toFixed(1)
-              }}%)
-              <!-- Show percentage -->
-            </span>
-          </div>
-        </div>
-        <!-- Empty div for alignment or future use -->
-        <div />
-      </div>
+      <!-- Results summary handled inside SingleDrawPanel -->
 
       <!-- Action Buttons -->
       <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4">
@@ -112,17 +95,7 @@
               : 'Generate Tickets'
           }}
         </button>
-        <button
-          :disabled="loading || tickets.length === 0"
-          class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
-          @click="simulateExtractionHandler"
-        >
-          {{
-            loading && currentAction === 'simulate'
-              ? 'Simulating...'
-              : 'Simulate Extraction'
-          }}
-        </button>
+        <!-- Single-draw action button is inside SingleDrawPanel -->
       </div>
     </div>
 
@@ -159,61 +132,25 @@
       {{ error }}
     </div>
 
-    <!-- Simulation Result Display -->
-    <SimulationResult v-if="simulationResult" :result="simulationResult" />
-
-    <!-- Batch Simulation Section -->
-    <BatchSimulationConfig
-      v-if="
-        tickets.length > 0 &&
-        !simulationResult &&
-        batchSimulationState.phase === 'config'
-      "
-      :ticket-count="tickets.length"
+    <!-- Panels -->
+    <SingleDrawPanel
+      v-if="mode === 'single' && tickets.length > 0"
+      :key="singlePanelKey"
+      :tickets="tickets"
+      :total-price="totalPrice"
+      @apply-highlights="applyHighlightsOnTickets"
+    />
+    <MonteCarloPanel
+      v-if="mode === 'montecarlo' && tickets.length > 0"
+      :key="montePanelKey"
+      :tickets="tickets"
       :cost-per-simulation="totalPrice"
-      :disabled="batchSimulationState.isRunning"
-      :can-cancel="batchSimulationState.canCancel"
-      :show-cancel-button="batchSimulationState.isRunning"
-      @start="handleBatchSimulationStart"
-      @cancel="handleBatchSimulationCancel"
-    />
-
-    <!-- Batch Simulation Progress -->
-    <BatchSimulationProgress
-      v-if="batchSimulationState.phase === 'running'"
-      :current-simulation="batchSimulationState.currentSimulation"
-      :total-simulations="batchSimulationState.totalSimulations"
-      :elapsed-time="batchSimulationState.elapsedTime"
-      :estimated-time-remaining="batchSimulationState.estimatedTimeRemaining"
-      :can-cancel="batchSimulationState.canCancel"
-      :partial-results="batchSimulationState.partialResults"
-      @cancel="handleBatchSimulationCancel"
-    />
-
-    <!-- Batch Simulation Results -->
-    <BatchSimulationResults
-      v-if="
-        batchSimulationState.phase === 'results' && batchSimulationState.results
-      "
-      :results="batchSimulationState.results"
-      @reset="handleBatchSimulationReset"
     />
 
     <!-- Ticket List Display -->
-    <div
-      v-if="
-        tickets.length && !loading && batchSimulationState.phase !== 'results'
-      "
-      class="space-y-4"
-    >
-      <h2
-        v-if="!simulationResult"
-        class="text-2xl font-semibold text-gray-300 mb-4"
-      >
+    <div v-if="tickets.length && !loading" class="space-y-4">
+      <h2 class="text-2xl font-semibold text-gray-300 mb-4">
         Generated Tickets ({{ tickets.length }})
-      </h2>
-      <h2 v-else class="text-2xl font-semibold text-gray-300 mb-4">
-        Simulation Results ({{ tickets.length }} Tickets)
       </h2>
       <!-- Use TicketComponent which is renamed from Ticket to avoid naming conflict -->
       <TicketComponent
@@ -227,22 +164,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted, type Ref } from 'vue'
-import { useRuntimeConfig } from '#app' // Nuxt composable for runtime config
+import { ref, computed, type Ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
-import type { EurojackpotHistoricOdds } from '~/types/winning'
-import SimulationResult from './SimulationResult.vue'
-import TicketComponent from './TicketItem.vue' // Renamed import
-import BatchSimulationConfig from './BatchSimulationConfig.vue'
-import BatchSimulationProgress from './BatchSimulationProgress.vue'
-import BatchSimulationResults from './BatchSimulationResults.vue'
-import { calculateTotalWinnings } from '~/utils/winningManager'
-import { calculateWinningLineCounts } from '~/utils/combinatorics'
-import { playWinSound } from '~/utils/audioUtils' // Sound utility
-import type {
-  BatchSimulationRequest,
-  BatchSimulationResult,
-} from '~/types/batchSimulation'
+import SingleDrawPanel from './SingleDrawPanel.vue'
+import MonteCarloPanel from './MonteCarloPanel.vue'
+import TicketComponent from './TicketItem.vue'
 
 // --- Interfaces & Types ---
 
@@ -292,43 +219,11 @@ const loading: Ref<boolean> = ref(false)
 const currentAction: Ref<'generate' | 'simulate' | null> = ref(null)
 // Holds error messages from API calls or processing.
 const error: Ref<string> = ref('')
-// Stores the result of the simulated winning draw (main and euro numbers). Null if not simulated yet.
-const simulationResult: Ref<Pick<
-  Ticket,
-  'mainNumbers' | 'euroNumbers'
-> | null> = ref(null)
-// Stores the fetched official winning odds data for calculating payouts.
-const latestWinningData: Ref<EurojackpotHistoricOdds | null> = ref(null)
-// Calculated total winnings from all tickets after simulation.
-const totalWinnings: Ref<number> = ref(0)
-// Calculated win/loss rate percentage ((Profit / Cost) * 100). Null before simulation.
-const winLossRate: Ref<number> = ref(0) // Initialize to 0
-
-// --- Batch Simulation State ---
-const batchSimulationState = ref({
-  phase: 'config' as 'config' | 'running' | 'results',
-  isRunning: false,
-  canCancel: false,
-  currentSimulation: 0,
-  totalSimulations: 0,
-  startTime: 0,
-  elapsedTime: 0,
-  estimatedTimeRemaining: null as string | null,
-  partialResults: null as {
-    simulationsCompleted: number
-    totalWins: number
-    winPercentage: number
-    currentROI: number
-    netProfit: number
-    maxWin: number
-    winsByClass: Record<number, number>
-  } | null,
-  results: null as BatchSimulationResult | null,
-  abortController: null as AbortController | null,
-})
-
-// Timer for updating elapsed time during batch simulation
-const batchTimer = ref<NodeJS.Timeout | null>(null)
+// UI mode: 'single' draw vs 'montecarlo' batch
+const mode = ref<'single' | 'montecarlo'>('single')
+// Keys to force remounting panels after generation
+const singlePanelKey = ref(0)
+const montePanelKey = ref(0)
 
 // Get runtime configuration, primarily for the API base URL.
 const config = useRuntimeConfig()
@@ -343,27 +238,25 @@ const totalPrice = computed<number>(() => {
   return (selectedTicketType.value?.price ?? 0) * count
 })
 
-// Calculates the absolute profit or loss amount.
-const profitLossAmount = computed<number>(
-  () => totalWinnings.value - totalPrice.value
-)
-
 // --- Methods ---
 
-/**
- * Resets the component state related to simulation results and errors.
- * Called before starting a new generation or simulation.
- */
-const resetState = (clearTickets: boolean = false): void => {
-  if (clearTickets) {
-    tickets.value = []
-  }
+const resetAllState = (clearTickets = false): void => {
+  if (clearTickets) tickets.value = []
   error.value = ''
-  simulationResult.value = null
-  latestWinningData.value = null
-  totalWinnings.value = 0
-  winLossRate.value = 0 // Reset rate to 0
 }
+
+const setMode = (m: 'single' | 'montecarlo'): void => {
+  mode.value = m
+  error.value = ''
+}
+
+const tabClass = (target: 'single' | 'montecarlo') =>
+  [
+    'px-4 py-2 text-sm font-medium focus:outline-none transition',
+    mode.value === target
+      ? 'bg-casino-gold text-casino-blue-dark'
+      : 'bg-casino-blue hover:bg-casino-blue-light/20 text-gray-300',
+  ].join(' ')
 
 /**
  * Handles the 'Generate Tickets' button click.
@@ -385,7 +278,7 @@ const generateTicketsHandler = async (): Promise<void> => {
 
   loading.value = true
   currentAction.value = 'generate'
-  resetState(true) // Clear previous tickets and results
+  resetAllState(true) // Clear previous tickets and both modes' results
 
   try {
     // Make API call using $fetch (Nuxt's built-in fetch wrapper)
@@ -402,6 +295,9 @@ const generateTicketsHandler = async (): Promise<void> => {
 
     // Assign the successfully generated tickets to the reactive state.
     tickets.value = generatedTickets
+    // Reset children panels
+    singlePanelKey.value++
+    montePanelKey.value++
   } catch (err: unknown) {
     // Handle errors from the $fetch call (network, HTTP errors, etc.)
     console.error('Error generating tickets:', err)
@@ -420,458 +316,39 @@ const generateTicketsHandler = async (): Promise<void> => {
   }
 }
 
-/**
- * Handles the 'Simulate Extraction' button click.
- * Fetches a simulated winning draw and the latest official odds data concurrently.
- * Then, checks tickets against the simulation and calculates winnings.
- */
-const simulateExtractionHandler = async (): Promise<void> => {
-  // Prevent simulation if no tickets generated or already loading
-  if (tickets.value.length === 0) {
-    error.value = 'Please generate tickets before simulating.'
-    return
-  }
-  if (loading.value) return
+// Single-draw logic moved into SingleDrawPanel
 
-  loading.value = true
-  currentAction.value = 'simulate'
-  // Reset previous simulation results but keep generated tickets
-  resetState(false)
-
-  try {
-    // --- Step 1: Fetch Simulation and Winning Data Concurrently ---
-    // Use Promise.all to fetch both pieces of data in parallel for efficiency.
-    const [simResponse, winDataResponse] = await Promise.all([
-      // Fetch the simulated winning numbers (5 main, 2 euro)
-      $fetch<Pick<Ticket, 'mainNumbers' | 'euroNumbers'>>(
-        `${apiBaseUrl}/simulate`
-      ),
-      // Fetch the latest official winning odds data (includes fallback logic in API)
-      $fetch<EurojackpotHistoricOdds>(`${apiBaseUrl}/fetchWinningData`),
-    ])
-
-    // --- Step 2: Process Responses ---
-    simulationResult.value = simResponse
-    latestWinningData.value = winDataResponse // API handles normalization and fallback
-
-    // Basic validation of fetched data
-    if (
-      !simulationResult.value?.mainNumbers ||
-      !simulationResult.value?.euroNumbers
-    ) {
-      throw new Error('Invalid simulation result received from API.')
-    }
-    if (!latestWinningData.value?.eurojackpotOdds) {
-      // Log warning but proceed; winnings calculation will handle missing odds.
-      console.warn('Winning odds data is missing or invalid in the response.')
-    }
-
-    // --- Step 3: Check Tickets Against Simulation ---
-    checkWinningNumbers() // Updates each ticket with winClass and highlights matches
-
-    // --- Step 4: Calculate Total Winnings ---
-    // Only calculate if valid odds data is available.
-    if (
-      latestWinningData.value?.eurojackpotOdds &&
-      latestWinningData.value.eurojackpotOdds.length > 0
-    ) {
-      totalWinnings.value = calculateTotalWinnings(
-        tickets.value,
-        latestWinningData.value
-      )
-    } else {
-      totalWinnings.value = 0 // Set winnings to 0 if odds are missing/invalid
-      console.warn(
-        'Cannot calculate total winnings because odds data is unavailable or empty.'
-      )
-    }
-
-    // --- Step 5: Calculate Win/Loss Rate ---
-    const cost = totalPrice.value // Get the calculated total cost
-    if (cost > 0) {
-      const profit = totalWinnings.value - cost
-      // Calculate rate as percentage. Avoid division by zero.
-      winLossRate.value = (profit / cost) * 100
-    } else {
-      // Handle edge case where cost is zero (e.g., 0 tickets selected - though UI prevents this)
-      // If winnings > 0, rate is effectively infinite positive. If winnings=0, rate is 0.
-      winLossRate.value = totalWinnings.value > 0 ? Infinity : 0
-    }
-  } catch (err: unknown) {
-    // Handle errors from either fetch call or processing steps
-    console.error('Error during simulation or data processing:', err)
-    const errorResponseMessage =
-      err.data?.message ||
-      err.data?.statusMessage ||
-      err.statusText ||
-      err.message ||
-      'An error occurred during simulation.'
-    error.value = String(errorResponseMessage)
-    // Clear results on error to avoid showing inconsistent state
-    resetState(false)
-  } finally {
-    loading.value = false
-    currentAction.value = null
-
-    // --- Step 6: Play Sound Based on Result ---
-    // Play sound only if simulation completed (simulationResult is not null).
-    if (simulationResult.value) {
-      playWinSound(totalWinnings.value, totalPrice.value)
-    }
-  }
-}
-
-/**
- * Compares each generated ticket against the simulated winning numbers.
- * For system tickets, uses efficient combinatorial math to calculate per-class win counts.
- * Formula: C(k,i) × C(m−k,5−i) × C(h,j) × C(e−h,2−j)
- * Updates each ticket object with:
- * - `winningMainNumbers`: Array of matched main numbers for UI highlighting.
- * - `winningEuroNumbers`: Array of matched euro numbers for UI highlighting.
- * - `winClassCounts`: Record of winning class counts for system tickets.
- * - `winClass`: The best (lowest number) winning class if any.
- * Finally, sorts the tickets array to show winners first, ordered by winning class.
- */
-const checkWinningNumbers = (): void => {
-  if (!simulationResult.value || tickets.value.length === 0) {
-    console.warn(
-      'Cannot check winning numbers: Simulation result or tickets are missing.'
-    )
-    return
-  }
-
-  const simMain = simulationResult.value.mainNumbers
-  const simEuro = simulationResult.value.euroNumbers
-
-  tickets.value.forEach((ticket) => {
-    // Highlight intersections for the UI bubbles
-    ticket.winningMainNumbers = ticket.mainNumbers.filter((n) =>
-      simMain.includes(n)
-    )
-    ticket.winningEuroNumbers = ticket.euroNumbers.filter((n) =>
-      simEuro.includes(n)
-    )
-
-    // Calculate k (correct mains) and h (correct euros)
-    const k = ticket.winningMainNumbers.length
-    const h = ticket.winningEuroNumbers.length
-    const m = ticket.mainNumbers.length
-    const e = ticket.euroNumbers.length
-
-    // Use efficient combinatorial calculation instead of line expansion
-    const winCounts = calculateWinningLineCounts(m, e, k, h)
-
-    ticket.winClassCounts = winCounts
-    ticket.winClass = Object.keys(winCounts)
-      .map(Number)
-      .sort((a, b) => a - b)[0] // Best class if any
-  })
-
-  // Sort winners first (best class), then by id
-  tickets.value.sort((a, b) => {
-    const A = a.winClass ?? 999
-    const B = b.winClass ?? 999
-    return A === B ? a.id - b.id : A - B
-  })
-}
-
-// --- Batch Simulation Methods ---
-
-/**
- * Handles the start of batch simulation.
- */
-const handleBatchSimulationStart = async (
-  config: BatchSimulationRequest
-): Promise<void> => {
-  if (tickets.value.length === 0) {
-    error.value = 'Please generate tickets before starting batch simulation.'
-    return
-  }
-
-  // Reset batch simulation state
-  batchSimulationState.value = {
-    phase: 'running',
-    isRunning: true,
-    canCancel: true,
-    currentSimulation: 0,
-    totalSimulations: config.simulationCount,
-    startTime: Date.now(),
-    elapsedTime: 0,
-    estimatedTimeRemaining: null,
-    partialResults: {
-      simulationsCompleted: 0,
-      totalWins: 0,
-      winPercentage: 0,
-      currentROI: 0,
-      netProfit: 0,
-      maxWin: 0,
-      winsByClass: {},
-    },
-    results: null,
-    abortController: new AbortController(),
-  }
-
-  // Start timer for elapsed time updates
-  batchTimer.value = setInterval(() => {
-    batchSimulationState.value.elapsedTime =
-      Date.now() - batchSimulationState.value.startTime
-
-    // Calculate estimated time remaining
-    if (batchSimulationState.value.currentSimulation > 0) {
-      const avgTimePerSim =
-        batchSimulationState.value.elapsedTime /
-        batchSimulationState.value.currentSimulation
-      const remainingSims =
-        batchSimulationState.value.totalSimulations -
-        batchSimulationState.value.currentSimulation
-      const estimatedMs = remainingSims * avgTimePerSim
-
-      batchSimulationState.value.estimatedTimeRemaining =
-        formatEstimatedTime(estimatedMs)
-    }
-  }, 1000)
-
-  try {
-    // Prepare request with tickets
-    const request: BatchSimulationRequest = {
-      ...config,
-      tickets: tickets.value,
-    }
-
-    // Make streaming API call (NDJSON)
-    const resp = await fetch(`${apiBaseUrl}/batchSimulate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/x-ndjson',
-      },
-      body: JSON.stringify(request),
-      signal: batchSimulationState.value.abortController?.signal ?? undefined,
-    })
-
-    const contentType = resp.headers.get('content-type') || ''
-
-    if (!resp.ok) {
-      const text = await resp.text()
-      throw new Error(text || `HTTP ${resp.status}`)
-    }
-
-    if (contentType.includes('application/x-ndjson') && resp.body) {
-      const reader = resp.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      const consume = async (): Promise<void> => {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buffer += decoder.decode(value, { stream: true })
-          let idx: number
-          while ((idx = buffer.indexOf('\n')) >= 0) {
-            const line = buffer.slice(0, idx).trim()
-            buffer = buffer.slice(idx + 1)
-            if (!line) continue
-            let msg: unknown
-            try {
-              msg = JSON.parse(line) as unknown
-            } catch {
-              console.warn('Failed to parse NDJSON line', line)
-              continue
-            }
-
-            type StreamProgress = {
-              type: 'progress'
-              progress: {
-                currentSimulation: number
-                totalSimulations: number
-                progressPercentage: number
-              }
-              summary: {
-                totalCost: number
-                totalWinnings: number
-                netProfit: number
-                roiPercentage: number
-                maxWin: number
-                winDistribution: {
-                  winsByClass: Record<number, number>
-                  totalWins: number
-                  totalLosses: number
-                  winPercentage: number
-                }
-              }
-            }
-            type StreamResult = {
-              type: 'result'
-              result: BatchSimulationResult
-            }
-            type StreamError = { type: 'error'; error: string }
-
-            const isProgress = (m: unknown): m is StreamProgress => {
-              if (typeof m !== 'object' || m === null) return false
-              const g = m as Record<string, unknown>
-              if (g.type !== 'progress') return false
-              const progress = g.progress as Record<string, unknown> | undefined
-              const summary = g.summary as Record<string, unknown> | undefined
-              return (
-                typeof progress?.currentSimulation === 'number' &&
-                typeof summary?.netProfit === 'number'
-              )
-            }
-            const isResult = (m: unknown): m is StreamResult => {
-              if (typeof m !== 'object' || m === null) return false
-              const g = m as Record<string, unknown>
-              return (
-                g.type === 'result' &&
-                typeof g.result === 'object' &&
-                g.result !== null
-              )
-            }
-            const isError = (m: unknown): m is StreamError => {
-              if (typeof m !== 'object' || m === null) return false
-              const g = m as Record<string, unknown>
-              return g.type === 'error' && typeof g.error === 'string'
-            }
-
-            if (isProgress(msg)) {
-              const current = Number(msg.progress.currentSimulation) || 0
-              batchSimulationState.value.currentSimulation = current
-              batchSimulationState.value.partialResults = {
-                simulationsCompleted: current,
-                totalWins: msg.summary.winDistribution.totalWins ?? 0,
-                winPercentage: msg.summary.winDistribution.winPercentage ?? 0,
-                currentROI: msg.summary.roiPercentage ?? 0,
-                netProfit: msg.summary.netProfit ?? 0,
-                maxWin: msg.summary.maxWin ?? 0,
-                winsByClass: msg.summary.winDistribution.winsByClass || {},
-              }
-            } else if (isResult(msg)) {
-              batchSimulationState.value.results = msg.result
-              batchSimulationState.value.phase = 'results'
-            } else if (isError(msg)) {
-              throw new Error(String(msg.error))
-            }
-          }
-        }
+// Provide a helper for SingleDrawPanel to apply ticket highlighting
+const applyHighlightsOnTickets = (
+  updates: Array<{
+    id: number
+    winningMainNumbers: number[]
+    winningEuroNumbers: number[]
+    winClassCounts: Record<number, number>
+    winClass?: number
+  }>
+): void => {
+  const byId = new Map(updates.map((u) => [u.id, u]))
+  tickets.value = tickets.value
+    .map((t) => {
+      const u = byId.get(t.id)
+      if (!u) return t
+      return {
+        ...t,
+        winningMainNumbers: u.winningMainNumbers,
+        winningEuroNumbers: u.winningEuroNumbers,
+        winClassCounts: u.winClassCounts,
+        winClass: u.winClass,
       }
-
-      await consume()
-    } else {
-      // Fallback: non-streaming JSON response
-      const results = (await resp.json()) as BatchSimulationResult
-      batchSimulationState.value.results = results
-      batchSimulationState.value.phase = 'results'
-    }
-
-    // Play sound based on overall performance
-    if (
-      batchSimulationState.value.results &&
-      batchSimulationState.value.results.roiPercentage > 0
-    ) {
-      const r = batchSimulationState.value.results
-      playWinSound(r.totalWinnings, r.totalCost)
-    }
-  } catch (err: unknown) {
-    console.error('Error during batch simulation:', err)
-
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      error.value = 'Batch simulation was cancelled.'
-    } else {
-      const errorMessage =
-        err.data?.message ||
-        err.data?.statusMessage ||
-        err.statusText ||
-        err.message ||
-        'An error occurred during batch simulation.'
-      error.value = String(errorMessage)
-    }
-
-    // Reset to config phase on error
-    batchSimulationState.value.phase = 'config'
-  } finally {
-    batchSimulationState.value.isRunning = false
-    batchSimulationState.value.canCancel = false
-
-    // Clear timer
-    if (batchTimer.value) {
-      clearInterval(batchTimer.value)
-      batchTimer.value = null
-    }
-  }
+    })
+    .sort((a, b) => {
+      const A = a.winClass ?? 999
+      const B = b.winClass ?? 999
+      return A === B ? a.id - b.id : A - B
+    })
 }
 
-/**
- * Handles cancellation of batch simulation.
- */
-const handleBatchSimulationCancel = (): void => {
-  if (batchSimulationState.value.abortController) {
-    batchSimulationState.value.abortController.abort()
-  }
-
-  batchSimulationState.value.canCancel = false
-
-  // Clear timer
-  if (batchTimer.value) {
-    clearInterval(batchTimer.value)
-    batchTimer.value = null
-  }
-}
-
-/**
- * Handles reset of batch simulation to start a new one.
- */
-const handleBatchSimulationReset = (): void => {
-  batchSimulationState.value = {
-    phase: 'config',
-    isRunning: false,
-    canCancel: false,
-    currentSimulation: 0,
-    totalSimulations: 0,
-    startTime: 0,
-    elapsedTime: 0,
-    estimatedTimeRemaining: null,
-    partialResults: null,
-    results: null,
-    abortController: null,
-  }
-
-  // Also reset single simulation state
-  resetState(false)
-}
-
-/**
- * Formats estimated time remaining in a human-readable format.
- */
-const formatEstimatedTime = (ms: number): string => {
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-
-  if (hours > 0) {
-    return `${hours}h ${minutes % 60}m`
-  } else if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s`
-  } else {
-    return `${seconds}s`
-  }
-}
-
-// --- Lifecycle ---
-
-/**
- * Cleanup when component is unmounted
- */
-onUnmounted(() => {
-  // Cancel any running batch simulation
-  if (batchSimulationState.value.abortController) {
-    batchSimulationState.value.abortController.abort()
-  }
-
-  // Clear timer
-  if (batchTimer.value) {
-    clearInterval(batchTimer.value)
-    batchTimer.value = null
-  }
-})
+// batch simulation logic moved into MonteCarloPanel
 </script>
 
 <style scoped>
