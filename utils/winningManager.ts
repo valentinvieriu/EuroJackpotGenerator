@@ -62,7 +62,9 @@ function generateNearestEurojackpotUrl() {
     if (target.getDay() !== 4) {
       target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
     }
-    const weekNumber = 1 + Math.ceil((firstThursday - target.getTime()) / 6048000);
+    // 604800000 = 7 * 24 * 60 * 60 * 1000 milliseconds in a week
+    const MILLISECONDS_IN_WEEK = 7 * 24 * 60 * 60 * 1000;
+    const weekNumber = 1 + Math.ceil((firstThursday - target.getTime()) / MILLISECONDS_IN_WEEK);
     return weekNumber;
   }
 
