@@ -27,28 +27,28 @@ let ticketIdCounter = 1
 export async function generateTickets(
   ticketCount: number,
   mainCount: number,
-  euroCount: number,
+  euroCount: number
 ): Promise<Ticket[]> {
   // Basic validation for inputs
   if (!Number.isInteger(ticketCount) || ticketCount <= 0) {
     throw new Error('ticketCount must be a positive integer.')
   }
   if (
-    !Number.isInteger(mainCount)
-    || mainCount < MAIN_NUMBER_MIN
-    || mainCount > MAIN_NUMBER_MAX
+    !Number.isInteger(mainCount) ||
+    mainCount < MAIN_NUMBER_MIN ||
+    mainCount > MAIN_NUMBER_MAX
   ) {
     throw new Error(
-      `mainCount must be an integer between ${MAIN_NUMBER_MIN} and ${MAIN_NUMBER_MAX}.`,
+      `mainCount must be an integer between ${MAIN_NUMBER_MIN} and ${MAIN_NUMBER_MAX}.`
     )
   }
   if (
-    !Number.isInteger(euroCount)
-    || euroCount < EURO_NUMBER_MIN
-    || euroCount > EURO_NUMBER_MAX
+    !Number.isInteger(euroCount) ||
+    euroCount < EURO_NUMBER_MIN ||
+    euroCount > EURO_NUMBER_MAX
   ) {
     throw new Error(
-      `euroCount must be an integer between ${EURO_NUMBER_MIN} and ${EURO_NUMBER_MAX}.`,
+      `euroCount must be an integer between ${EURO_NUMBER_MIN} and ${EURO_NUMBER_MAX}.`
     )
   }
 
@@ -58,15 +58,14 @@ export async function generateTickets(
     statsData = await fetchStatistics()
     if (!statsData) {
       console.warn(
-        'Statistics data unavailable, proceeding with purely random number generation.',
+        'Statistics data unavailable, proceeding with purely random number generation.'
       )
     }
-  }
-  catch (error) {
+  } catch (error) {
     // Log the error but continue with random generation as a fallback.
     console.error(
       'Failed to fetch statistics, using purely random generation:',
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error ? error.message : String(error)
     )
     // statsData remains null
   }
@@ -93,7 +92,7 @@ export async function generateTickets(
       if (attempts > MAX_RETRIES_PER_TICKET) {
         // If uniqueness cannot be achieved after several tries, something might be wrong.
         throw new Error(
-          `Max retries (${MAX_RETRIES_PER_TICKET}) exceeded while generating unique ticket ${i + 1}/${ticketCount}. Possible issues: requesting too many tickets for the chosen system, or error in number generation logic.`,
+          `Max retries (${MAX_RETRIES_PER_TICKET}) exceeded while generating unique ticket ${i + 1}/${ticketCount}. Possible issues: requesting too many tickets for the chosen system, or error in number generation logic.`
         )
       }
 
@@ -103,7 +102,7 @@ export async function generateTickets(
         mainCount,
         MAIN_NUMBER_MIN,
         MAIN_NUMBER_MAX,
-        statsData?.numbers, // Pass main number stats (if available)
+        statsData?.numbers // Pass main number stats (if available)
       )
 
       // Generate euro numbers. Uses weighted stats if available, otherwise random.
@@ -112,16 +111,16 @@ export async function generateTickets(
         euroCount,
         EURO_NUMBER_MIN,
         EURO_NUMBER_MAX,
-        statsData?.additionalNumbers, // Pass euro number stats (if available)
+        statsData?.additionalNumbers // Pass euro number stats (if available)
       )
 
       // Create a unique string representation for the combination.
       // Sorting is crucial here to ensure "1,5" and "5,1" produce the same key.
       // generateNumbers already sorts, but sorting again ensures consistency if the source changes.
-      ticketKey
-        = mainNumbers.sort((a, b) => a - b).join(',')
-          + '|'
-          + euroNumbers.sort((a, b) => a - b).join(',')
+      ticketKey =
+        mainNumbers.sort((a, b) => a - b).join(',') +
+        '|' +
+        euroNumbers.sort((a, b) => a - b).join(',')
     } while (uniqueTicketKeys.has(ticketKey)) // Repeat if this combination already exists in the current batch
 
     // Add the unique key to the set.

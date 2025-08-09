@@ -44,9 +44,9 @@ export default defineEventHandler(async (event: H3Event): Promise<Ticket[]> => {
 
     // Validate ticketCount
     if (
-      Number.isNaN(ticketCount)
-      || ticketCount < MIN_TICKETS
-      || ticketCount > MAX_TICKETS
+      Number.isNaN(ticketCount) ||
+      ticketCount < MIN_TICKETS ||
+      ticketCount > MAX_TICKETS
     ) {
       throw createError({
         statusCode: 400,
@@ -56,9 +56,9 @@ export default defineEventHandler(async (event: H3Event): Promise<Ticket[]> => {
 
     // Validate mainCount
     if (
-      Number.isNaN(mainCount)
-      || mainCount < MIN_MAIN_COUNT
-      || mainCount > MAX_MAIN_COUNT
+      Number.isNaN(mainCount) ||
+      mainCount < MIN_MAIN_COUNT ||
+      mainCount > MAX_MAIN_COUNT
     ) {
       throw createError({
         statusCode: 400,
@@ -68,9 +68,9 @@ export default defineEventHandler(async (event: H3Event): Promise<Ticket[]> => {
 
     // Validate euroCount
     if (
-      Number.isNaN(euroCount)
-      || euroCount < MIN_EURO_COUNT
-      || euroCount > MAX_EURO_COUNT
+      Number.isNaN(euroCount) ||
+      euroCount < MIN_EURO_COUNT ||
+      euroCount > MAX_EURO_COUNT
     ) {
       throw createError({
         statusCode: 400,
@@ -89,15 +89,14 @@ export default defineEventHandler(async (event: H3Event): Promise<Ticket[]> => {
 
     // 3. Call the ticket generation utility
     console.log(
-      `Generating ${ticketCount} tickets with system ${mainCount}/${euroCount}...`,
+      `Generating ${ticketCount} tickets with system ${mainCount}/${euroCount}...`
     )
     const tickets = await generateTickets(ticketCount, mainCount, euroCount)
     console.log(`Successfully generated ${tickets.length} tickets.`)
 
     // 4. Return the generated tickets
     return tickets
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     // Log the detailed error on the server-side
     console.error('Error in /api/generate endpoint:', error)
 

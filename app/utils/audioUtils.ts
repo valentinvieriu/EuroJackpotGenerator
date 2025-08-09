@@ -21,11 +21,13 @@ export const playWinSound = (winnings: number, cost: number): void => {
 
   try {
     // 1. Check for Web Audio API support and get AudioContext.
-    const AudioContextClass
-      = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext
     if (!AudioContextClass) {
       console.warn(
-        'Web Audio API is not supported in this browser. Cannot play sound.',
+        'Web Audio API is not supported in this browser. Cannot play sound.'
       )
       return
     }
@@ -58,7 +60,7 @@ export const playWinSound = (winnings: number, cost: number): void => {
       frequency: number,
       startTime: number,
       playDuration: number = durationPerTone,
-      gainValue: number = baseGain,
+      gainValue: number = baseGain
     ): void => {
       if (!audioContext || audioContext.state === 'closed') return // Safety check
 
@@ -81,7 +83,7 @@ export const playWinSound = (winnings: number, cost: number): void => {
       // Exponential decay to near silence (more natural fade out)
       gainNode.gain.exponentialRampToValueAtTime(
         0.001,
-        startTime + playDuration,
+        startTime + playDuration
       )
       // --- End Envelope ---
 
@@ -108,12 +110,11 @@ export const playWinSound = (winnings: number, cost: number): void => {
       // Pitch increases as ratio approaches 1.
       const pitch = Math.min(
         baseFrequency + ratio * (winFrequency - baseFrequency),
-        maxFrequency,
+        maxFrequency
       )
       playTone(pitch, audioContext.currentTime)
       scheduledEndTime = audioContext.currentTime + durationPerTone
-    }
-    else if (ratio >= 1) {
+    } else if (ratio >= 1) {
       // --- Significant Win (Winnings >= Cost) ---
       // Play a sequence of higher-pitched tones. Repetitions increase with the win magnitude.
       // Cap repetitions to avoid excessively long sounds.
@@ -130,38 +131,36 @@ export const playWinSound = (winnings: number, cost: number): void => {
     // 5. Schedule AudioContext closure.
     // Close the context shortly after the last sound is expected to finish playing.
     // This releases system audio resources. Add a small buffer.
-    const closeDelayMs
-      = (scheduledEndTime - audioContext.currentTime + 0.2) * 1000 // Delay in ms + 200ms buffer
+    const closeDelayMs =
+      (scheduledEndTime - audioContext.currentTime + 0.2) * 1000 // Delay in ms + 200ms buffer
     if (closeDelayMs > 0) {
       setTimeout(() => {
         if (audioContext && audioContext.state !== 'closed') {
           // console.log("Closing AudioContext");
           audioContext
             .close()
-            .catch(e => console.error('Error closing audio context:', e))
+            .catch((e) => console.error('Error closing audio context:', e))
         }
       }, closeDelayMs)
-    }
-    else {
+    } else {
       // If no sound was scheduled or duration is somehow zero/negative, close immediately.
       if (audioContext && audioContext.state !== 'closed') {
         audioContext
           .close()
-          .catch(e => console.error('Error closing audio context:', e))
+          .catch((e) => console.error('Error closing audio context:', e))
       }
     }
-  }
-  catch (e: unknown) {
+  } catch (e: unknown) {
     console.error(
       'Could not initialize or play win sound:',
-      e instanceof Error ? e.message : String(e),
+      e instanceof Error ? e.message : String(e)
     )
     // Attempt to clean up context if creation failed mid-way (optional, error handling specific)
     if (audioContext && audioContext.state !== 'closed') {
       audioContext
         .close()
-        .catch(err =>
-          console.error('Error closing audio context after failure:', err),
+        .catch((err) =>
+          console.error('Error closing audio context after failure:', err)
         )
     }
   }

@@ -15,9 +15,9 @@ import type { EurojackpotHistoricOdds, WinningClass } from '~/types/winning'
 const normalizeWinningClass = (odd: WinningClass): WinningClass => {
   // Check if winningClass is a number and greater than 100 (the pattern observed)
   if (
-    typeof odd.winningClass === 'number'
-    && odd.winningClass > 100
-    && odd.winningClass <= 112
+    typeof odd.winningClass === 'number' &&
+    odd.winningClass > 100 &&
+    odd.winningClass <= 112
   ) {
     return {
       ...odd,
@@ -73,12 +73,11 @@ export default defineEventHandler(
         let errorBody = `(Status: ${response.status})`
         try {
           errorBody = await response.text()
-        }
-        catch {
+        } catch {
           /* Ignore error reading body */
         }
         throw new Error(
-          `HTTP error fetching winning data: ${response.status}. Body: ${errorBody}`,
+          `HTTP error fetching winning data: ${response.status}. Body: ${errorBody}`
         )
       }
 
@@ -87,13 +86,13 @@ export default defineEventHandler(
 
       // Basic validation: Check if it's an object and has the expected top-level keys
       if (
-        typeof responseData !== 'object'
-        || responseData === null
-        || !('eurojackpotGameCycle' in responseData)
-        || !('eurojackpotOdds' in responseData)
+        typeof responseData !== 'object' ||
+        responseData === null ||
+        !('eurojackpotGameCycle' in responseData) ||
+        !('eurojackpotOdds' in responseData)
       ) {
         throw new Error(
-          'Fetched data is not a valid EurojackpotHistoricOdds object.',
+          'Fetched data is not a valid EurojackpotHistoricOdds object.'
         )
       }
       // Now we can safely cast
@@ -105,19 +104,17 @@ export default defineEventHandler(
       if (data && Array.isArray(data.eurojackpotOdds)) {
         data.eurojackpotOdds = data.eurojackpotOdds.map(normalizeWinningClass)
         console.log('Winning classes normalized (if necessary).')
-      }
-      else {
+      } else {
         // This case indicates a problem with the fetched data structure even after basic validation.
         console.warn(
-          'Fetched data is missing or has an invalid eurojackpotOdds array. Proceeding, but calculations might fail.',
+          'Fetched data is missing or has an invalid eurojackpotOdds array. Proceeding, but calculations might fail.'
         )
         // data might still be returned, but subsequent processing should be robust
       }
 
       // --- Return successfully fetched and processed data ---
       return data
-    }
-    catch (error: unknown) {
+    } catch (error: unknown) {
       // Clear timeout just in case error occurred before fetch completed but after timeout was set
       clearTimeout(timeoutId)
 
@@ -128,7 +125,7 @@ export default defineEventHandler(
       // Handle fetch errors (including AbortError from timeout) and parsing/validation errors
       fetchError = error instanceof Error ? error : new Error(String(error)) // Store the error
       console.error(
-        `Error during winning data fetch or processing: ${fetchError.message}`,
+        `Error during winning data fetch or processing: ${fetchError.message}`
       )
       // Fallback mechanism will be triggered below as 'data' is still null.
     }
@@ -137,14 +134,14 @@ export default defineEventHandler(
     // If 'data' is still null at this point, it means the try block failed.
     if (!data) {
       console.warn(
-        `Using fallback winning data due to error: ${fetchError?.message ?? 'Unknown error'}`,
+        `Using fallback winning data due to error: ${fetchError?.message ?? 'Unknown error'}`
       )
       data = getFallbackWinningData() // Use the predefined fallback data
     }
 
     // Return either the successfully fetched/normalized data or the fallback data.
     return data
-  },
+  }
 )
 
 /**

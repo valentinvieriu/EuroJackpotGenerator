@@ -27,7 +27,7 @@ function getISOWeekNumber(date: Date): number {
 
   // Adjust firstThursday to be the Thursday of week 1
   firstThursday.setDate(
-    firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3,
+    firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3
   )
 
   // Calculate the difference in weeks
@@ -63,8 +63,7 @@ function getDrawDate(referenceDate: Date, type: EurojackpotDrawType): Date {
       daysAgo = Math.min(daysAgo, diff)
     }
     daysToAddOrSubtract = -daysAgo
-  }
-  else {
+  } else {
     // EurojackpotDrawType.NEXT
     // Calculate days *forward* to the nearest upcoming draw day (Tue or Fri)
     // Example: If today is Sunday (0), next draw is Tuesday (+2 days).
@@ -102,8 +101,8 @@ function getDrawDate(referenceDate: Date, type: EurojackpotDrawType): Date {
  * @returns The fully constructed URL string.
  */
 export function generateEurojackpotUrl(type: EurojackpotDrawType): string {
-  const BASE_URL
-    = 'https://www.lotto-bayern.de/getEurojackpotHistoricOdds?gckey='
+  const BASE_URL =
+    'https://www.lotto-bayern.de/getEurojackpotHistoricOdds?gckey='
   const today = new Date()
 
   // Find the actual date of the draw we are interested in.
@@ -114,14 +113,14 @@ export function generateEurojackpotUrl(type: EurojackpotDrawType): string {
   const drawDayOfWeek = drawDate.getDay() // This will be 2 (Tue) or 5 (Fri)
 
   // Format week number with leading zero if needed (e.g., 09 instead of 9)
-  const formattedWeekNumber
-    = weekNumber < 10 ? `0${weekNumber}` : `${weekNumber}`
+  const formattedWeekNumber =
+    weekNumber < 10 ? `0${weekNumber}` : `${weekNumber}`
 
   // Construct the key required by the API.
   const gckey = `${year}-${formattedWeekNumber}-${drawDayOfWeek}` // Format YYYY-WW-D
 
   console.log(
-    `Generated gckey for ${type} draw on ${drawDate.toDateString()}: ${gckey}`,
+    `Generated gckey for ${type} draw on ${drawDate.toDateString()}: ${gckey}`
   )
 
   return `${BASE_URL}${gckey}`

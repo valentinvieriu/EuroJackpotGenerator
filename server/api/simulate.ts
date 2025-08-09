@@ -37,14 +37,14 @@ export default defineEventHandler(async (_event): Promise<SimulationResult> => {
     const mainNumbers = generateRandomNumbers(
       MAIN_NUMBERS_COUNT, // Use constant for count (5)
       MAIN_NUMBER_MIN,
-      MAIN_NUMBER_MAX,
+      MAIN_NUMBER_MAX
     )
 
     // Generate the standard count of euro numbers (2) within the allowed range (1-12).
     const euroNumbers = generateRandomNumbers(
       EURO_NUMBERS_COUNT, // Use constant for count (2)
       EURO_NUMBER_MIN,
-      EURO_NUMBER_MAX,
+      EURO_NUMBER_MAX
     )
 
     // Log the simulated draw result on the server (optional)
@@ -56,12 +56,11 @@ export default defineEventHandler(async (_event): Promise<SimulationResult> => {
       mainNumbers,
       euroNumbers,
     }
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     // Log the detailed error on the server-side
     console.error(
       'Error simulating extraction in /api/simulate endpoint:',
-      error,
+      error
     )
 
     // If it's already an H3Error (though unlikely from generateRandomNumbers unless range/count is invalid), re-throw it.

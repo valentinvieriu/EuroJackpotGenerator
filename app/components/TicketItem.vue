@@ -18,7 +18,9 @@
       </span>
     </h3>
     <div class="mb-3">
-      <span class="font-medium text-sm text-gray-400 block mb-1">Main Numbers:</span>
+      <span class="font-medium text-sm text-gray-400 block mb-1"
+        >Main Numbers:</span
+      >
       <div class="flex flex-wrap gap-2">
         <TicketNumber
           v-for="number in ticket.mainNumbers"
@@ -29,7 +31,9 @@
       </div>
     </div>
     <div>
-      <span class="font-medium text-sm text-gray-400 block mb-1">Euro Numbers:</span>
+      <span class="font-medium text-sm text-gray-400 block mb-1"
+        >Euro Numbers:</span
+      >
       <div class="flex flex-wrap gap-2">
         <TicketNumber
           v-for="number in ticket.euroNumbers"

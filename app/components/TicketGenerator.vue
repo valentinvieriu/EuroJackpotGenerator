@@ -10,7 +10,8 @@
           <label
             for="ticketType"
             class="mb-2 block text-gray-400 text-sm font-medium"
-          >Ticket Type:</label>
+            >Ticket Type:</label
+          >
           <select
             id="ticketType"
             v-model="selectedTicketType"
@@ -32,7 +33,8 @@
           <label
             for="ticketCount"
             class="mb-2 block text-gray-400 text-sm font-medium"
-          >Number of Tickets:</label>
+            >Number of Tickets:</label
+          >
           <input
             id="ticketCount"
             v-model.number="ticketCount"
@@ -41,14 +43,18 @@
             :max="maxTicketsAllowed"
             class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
             aria-label="Number of Tickets to Generate"
-          >
+          />
         </div>
         <!-- Total Price Display -->
         <div class="text-right sm:text-left">
-          <label class="mb-2 block text-gray-400 text-sm font-medium">Total Price:</label>
+          <label class="mb-2 block text-gray-400 text-sm font-medium"
+            >Total Price:</label
+          >
           <div class="flex items-center justify-end sm:justify-start h-10">
             <!-- Fixed height for alignment -->
-            <span class="text-xl font-semibold text-casino-gold-light">€{{ totalPrice.toFixed(2) }}</span>
+            <span class="text-xl font-semibold text-casino-gold-light"
+              >€{{ totalPrice.toFixed(2) }}</span
+            >
           </div>
         </div>
       </div>
@@ -60,14 +66,20 @@
       >
         <!-- Total Winnings Display -->
         <div class="text-right sm:text-left">
-          <label class="mb-2 block text-gray-400 text-sm font-medium">Total Winnings:</label>
+          <label class="mb-2 block text-gray-400 text-sm font-medium"
+            >Total Winnings:</label
+          >
           <div class="flex items-center justify-end sm:justify-start h-10">
-            <span class="text-xl font-semibold text-casino-gold">€{{ totalWinnings.toFixed(2) }}</span>
+            <span class="text-xl font-semibold text-casino-gold"
+              >€{{ totalWinnings.toFixed(2) }}</span
+            >
           </div>
         </div>
         <!-- Win/Loss Rate Display -->
         <div class="text-right sm:text-left">
-          <label class="mb-2 block text-gray-400 text-sm font-medium">Profit / Loss:</label>
+          <label class="mb-2 block text-gray-400 text-sm font-medium"
+            >Profit / Loss:</label
+          >
           <div class="flex items-center justify-end sm:justify-start h-10">
             <span
               :class="[
@@ -115,10 +127,7 @@
     </div>
 
     <!-- Loading Indicator -->
-    <div
-      v-if="loading"
-      class="text-center text-gray-400 my-8"
-    >
+    <div v-if="loading" class="text-center text-gray-400 my-8">
       <svg
         class="animate-spin h-8 w-8 text-casino-gold-light mx-auto"
         xmlns="http://www.w3.org/2000/svg"
@@ -139,9 +148,7 @@
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         />
       </svg>
-      <p class="mt-2">
-        Processing {{ currentAction }}...
-      </p>
+      <p class="mt-2">Processing {{ currentAction }}...</p>
     </div>
     <!-- Error Display -->
     <div
@@ -153,26 +160,17 @@
     </div>
 
     <!-- Simulation Result Display -->
-    <SimulationResult
-      v-if="simulationResult"
-      :result="simulationResult"
-    />
+    <SimulationResult v-if="simulationResult" :result="simulationResult" />
 
     <!-- Ticket List Display -->
-    <div
-      v-if="tickets.length && !loading"
-      class="space-y-4"
-    >
+    <div v-if="tickets.length && !loading" class="space-y-4">
       <h2
         v-if="!simulationResult"
         class="text-2xl font-semibold text-gray-300 mb-4"
       >
         Generated Tickets ({{ tickets.length }})
       </h2>
-      <h2
-        v-else
-        class="text-2xl font-semibold text-gray-300 mb-4"
-      >
+      <h2 v-else class="text-2xl font-semibold text-gray-300 mb-4">
         Simulation Results ({{ tickets.length }} Tickets)
       </h2>
       <!-- Use TicketComponent which is renamed from Ticket to avoid naming conflict -->
@@ -272,7 +270,7 @@ const totalPrice = computed<number>(() => {
 
 // Calculates the absolute profit or loss amount.
 const profitLossAmount = computed<number>(
-  () => totalWinnings.value - totalPrice.value,
+  () => totalWinnings.value - totalPrice.value
 )
 
 // --- Methods ---
@@ -302,9 +300,9 @@ const generateTicketsHandler = async (): Promise<void> => {
 
   // Validate ticket count locally before sending request
   if (
-    !Number.isInteger(ticketCount.value)
-    || ticketCount.value < 1
-    || ticketCount.value > maxTicketsAllowed
+    !Number.isInteger(ticketCount.value) ||
+    ticketCount.value < 1 ||
+    ticketCount.value > maxTicketsAllowed
   ) {
     error.value = `Please enter a valid number of tickets (1-${maxTicketsAllowed}).`
     return
@@ -329,21 +327,19 @@ const generateTicketsHandler = async (): Promise<void> => {
 
     // Assign the successfully generated tickets to the reactive state.
     tickets.value = generatedTickets
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     // Handle errors from the $fetch call (network, HTTP errors, etc.)
     console.error('Error generating tickets:', err)
     // Try to extract a meaningful error message from the response
-    const errorResponseMessage
-      = err.data?.message
-        || err.data?.statusMessage
-        || err.statusText
-        || err.message
-        || 'Failed to generate tickets.'
+    const errorResponseMessage =
+      err.data?.message ||
+      err.data?.statusMessage ||
+      err.statusText ||
+      err.message ||
+      'Failed to generate tickets.'
     error.value = String(errorResponseMessage)
     tickets.value = [] // Clear tickets on error
-  }
-  finally {
+  } finally {
     loading.value = false
     currentAction.value = null
   }
@@ -373,7 +369,7 @@ const simulateExtractionHandler = async (): Promise<void> => {
     const [simResponse, winDataResponse] = await Promise.all([
       // Fetch the simulated winning numbers (5 main, 2 euro)
       $fetch<Pick<Ticket, 'mainNumbers' | 'euroNumbers'>>(
-        `${apiBaseUrl}/simulate`,
+        `${apiBaseUrl}/simulate`
       ),
       // Fetch the latest official winning odds data (includes fallback logic in API)
       $fetch<EurojackpotHistoricOdds>(`${apiBaseUrl}/fetchWinningData`),
@@ -385,8 +381,8 @@ const simulateExtractionHandler = async (): Promise<void> => {
 
     // Basic validation of fetched data
     if (
-      !simulationResult.value?.mainNumbers
-      || !simulationResult.value?.euroNumbers
+      !simulationResult.value?.mainNumbers ||
+      !simulationResult.value?.euroNumbers
     ) {
       throw new Error('Invalid simulation result received from API.')
     }
@@ -401,18 +397,17 @@ const simulateExtractionHandler = async (): Promise<void> => {
     // --- Step 4: Calculate Total Winnings ---
     // Only calculate if valid odds data is available.
     if (
-      latestWinningData.value?.eurojackpotOdds
-      && latestWinningData.value.eurojackpotOdds.length > 0
+      latestWinningData.value?.eurojackpotOdds &&
+      latestWinningData.value.eurojackpotOdds.length > 0
     ) {
       totalWinnings.value = calculateTotalWinnings(
         tickets.value,
-        latestWinningData.value,
+        latestWinningData.value
       )
-    }
-    else {
+    } else {
       totalWinnings.value = 0 // Set winnings to 0 if odds are missing/invalid
       console.warn(
-        'Cannot calculate total winnings because odds data is unavailable or empty.',
+        'Cannot calculate total winnings because odds data is unavailable or empty.'
       )
     }
 
@@ -422,27 +417,24 @@ const simulateExtractionHandler = async (): Promise<void> => {
       const profit = totalWinnings.value - cost
       // Calculate rate as percentage. Avoid division by zero.
       winLossRate.value = (profit / cost) * 100
-    }
-    else {
+    } else {
       // Handle edge case where cost is zero (e.g., 0 tickets selected - though UI prevents this)
       // If winnings > 0, rate is effectively infinite positive. If winnings=0, rate is 0.
       winLossRate.value = totalWinnings.value > 0 ? Infinity : 0
     }
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     // Handle errors from either fetch call or processing steps
     console.error('Error during simulation or data processing:', err)
-    const errorResponseMessage
-      = err.data?.message
-        || err.data?.statusMessage
-        || err.statusText
-        || err.message
-        || 'An error occurred during simulation.'
+    const errorResponseMessage =
+      err.data?.message ||
+      err.data?.statusMessage ||
+      err.statusText ||
+      err.message ||
+      'An error occurred during simulation.'
     error.value = String(errorResponseMessage)
     // Clear results on error to avoid showing inconsistent state
     resetState(false)
-  }
-  finally {
+  } finally {
     loading.value = false
     currentAction.value = null
 
@@ -465,7 +457,7 @@ const simulateExtractionHandler = async (): Promise<void> => {
 const checkWinningNumbers = (): void => {
   if (!simulationResult.value || tickets.value.length === 0) {
     console.warn(
-      'Cannot check winning numbers: Simulation result or tickets are missing.',
+      'Cannot check winning numbers: Simulation result or tickets are missing.'
     )
     return
   }
@@ -475,11 +467,11 @@ const checkWinningNumbers = (): void => {
 
   tickets.value.forEach((ticket) => {
     // Find numbers present in both the ticket and the simulation result.
-    const matchedMain = ticket.mainNumbers.filter(num =>
-      simMain.includes(num),
+    const matchedMain = ticket.mainNumbers.filter((num) =>
+      simMain.includes(num)
     )
-    const matchedEuro = ticket.euroNumbers.filter(num =>
-      simEuro.includes(num),
+    const matchedEuro = ticket.euroNumbers.filter((num) =>
+      simEuro.includes(num)
     )
 
     // Determine the winning class based on the counts of matched numbers.

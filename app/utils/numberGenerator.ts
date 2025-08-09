@@ -1,7 +1,5 @@
 import type { StatisticsData } from '../types/statistics'
-import {
-  MAIN_NUMBER_MAX,
-} from './constants'
+import { MAIN_NUMBER_MAX } from './constants'
 
 /**
  * Selects numbers based on weighted probabilities derived from statistics.
@@ -18,7 +16,7 @@ export function generateNumbers(
   count: number,
   min: number,
   max: number,
-  stats?: StatisticsData['numbers'] | StatisticsData['additionalNumbers'],
+  stats?: StatisticsData['numbers'] | StatisticsData['additionalNumbers']
 ): number[] {
   // Use weighted generation if valid stats are provided
   if (stats && stats.length > 0) {
@@ -28,11 +26,10 @@ export function generateNumbers(
       const relevantStats = isMainNumbers ? stats : stats // In this structure, stats are already pre-filtered
 
       return generateNumbersWithStatsInternal(count, min, max, relevantStats)
-    }
-    catch (error) {
+    } catch (error) {
       // Log the error and fall back to purely random generation
       console.warn(
-        `Weighted generation failed: ${error instanceof Error ? error.message : String(error)}. Falling back to random generation.`,
+        `Weighted generation failed: ${error instanceof Error ? error.message : String(error)}. Falling back to random generation.`
       )
       // Fallthrough to random generation below
     }
@@ -56,29 +53,29 @@ function generateNumbersWithStatsInternal(
   count: number,
   min: number,
   max: number,
-  stats: ReadonlyArray<{ number: number, value: number }>, // Use ReadonlyArray for safety
+  stats: ReadonlyArray<{ number: number; value: number }> // Use ReadonlyArray for safety
 ): number[] {
   // Validate input stats
   if (!stats || stats.length === 0) {
     throw new Error(
-      'No valid statistics data provided for weighted generation.',
+      'No valid statistics data provided for weighted generation.'
     )
   }
 
   // 1. Adjust values and filter: Use square root to smooth probabilities and filter invalid entries.
   const adjustedStats = stats
-    .map(item => ({
+    .map((item) => ({
       number: item.number,
       // Using sqrt reduces the dominance of very frequent numbers
       adjustedValue: Math.sqrt(item.value),
     }))
     .filter(
-      item =>
-        Number.isInteger(item.number)
-        && item.number >= min
-        && item.number <= max
-        && Number.isFinite(item.adjustedValue)
-        && item.adjustedValue > 0,
+      (item) =>
+        Number.isInteger(item.number) &&
+        item.number >= min &&
+        item.number <= max &&
+        Number.isFinite(item.adjustedValue) &&
+        item.adjustedValue > 0
     )
 
   if (adjustedStats.length === 0) {
@@ -86,7 +83,7 @@ function generateNumbersWithStatsInternal(
   }
 
   // 2. Build Cumulative Distribution Function (CDF)
-  const cumulativeDistribution: { number: number, cumulative: number }[] = []
+  const cumulativeDistribution: { number: number; cumulative: number }[] = []
   let cumulativeSum = 0
   // Sort stats by number to ensure CDF is correctly ordered if stats aren't pre-sorted
   adjustedStats.sort((a, b) => a.number - b.number)
@@ -102,9 +99,9 @@ function generateNumbersWithStatsInternal(
   // Check if the cumulative distribution is valid
   const totalAdjustedValue = cumulativeSum
   if (
-    cumulativeDistribution.length === 0
-    || !Number.isFinite(totalAdjustedValue)
-    || totalAdjustedValue <= 0
+    cumulativeDistribution.length === 0 ||
+    !Number.isFinite(totalAdjustedValue) ||
+    totalAdjustedValue <= 0
   ) {
     throw new Error('Invalid cumulative distribution generated.')
   }
@@ -123,7 +120,7 @@ function generateNumbersWithStatsInternal(
     // This selects numbers proportionally to their adjustedValue.
     // `find` works well here; binary search is only needed for very large distributions.
     const selected = cumulativeDistribution.find(
-      item => rand < item.cumulative,
+      (item) => rand < item.cumulative
     )?.number
 
     if (selected !== undefined && !selectedNumbers.has(selected)) {
@@ -136,7 +133,7 @@ function generateNumbersWithStatsInternal(
   // 4. Handle incomplete selection (fallback)
   if (selectedNumbers.size < count) {
     console.warn(
-      `Could only select ${selectedNumbers.size}/${count} unique numbers using weighted stats after ${count * 10} attempts. Filling the remainder randomly.`,
+      `Could only select ${selectedNumbers.size}/${count} unique numbers using weighted stats after ${count * 10} attempts. Filling the remainder randomly.`
     )
     const remainingCount = count - selectedNumbers.size
     // Generate more random numbers than needed to increase chances of finding unique ones
@@ -152,7 +149,7 @@ function generateNumbersWithStatsInternal(
     // If still not enough (highly unlikely but possible if range is small), throw error
     if (selectedNumbers.size < count) {
       throw new Error(
-        `Failed to fill remaining ${remainingCount} numbers randomly.`,
+        `Failed to fill remaining ${remainingCount} numbers randomly.`
       )
     }
   }
@@ -174,12 +171,12 @@ function generateNumbersWithStatsInternal(
 export function generateRandomNumbers(
   count: number,
   min: number,
-  max: number,
+  max: number
 ): number[] {
   const rangeSize = max - min + 1
   if (rangeSize < count) {
     throw new Error(
-      `Cannot generate ${count} unique numbers from a range of size ${rangeSize} (${min}-${max})`,
+      `Cannot generate ${count} unique numbers from a range of size ${rangeSize} (${min}-${max})`
     )
   }
   if (count <= 0) {

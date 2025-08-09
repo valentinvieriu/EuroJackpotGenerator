@@ -14,17 +14,17 @@ import type { Ticket } from '~/types/ticket'
  */
 export function calculateTotalWinnings(
   tickets: ReadonlyArray<Ticket>, // Use ReadonlyArray for immutable input
-  winningData: EurojackpotHistoricOdds | null, // Allow null for robustness
+  winningData: EurojackpotHistoricOdds | null // Allow null for robustness
 ): number {
   let totalWinnings = 0
 
   // Validate the presence and structure of the winning data and odds.
   if (
-    !winningData?.eurojackpotOdds
-    || winningData.eurojackpotOdds.length === 0
+    !winningData?.eurojackpotOdds ||
+    winningData.eurojackpotOdds.length === 0
   ) {
     console.warn(
-      'Cannot calculate winnings: Winning data or eurojackpotOdds array is missing or empty.',
+      'Cannot calculate winnings: Winning data or eurojackpotOdds array is missing or empty.'
     )
     return 0 // Return 0 if essential data is unavailable.
   }
@@ -35,17 +35,16 @@ export function calculateTotalWinnings(
   winningData.eurojackpotOdds.forEach((odd) => {
     // Ensure the winningClass is a valid number (1-12) and amount is valid before adding.
     if (
-      Number.isInteger(odd.winningClass)
-      && odd.winningClass >= 1
-      && odd.winningClass <= 12
-      && typeof odd.amount === 'number'
-      && odd.amount >= 0
+      Number.isInteger(odd.winningClass) &&
+      odd.winningClass >= 1 &&
+      odd.winningClass <= 12 &&
+      typeof odd.amount === 'number' &&
+      odd.amount >= 0
     ) {
       oddsMap.set(odd.winningClass, odd.amount)
-    }
-    else {
+    } else {
       console.warn(
-        `Invalid or missing data for winning class entry: ${JSON.stringify(odd)}. Skipping.`,
+        `Invalid or missing data for winning class entry: ${JSON.stringify(odd)}. Skipping.`
       )
     }
   })
@@ -54,21 +53,20 @@ export function calculateTotalWinnings(
   tickets.forEach((ticket) => {
     // Check if the ticket has a valid winning class assigned (1-12).
     if (
-      ticket.winClass
-      && Number.isInteger(ticket.winClass)
-      && ticket.winClass >= 1
-      && ticket.winClass <= 12
+      ticket.winClass &&
+      Number.isInteger(ticket.winClass) &&
+      ticket.winClass >= 1 &&
+      ticket.winClass <= 12
     ) {
       // Check if this winning class exists in our odds map.
       if (oddsMap.has(ticket.winClass)) {
         // Add the corresponding amount to the total winnings.
         // The non-null assertion (!) is safe here because we checked with oddsMap.has().
         totalWinnings += oddsMap.get(ticket.winClass)!
-      }
-      else {
+      } else {
         // This case should ideally not happen if winningData is complete, but good to log.
         console.warn(
-          `Ticket ${ticket.id} has winClass ${ticket.winClass}, but no corresponding amount found in odds data.`,
+          `Ticket ${ticket.id} has winClass ${ticket.winClass}, but no corresponding amount found in odds data.`
         )
       }
     }

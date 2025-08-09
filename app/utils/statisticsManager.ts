@@ -15,12 +15,12 @@ const CACHE_DURATION_MS: number = 10 * 60 * 1000 // Cache duration: 10 minutes i
 const isValidStatisticsData = (data: unknown): data is StatisticsData => {
   // Check if data is an object and has the required properties which are arrays
   return (
-    typeof data === 'object'
-    && data !== null
-    && Array.isArray((data as StatisticsData).numbers)
-    && (data as StatisticsData).numbers.length > 0 // Ensure arrays are not empty
-    && Array.isArray((data as StatisticsData).additionalNumbers)
-    && (data as StatisticsData).additionalNumbers.length > 0
+    typeof data === 'object' &&
+    data !== null &&
+    Array.isArray((data as StatisticsData).numbers) &&
+    (data as StatisticsData).numbers.length > 0 && // Ensure arrays are not empty
+    Array.isArray((data as StatisticsData).additionalNumbers) &&
+    (data as StatisticsData).additionalNumbers.length > 0
     // Add more checks here if needed (e.g., check item structure within arrays)
   )
 }
@@ -52,13 +52,13 @@ export async function fetchStatistics(): Promise<StatisticsData | null> {
         // Headers typically required for JSON APIs
         headers: { Accept: 'application/json, text/plain, */*' },
         // Consider adding a timeout via AbortController if needed
-      },
+      }
     )
 
     // Check if the HTTP request was successful
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch statistics: HTTP status ${response.status}`,
+        `Failed to fetch statistics: HTTP status ${response.status}`
       )
     }
 
@@ -70,7 +70,7 @@ export async function fetchStatistics(): Promise<StatisticsData | null> {
       // Log the invalid data structure for debugging purposes
       console.error(
         'Fetched statistics data has invalid structure:',
-        JSON.stringify(statsData),
+        JSON.stringify(statsData)
       )
       throw new Error('Invalid statistics data structure received from API.')
     }
@@ -80,12 +80,11 @@ export async function fetchStatistics(): Promise<StatisticsData | null> {
     cachedStats = statsData // Store the valid data
     lastFetchTime = now // Update the timestamp of the successful fetch
     return cachedStats
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     // Log any errors during the fetch or processing
     console.error(
       'Error fetching or processing statistics:',
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error ? error.message : String(error)
     )
     // In case of error, return null (or potentially the stale cache if desired, but null is safer)
     cachedStats = null // Invalidate cache on error

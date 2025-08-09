@@ -35,11 +35,11 @@ export const winningClassesMap: ReadonlyArray<{
  */
 export function determineWinClass(
   matchedMain: number,
-  matchedEuro: number,
+  matchedEuro: number
 ): number | undefined {
   // Find the entry in the map where the main and euro counts match the input.
   const win = winningClassesMap.find(
-    wc => wc.main === matchedMain && wc.euro === matchedEuro,
+    (wc) => wc.main === matchedMain && wc.euro === matchedEuro
   )
 
   // Return the 'class' number if a match was found, otherwise return undefined.
