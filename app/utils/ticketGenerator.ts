@@ -1,7 +1,7 @@
 import { fetchStatistics } from './statisticsManager';
 import { generateNumbers } from './numberGenerator';
 import type { Ticket } from '~/types/ticket';
-import type { StatisticsData } from '../types/statistics';
+import type { StatisticsData } from '~/types/statistics';
 import { MAIN_NUMBER_MIN, MAIN_NUMBER_MAX, EURO_NUMBER_MIN, EURO_NUMBER_MAX } from './constants';
 
 // Global counter for assigning unique IDs to tickets across multiple generation requests within the same session.

@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Write",
+      "MultiEdit",
+      "Edit",
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep",
+      "LS",
+      "WebFetch",
+      "TodoRead",
+      "TodoWrite"
+    ],
+    "deny": []
+  },
+  "features": {
+    "extendedThinking": true,
+    "toolUse": true,
+    "codeExecution": true
+  },
+  "preferences": {
+    "verbosity": "concise",
+    "codeStyle": "modern-es",
+    "testFirst": true,
+    "lintBeforeCommit": true
+  },
+    "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@context7/mcp-server"],
+      "env": {
+        "CONTEXT7_MCP_SERVER_URL": "https://mcp.context7.com/sse"
+      }
+    }
+  }
+}

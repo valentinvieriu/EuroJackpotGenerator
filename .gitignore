@@ -26,3 +26,4 @@ logs
 # wrangler files
 .wrangler
 .dev.vars
+ai_docs/repomix-output.md

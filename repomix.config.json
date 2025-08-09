@@ -1,0 +1,56 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "input": {
+    "maxFileSize": 52428800
+  },
+  "output": {
+    "filePath": "ai_docs/repomix-output.md",
+    "style": "markdown",
+    "headerText": "",
+    "parsableStyle": false,
+    "fileSummary": true,
+    "directoryStructure": true,
+    "files": true,
+    "removeComments": true,
+    "removeEmptyLines": true,
+    "compress": false,
+    "topFilesLength": 10,
+    "showLineNumbers": false,
+    "copyToClipboard": true,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeDiffs": false
+    }
+  },
+  "include": [],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "**/.output/**",
+      "**/.nuxt/**",
+      "**/.nitro/**",
+      "**/.cache/**",
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/.wrangler/**",
+      "**/*.log",
+      "**/package-lock.json",
+      "**/yarn.lock",
+      "**/pnpm-lock.yaml",
+      "**/.DS_Store",
+      "**/.env*",
+      "**/wrangler.toml",
+      "**/.dev.vars",
+      "**/cloudflare-preset/**",
+      "**/worker-configuration.d.ts"
+    ]
+  },
+  "security": {
+    "enableSecurityCheck": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  }
+}

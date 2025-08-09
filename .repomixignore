@@ -1,0 +1,54 @@
+# Development and build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist/
+node_modules/
+
+# Logs and temporary files
+logs/
+*.log
+.DS_Store
+
+# Environment and config
+.env
+.env.*
+.wrangler/
+.dev.vars
+wrangler.toml
+
+# IDE and tooling
+.claude/
+.husky/
+.vscode/
+.fleet/
+.idea/
+
+# Package management
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Config files
+.gitignore
+.repomixignore
+repomix.config.json
+eslint.config.js
+.prettierignore
+.prettierrc
+tailwind.config.js
+tsconfig.json
+nuxt.config.ts
+nitro.config.ts
+
+# Documentation (keep only essential)
+README.md
+AGENTS.md
+ai_docs/*
+!ai_docs/COMMON_GUIDE.md
+
+# Cloudflare Workers
+worker-configuration.d.ts
+cloudflare-preset/
