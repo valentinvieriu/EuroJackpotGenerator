@@ -22,6 +22,7 @@ import type {
   IndividualSimulationResult,
 } from '~/types/batchSimulation'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
+import { normalizeOdds } from '~/utils/odds'
 import {
   calculateBatchStatistics,
   simulateSingleDraw,
@@ -357,10 +358,10 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
       return getFallbackWinningData()
     }
 
-    return data as EurojackpotHistoricOdds
+    return normalizeOdds(data as EurojackpotHistoricOdds)
   } catch (error) {
     console.warn('Error fetching winning data, using fallback:', error)
-    return getFallbackWinningData()
+    return normalizeOdds(getFallbackWinningData())
   }
 }
 

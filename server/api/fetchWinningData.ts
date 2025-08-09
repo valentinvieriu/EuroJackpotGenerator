@@ -1,32 +1,11 @@
 import type { H3Error } from 'h3'
 import { generateEurojackpotUrl, EurojackpotDrawType } from '~/utils/dateUtils' // Import enum too
-import type { EurojackpotHistoricOdds, WinningClass } from '~/types/winning'
+import type { EurojackpotHistoricOdds } from '~/types/winning'
+import { normalizeOdds } from '~/utils/odds'
 
 /**
- * Normalizes a winning class object fetched from the API.
- * The source API sometimes uses class numbers like 101, 102,... 112 for classes 1-12.
- * This function converts them to the standard 1-12 format.
- * It handles potential non-standard values gracefully.
- *
- * @param odd The original WinningClass object from the API response.
- * @returns A new WinningClass object with the `winningClass` property normalized to 1-12.
- *          Returns the original object if normalization is not needed or applicable.
+ * NOTE: Winning class normalization now lives in `~/utils/odds.ts` as a shared utility.
  */
-const normalizeWinningClass = (odd: WinningClass): WinningClass => {
-  // Check if winningClass is a number and greater than 100 (the pattern observed)
-  if (
-    typeof odd.winningClass === 'number' &&
-    odd.winningClass > 100 &&
-    odd.winningClass <= 112
-  ) {
-    return {
-      ...odd,
-      winningClass: odd.winningClass - 100, // Normalize (e.g., 101 -> 1)
-    }
-  }
-  // Return the original object if it's already 1-12 or doesn't match the pattern
-  return odd
-}
 
 /**
  * API endpoint handler to fetch the latest available EuroJackpot winning numbers and odds data.
@@ -102,7 +81,7 @@ export default defineEventHandler(
 
       // --- Normalize Winning Classes ---
       if (data && Array.isArray(data.eurojackpotOdds)) {
-        data.eurojackpotOdds = data.eurojackpotOdds.map(normalizeWinningClass)
+        data = normalizeOdds(data)
         console.log('Winning classes normalized (if necessary).')
       } else {
         // This case indicates a problem with the fetched data structure even after basic validation.
