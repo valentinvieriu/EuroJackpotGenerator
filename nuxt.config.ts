@@ -1,6 +1,10 @@
 export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss'],
   css: ['assets/css/tailwind.css'],
+  experimental: {
+    // Prevent duplicate registration warnings for Nuxt's internal route middleware in dev
+    clientRouteRules: false
+  },
 
   runtimeConfig: {
     public: {
