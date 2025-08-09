@@ -83,80 +83,30 @@ function generateNumbersWithStatsInternal(
     throw new Error('No valid statistics after adjusting and filtering.')
   }
 
-  // 2. Build Cumulative Distribution Function (CDF)
-  const cumulativeDistribution: { number: number; cumulative: number }[] = []
-  let cumulativeSum = 0
-  // Sort stats by number to ensure CDF is correctly ordered if stats aren't pre-sorted
-  adjustedStats.sort((a, b) => a.number - b.number)
-
-  for (const item of adjustedStats) {
-    cumulativeSum += item.adjustedValue
-    cumulativeDistribution.push({
-      number: item.number,
-      cumulative: cumulativeSum, // Store the upper bound of the range for this number
-    })
-  }
-
-  // Check if the cumulative distribution is valid
-  const totalAdjustedValue = cumulativeSum
-  if (
-    cumulativeDistribution.length === 0 ||
-    !Number.isFinite(totalAdjustedValue) ||
-    totalAdjustedValue <= 0
-  ) {
-    throw new Error('Invalid cumulative distribution generated.')
-  }
-
-  // 3. Select numbers using the CDF
-  const selectedNumbers = new Set<number>()
-  // Limit iterations to prevent potential infinite loops with bad data or logic.
-  // Allows roughly 10 attempts per number needed, which should be ample.
-  let maxIterations = count * 10
-
-  while (selectedNumbers.size < count && maxIterations > 0) {
-    // Generate a random value within the total adjusted range
-    const rand = randomFloat() * totalAdjustedValue
-
-    // Find the first number in the CDF whose cumulative value is greater than the random value
-    // This selects numbers proportionally to their adjustedValue.
-    // `find` works well here; binary search is only needed for very large distributions.
-    const selected = cumulativeDistribution.find(
-      (item) => rand < item.cumulative
-    )?.number
-
-    if (selected !== undefined && !selectedNumbers.has(selected)) {
-      selectedNumbers.add(selected)
-    }
-    // Only decrement iterations if a selection attempt was made (selected might be undefined if rand is exactly totalAdjustedValue, though unlikely)
-    maxIterations--
-  }
-
-  // 4. Handle incomplete selection (fallback)
-  if (selectedNumbers.size < count) {
+  // 2. Weighted sampling without replacement (Efraimidis–Spirakis, B-ES variant)
+  // Compute a key for each candidate: key_i = ln(u_i) / w_i, where u_i ~ U(0,1]
+  // Then pick the top-`count` items by key (larger is better since ln(u) <= 0).
+  if (adjustedStats.length < count) {
+    // Not enough valid candidates after filtering; fall back to uniform random
     console.warn(
-      `Could only select ${selectedNumbers.size}/${count} unique numbers using weighted stats after ${count * 10} attempts. Filling the remainder randomly.`
+      `Weighted generation has only ${adjustedStats.length} candidates for ${count} picks. Falling back to uniform random.`
     )
-    const remainingCount = count - selectedNumbers.size
-    // Generate more random numbers than needed to increase chances of finding unique ones
-    const randomFillCandidates = generateRandomNumbers(count, min, max) // Generate enough candidates
-
-    for (const num of randomFillCandidates) {
-      if (selectedNumbers.size < count && !selectedNumbers.has(num)) {
-        selectedNumbers.add(num)
-      }
-      if (selectedNumbers.size === count) break // Stop once filled
-    }
-
-    // If still not enough (highly unlikely but possible if range is small), throw error
-    if (selectedNumbers.size < count) {
-      throw new Error(
-        `Failed to fill remaining ${remainingCount} numbers randomly.`
-      )
-    }
+    return generateRandomNumbers(count, min, max)
   }
 
-  // Return the selected numbers, sorted
-  return Array.from(selectedNumbers).sort((a, b) => a - b)
+  const keyed = adjustedStats.map((item) => {
+    // Guard against u=0 to avoid -Infinity; EPSILON shifts into (0,1]
+    const u = Math.max(Number.EPSILON, randomFloat())
+    const key = Math.log(u) / item.adjustedValue // B-ES key
+    return { number: item.number, key }
+  })
+
+  // Select the top-k keys; for these pool sizes (<= 50/12) sorting is fine
+  keyed.sort((a, b) => b.key - a.key)
+  const selected = keyed.slice(0, count).map((k) => k.number)
+
+  // Return sorted ascending
+  return selected.sort((a, b) => a - b)
 }
 
 /**
