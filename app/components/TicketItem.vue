@@ -1,13 +1,19 @@
 <template>
-  <div :class="[
-    'rounded-lg p-4 shadow-lg transition-all duration-300',
-    isWinner
-      ? 'bg-casino-blue-light border-2 border-casino-gold ring-2 ring-casino-gold-light/50 shadow-casino-gold/30'
-      : 'bg-casino-blue-dark border border-casino-blue-light/30'
-    ]">
+  <!-- TicketItem component - renamed to meet multi-word requirement -->
+  <div
+    :class="[
+      'rounded-lg p-4 shadow-lg transition-all duration-300',
+      isWinner
+        ? 'bg-casino-blue-light border-2 border-casino-gold ring-2 ring-casino-gold-light/50 shadow-casino-gold/30'
+        : 'bg-casino-blue-dark border border-casino-blue-light/30',
+    ]"
+  >
     <h3 class="font-semibold mb-3 text-gray-200">
       Ticket #{{ ticketNumber }}
-      <span v-if="ticket.winClass" class="ml-2 font-bold text-casino-gold-light">
+      <span
+        v-if="ticket.winClass"
+        class="ml-2 font-bold text-casino-gold-light"
+      >
         - Winner Class {{ ticket.winClass }}!
       </span>
     </h3>
@@ -18,7 +24,7 @@
           v-for="number in ticket.mainNumbers"
           :key="'main-' + number"
           :number="number"
-          :isWinner="ticket.winningMainNumbers?.includes(number) || false"
+          :is-winner="ticket.winningMainNumbers?.includes(number) || false"
         />
       </div>
     </div>
@@ -29,7 +35,7 @@
           v-for="number in ticket.euroNumbers"
           :key="'euro-' + number"
           :number="number"
-          :isWinner="ticket.winningEuroNumbers?.includes(number) || false"
+          :is-winner="ticket.winningEuroNumbers?.includes(number) || false"
         />
       </div>
     </div>

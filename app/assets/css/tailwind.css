@@ -6,14 +6,14 @@
   html {
     @apply bg-casino-blue;
   }
-  
+
   body {
     @apply bg-casino-blue text-gray-200 min-h-screen;
     /* Ensure body fills the entire viewport */
     margin: 0;
     padding: 0;
   }
-  
+
   /* Ensure root div also has proper styling */
   #__nuxt {
     @apply bg-casino-blue text-gray-200 min-h-screen;

@@ -6,4 +6,4 @@ Perform a comprehensive deployment readiness check:
 1. Check that all environment variables are documented
 1. Verify package.json dependencies are up to date
 1. Confirm no sensitive data in source code
-1. Check that the server starts without errors (`npm start`)
+1. Check that we can build without errors (`npm run build`)

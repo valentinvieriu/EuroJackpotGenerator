@@ -1,6 +1,6 @@
-import { H3Error, createError } from 'h3';
-import { generateEurojackpotUrl, EurojackpotDrawType } from '~/utils/dateUtils'; // Import enum too
-import type { EurojackpotHistoricOdds, WinningClass } from "~/types/winning";
+import type { H3Error } from 'h3'
+import { generateEurojackpotUrl, EurojackpotDrawType } from '~/utils/dateUtils' // Import enum too
+import type { EurojackpotHistoricOdds, WinningClass } from '~/types/winning'
 
 /**
  * Normalizes a winning class object fetched from the API.
@@ -14,15 +14,19 @@ import type { EurojackpotHistoricOdds, WinningClass } from "~/types/winning";
  */
 const normalizeWinningClass = (odd: WinningClass): WinningClass => {
   // Check if winningClass is a number and greater than 100 (the pattern observed)
-  if (typeof odd.winningClass === 'number' && odd.winningClass > 100 && odd.winningClass <= 112) {
+  if (
+    typeof odd.winningClass === 'number'
+    && odd.winningClass > 100
+    && odd.winningClass <= 112
+  ) {
     return {
       ...odd,
       winningClass: odd.winningClass - 100, // Normalize (e.g., 101 -> 1)
-    };
+    }
   }
   // Return the original object if it's already 1-12 or doesn't match the pattern
-  return odd;
-};
+  return odd
+}
 
 /**
  * API endpoint handler to fetch the latest available EuroJackpot winning numbers and odds data.
@@ -35,93 +39,113 @@ const normalizeWinningClass = (odd: WinningClass): WinningClass => {
  * @returns A promise resolving to the EurojackpotHistoricOdds object (either fetched or fallback).
  * @throws {H3Error} Propagates H3-specific errors. For general errors, logs them and returns fallback data.
  */
-export default defineEventHandler(async (event): Promise<EurojackpotHistoricOdds> => {
-  let data: EurojackpotHistoricOdds | null = null;
-  let fetchError: Error | null = null; // Store specific error for logging fallback reason
-  const controller = new AbortController(); // For implementing fetch timeout
-  const timeoutDuration = 8000; // 8 seconds timeout
+export default defineEventHandler(
+  async (_event): Promise<EurojackpotHistoricOdds> => {
+    let data: EurojackpotHistoricOdds | null = null
+    let fetchError: Error | null = null // Store specific error for logging fallback reason
+    const controller = new AbortController() // For implementing fetch timeout
+    const timeoutDuration = 8000 // 8 seconds timeout
 
-  // Set timeout to abort the fetch request if it takes too long
-  const timeoutId = setTimeout(() => {
-    console.warn(`Fetch timeout triggered after ${timeoutDuration}ms.`);
-    controller.abort();
-  }, timeoutDuration);
+    // Set timeout to abort the fetch request if it takes too long
+    const timeoutId = setTimeout(() => {
+      console.warn(`Fetch timeout triggered after ${timeoutDuration}ms.`)
+      controller.abort()
+    }, timeoutDuration)
 
-  try {
-    // Generate the URL for the *previous* draw relative to today.
-    const url = generateEurojackpotUrl(EurojackpotDrawType.PREVIOUS);
-    console.log(`Attempting to fetch winning data from: ${url}`);
+    try {
+      // Generate the URL for the *previous* draw relative to today.
+      const url = generateEurojackpotUrl(EurojackpotDrawType.PREVIOUS)
+      console.log(`Attempting to fetch winning data from: ${url}`)
 
-    // Fetch data from the external API
-    const response = await fetch(url, { 
-      signal: controller.signal, // Link fetch to the AbortController
-      headers: { Accept: 'application/json' }, // Request JSON response
-      // Consider cache-control headers if needed, e.g., 'Cache-Control': 'no-cache'
-    });
+      // Fetch data from the external API
+      const response = await fetch(url, {
+        signal: controller.signal, // Link fetch to the AbortController
+        headers: { Accept: 'application/json' }, // Request JSON response
+        // Consider cache-control headers if needed, e.g., 'Cache-Control': 'no-cache'
+      })
 
-    // Clear the timeout timer as the fetch completed (successfully or not)
-    clearTimeout(timeoutId);
+      // Clear the timeout timer as the fetch completed (successfully or not)
+      clearTimeout(timeoutId)
 
-    // --- Handle HTTP Response ---
-    if (!response.ok) {
-       // Try to get more details from the response body for better error diagnosis
-      let errorBody = `(Status: ${response.status})`;
-      try {
-        errorBody = await response.text();
-      } catch (e) { /* Ignore error reading body */ }
-      throw new Error(`HTTP error fetching winning data: ${response.status}. Body: ${errorBody}`);
+      // --- Handle HTTP Response ---
+      if (!response.ok) {
+        // Try to get more details from the response body for better error diagnosis
+        let errorBody = `(Status: ${response.status})`
+        try {
+          errorBody = await response.text()
+        }
+        catch {
+          /* Ignore error reading body */
+        }
+        throw new Error(
+          `HTTP error fetching winning data: ${response.status}. Body: ${errorBody}`,
+        )
+      }
+
+      // --- Parse and Validate JSON ---
+      const responseData = (await response.json()) as unknown // Parse as unknown first for safety
+
+      // Basic validation: Check if it's an object and has the expected top-level keys
+      if (
+        typeof responseData !== 'object'
+        || responseData === null
+        || !('eurojackpotGameCycle' in responseData)
+        || !('eurojackpotOdds' in responseData)
+      ) {
+        throw new Error(
+          'Fetched data is not a valid EurojackpotHistoricOdds object.',
+        )
+      }
+      // Now we can safely cast
+      data = responseData as EurojackpotHistoricOdds
+
+      console.log('Winning data fetched successfully.')
+
+      // --- Normalize Winning Classes ---
+      if (data && Array.isArray(data.eurojackpotOdds)) {
+        data.eurojackpotOdds = data.eurojackpotOdds.map(normalizeWinningClass)
+        console.log('Winning classes normalized (if necessary).')
+      }
+      else {
+        // This case indicates a problem with the fetched data structure even after basic validation.
+        console.warn(
+          'Fetched data is missing or has an invalid eurojackpotOdds array. Proceeding, but calculations might fail.',
+        )
+        // data might still be returned, but subsequent processing should be robust
+      }
+
+      // --- Return successfully fetched and processed data ---
+      return data
+    }
+    catch (error: unknown) {
+      // Clear timeout just in case error occurred before fetch completed but after timeout was set
+      clearTimeout(timeoutId)
+
+      if (error instanceof H3Error) {
+        throw error // Re-throw H3 specific errors directly
+      }
+
+      // Handle fetch errors (including AbortError from timeout) and parsing/validation errors
+      fetchError = error instanceof Error ? error : new Error(String(error)) // Store the error
+      console.error(
+        `Error during winning data fetch or processing: ${fetchError.message}`,
+      )
+      // Fallback mechanism will be triggered below as 'data' is still null.
     }
 
-    // --- Parse and Validate JSON ---
-    const responseData = await response.json() as unknown; // Parse as unknown first for safety
-
-    // Basic validation: Check if it's an object and has the expected top-level keys
-    if (typeof responseData !== 'object' || responseData === null || !('eurojackpotGameCycle' in responseData) || !('eurojackpotOdds' in responseData)) {
-         throw new Error('Fetched data is not a valid EurojackpotHistoricOdds object.');
-    }
-     // Now we can safely cast
-     data = responseData as EurojackpotHistoricOdds;
-
-    console.log('Winning data fetched successfully.');
-
-    // --- Normalize Winning Classes ---
-    if (data && Array.isArray(data.eurojackpotOdds)) {
-      data.eurojackpotOdds = data.eurojackpotOdds.map(normalizeWinningClass);
-      console.log('Winning classes normalized (if necessary).');
-    } else {
-      // This case indicates a problem with the fetched data structure even after basic validation.
-      console.warn('Fetched data is missing or has an invalid eurojackpotOdds array. Proceeding, but calculations might fail.');
-      // data might still be returned, but subsequent processing should be robust
+    // --- Fallback Mechanism ---
+    // If 'data' is still null at this point, it means the try block failed.
+    if (!data) {
+      console.warn(
+        `Using fallback winning data due to error: ${fetchError?.message ?? 'Unknown error'}`,
+      )
+      data = getFallbackWinningData() // Use the predefined fallback data
     }
 
-    // --- Return successfully fetched and processed data ---
-    return data;
-
-  } catch (error: unknown) {
-    // Clear timeout just in case error occurred before fetch completed but after timeout was set
-     clearTimeout(timeoutId);
-
-    if (error instanceof H3Error) {
-      throw error; // Re-throw H3 specific errors directly
-    }
-
-    // Handle fetch errors (including AbortError from timeout) and parsing/validation errors
-    fetchError = error instanceof Error ? error : new Error(String(error)); // Store the error
-    console.error(`Error during winning data fetch or processing: ${fetchError.message}`);
-    // Fallback mechanism will be triggered below as 'data' is still null.
-  }
-
-  // --- Fallback Mechanism ---
-  // If 'data' is still null at this point, it means the try block failed.
-  if (!data) {
-    console.warn(`Using fallback winning data due to error: ${fetchError?.message ?? 'Unknown error'}`);
-    data = getFallbackWinningData(); // Use the predefined fallback data
-  }
-
-  // Return either the successfully fetched/normalized data or the fallback data.
-  return data;
-});
-
+    // Return either the successfully fetched/normalized data or the fallback data.
+    return data
+  },
+)
 
 /**
  * Provides a hardcoded set of fallback EuroJackpot odds data.
@@ -131,9 +155,9 @@ export default defineEventHandler(async (event): Promise<EurojackpotHistoricOdds
  * @returns A complete EurojackpotHistoricOdds object with fallback values.
  */
 function getFallbackWinningData(): EurojackpotHistoricOdds {
-  const fallbackDate = new Date(); // Use current date for fallback context
+  const fallbackDate = new Date() // Use current date for fallback context
   // Ensure timestamps are numbers or null
-  const fallbackTimestamp = fallbackDate.getTime();
+  const fallbackTimestamp = fallbackDate.getTime()
 
   return {
     eurojackpotGameCycle: {
@@ -142,28 +166,100 @@ function getFallbackWinningData(): EurojackpotHistoricOdds {
       eventDate: fallbackTimestamp, // Example timestamp
       eventWeekday: fallbackDate.getDay(), // Example weekday
       gametableValidFrom: null, // Or a placeholder timestamp if needed
-      gametableValidTo: null,   // Or a placeholder timestamp if needed
-      key: "fallback-data-key", // Identifier for fallback
+      gametableValidTo: null, // Or a placeholder timestamp if needed
+      key: 'fallback-data-key', // Identifier for fallback
       variantNo: 0, // Placeholder
     },
     // Odds using standard winningClass 1-12 and estimated amounts
     eurojackpotOdds: [
-      { amount: 10000000.00, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
-      { amount: 750000.00, numberOfWins: 1, winningClass: 2, sequence: 2, jackpot: false }, // Example wins > 0
-      { amount: 100000.00, numberOfWins: 3, winningClass: 3, sequence: 3, jackpot: false },
-      { amount: 5000.00, numberOfWins: 20, winningClass: 4, sequence: 4, jackpot: false },
-      { amount: 300.00, numberOfWins: 500, winningClass: 5, sequence: 5, jackpot: false },
-      { amount: 100.00, numberOfWins: 1000, winningClass: 6, sequence: 6, jackpot: false },
-      { amount: 50.00, numberOfWins: 2000, winningClass: 7, sequence: 7, jackpot: false },
-      { amount: 20.00, numberOfWins: 10000, winningClass: 8, sequence: 8, jackpot: false },
-      { amount: 15.00, numberOfWins: 15000, winningClass: 9, sequence: 9, jackpot: false },
-      { amount: 12.00, numberOfWins: 25000, winningClass: 10, sequence: 10, jackpot: false },
-      { amount: 10.00, numberOfWins: 50000, winningClass: 11, sequence: 11, jackpot: false },
-      { amount: 8.00, numberOfWins: 100000, winningClass: 12, sequence: 12, jackpot: false },
+      {
+        amount: 10000000.0,
+        numberOfWins: 0,
+        winningClass: 1,
+        sequence: 1,
+        jackpot: true,
+      },
+      {
+        amount: 750000.0,
+        numberOfWins: 1,
+        winningClass: 2,
+        sequence: 2,
+        jackpot: false,
+      }, // Example wins > 0
+      {
+        amount: 100000.0,
+        numberOfWins: 3,
+        winningClass: 3,
+        sequence: 3,
+        jackpot: false,
+      },
+      {
+        amount: 5000.0,
+        numberOfWins: 20,
+        winningClass: 4,
+        sequence: 4,
+        jackpot: false,
+      },
+      {
+        amount: 300.0,
+        numberOfWins: 500,
+        winningClass: 5,
+        sequence: 5,
+        jackpot: false,
+      },
+      {
+        amount: 100.0,
+        numberOfWins: 1000,
+        winningClass: 6,
+        sequence: 6,
+        jackpot: false,
+      },
+      {
+        amount: 50.0,
+        numberOfWins: 2000,
+        winningClass: 7,
+        sequence: 7,
+        jackpot: false,
+      },
+      {
+        amount: 20.0,
+        numberOfWins: 10000,
+        winningClass: 8,
+        sequence: 8,
+        jackpot: false,
+      },
+      {
+        amount: 15.0,
+        numberOfWins: 15000,
+        winningClass: 9,
+        sequence: 9,
+        jackpot: false,
+      },
+      {
+        amount: 12.0,
+        numberOfWins: 25000,
+        winningClass: 10,
+        sequence: 10,
+        jackpot: false,
+      },
+      {
+        amount: 10.0,
+        numberOfWins: 50000,
+        winningClass: 11,
+        sequence: 11,
+        jackpot: false,
+      },
+      {
+        amount: 8.0,
+        numberOfWins: 100000,
+        winningClass: 12,
+        sequence: 12,
+        jackpot: false,
+      },
     ],
     // Turnover data might be less critical for fallback, provide placeholders
     eurojackpotTurnover: [
-      { amount: 50000000.00, jurisdiction: 0 }, // Example overall turnover
+      { amount: 50000000.0, jurisdiction: 0 }, // Example overall turnover
     ],
-  };
+  }
 }

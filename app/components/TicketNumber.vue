@@ -21,9 +21,10 @@
         'scale-110': isWinner,
         // Override base shadow if winner
         '!shadow-ball-winner': isWinner, // Use !important implicitly via Tailwind order or explicit `!`
-         // Override base gradient if winner
-        'bg-gradient-radial from-ball-yellow-light to-ball-yellow-dark': isWinner,
-      }
+        // Override base gradient if winner
+        'bg-gradient-radial from-ball-yellow-light to-ball-yellow-dark':
+          isWinner,
+      },
     ]"
   >
     {{ number }}
@@ -33,13 +34,13 @@
 <script setup lang="ts">
 interface Props {
   /** The number to display inside the ball. */
-  number: number;
+  number: number
   /** Flag indicating if this number is part of a winning combination. */
-  isWinner: boolean;
+  isWinner: boolean
 }
 
 // Define component props with types.
-defineProps<Props>();
+defineProps<Props>()
 </script>
 
 <style scoped>
@@ -51,7 +52,11 @@ defineProps<Props>();
    giving a common "shiny ball" lighting effect.
 */
 .bg-gradient-radial {
-  background-image: radial-gradient(circle at 30% 30%, var(--tw-gradient-from), var(--tw-gradient-to));
+  background-image: radial-gradient(
+    circle at 30% 30%,
+    var(--tw-gradient-from),
+    var(--tw-gradient-to)
+  );
 }
 
 /* Ensure winner styles correctly override base styles if specificity issues arise,

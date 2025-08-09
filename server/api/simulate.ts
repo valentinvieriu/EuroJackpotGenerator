@@ -1,15 +1,15 @@
-import { generateRandomNumbers } from '~/utils/numberGenerator';
-import { H3Error, createError, defineEventHandler } from 'h3';
+import { generateRandomNumbers } from '~/utils/numberGenerator'
+import { H3Error, createError, defineEventHandler } from 'h3'
 import {
-    // Import constants for range and count of standard winning numbers
-    MAIN_NUMBER_MIN,
-    MAIN_NUMBER_MAX,
-    EURO_NUMBER_MIN,
-    EURO_NUMBER_MAX,
-    MAIN_NUMBERS_COUNT, // Standard draw: 5 main numbers
-    EURO_NUMBERS_COUNT  // Standard draw: 2 euro numbers
-} from '~/utils/constants';
-import type { Ticket } from '~/types/ticket'; // Import Ticket type for defining return structure
+  // Import constants for range and count of standard winning numbers
+  MAIN_NUMBER_MIN,
+  MAIN_NUMBER_MAX,
+  EURO_NUMBER_MIN,
+  EURO_NUMBER_MAX,
+  MAIN_NUMBERS_COUNT, // Standard draw: 5 main numbers
+  EURO_NUMBERS_COUNT, // Standard draw: 2 euro numbers
+} from '~/utils/constants'
+// Import Ticket type for defining return structure
 
 /**
  * Defines the structure of the simulation result returned by the API.
@@ -17,9 +17,9 @@ import type { Ticket } from '~/types/ticket'; // Import Ticket type for defining
  */
 interface SimulationResult {
   /** Array of randomly generated main winning numbers (sorted). */
-  mainNumbers: number[];
+  mainNumbers: number[]
   /** Array of randomly generated euro winning numbers (sorted). */
-  euroNumbers: number[];
+  euroNumbers: number[]
 }
 
 /**
@@ -31,21 +31,21 @@ interface SimulationResult {
  * @returns A promise resolving to a SimulationResult object containing the generated winning numbers.
  * @throws {H3Error} Throws a 500 error if number generation fails unexpectedly.
  */
-export default defineEventHandler(async (event): Promise<SimulationResult> => {
+export default defineEventHandler(async (_event): Promise<SimulationResult> => {
   try {
     // Generate the standard count of main numbers (5) within the allowed range (1-50).
     const mainNumbers = generateRandomNumbers(
-        MAIN_NUMBERS_COUNT, // Use constant for count (5)
-        MAIN_NUMBER_MIN,
-        MAIN_NUMBER_MAX
-    );
+      MAIN_NUMBERS_COUNT, // Use constant for count (5)
+      MAIN_NUMBER_MIN,
+      MAIN_NUMBER_MAX,
+    )
 
     // Generate the standard count of euro numbers (2) within the allowed range (1-12).
     const euroNumbers = generateRandomNumbers(
-        EURO_NUMBERS_COUNT, // Use constant for count (2)
-        EURO_NUMBER_MIN,
-        EURO_NUMBER_MAX
-    );
+      EURO_NUMBERS_COUNT, // Use constant for count (2)
+      EURO_NUMBER_MIN,
+      EURO_NUMBER_MAX,
+    )
 
     // Log the simulated draw result on the server (optional)
     // console.log(`Simulated draw: Main=[${mainNumbers.join(',')}] Euro=[${euroNumbers.join(',')}]`);
@@ -54,24 +54,28 @@ export default defineEventHandler(async (event): Promise<SimulationResult> => {
     // generateRandomNumbers already sorts the arrays.
     return {
       mainNumbers,
-      euroNumbers
-    };
-
-  } catch (error: unknown) {
+      euroNumbers,
+    }
+  }
+  catch (error: unknown) {
     // Log the detailed error on the server-side
-    console.error('Error simulating extraction in /api/simulate endpoint:', error);
+    console.error(
+      'Error simulating extraction in /api/simulate endpoint:',
+      error,
+    )
 
     // If it's already an H3Error (though unlikely from generateRandomNumbers unless range/count is invalid), re-throw it.
     if (error instanceof H3Error) {
-      throw error;
+      throw error
     }
 
     // For other unexpected errors from generateRandomNumbers, return a generic 500 error.
     throw createError({
       statusCode: 500,
-      statusMessage: 'An internal server error occurred during draw simulation.',
+      statusMessage:
+        'An internal server error occurred during draw simulation.',
       // Optionally include original error message in data for debugging
-      data: { message: error instanceof Error ? error.message : String(error) }
-    });
+      data: { message: error instanceof Error ? error.message : String(error) },
+    })
   }
-});
+})
