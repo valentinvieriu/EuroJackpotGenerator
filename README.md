@@ -37,6 +37,12 @@ yarn install
 bun install
 ```
 
+## Environment Variables
+
+The following environment variables can be configured:
+
+- `NUXT_PUBLIC_API_BASE` - Base URL for API endpoints (default: `/api`)
+
 ## Development Server
 
 Start the development server on `http://localhost:3000`:

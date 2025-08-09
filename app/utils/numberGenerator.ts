@@ -1,5 +1,6 @@
 import type { StatisticsData } from '../types/statistics'
 import { MAIN_NUMBER_MAX } from './constants'
+import { randomFloat, randomInt } from './rng'
 
 /**
  * Selects numbers based on weighted probabilities derived from statistics.
@@ -114,7 +115,7 @@ function generateNumbersWithStatsInternal(
 
   while (selectedNumbers.size < count && maxIterations > 0) {
     // Generate a random value within the total adjusted range
-    const rand = Math.random() * totalAdjustedValue
+    const rand = randomFloat() * totalAdjustedValue
 
     // Find the first number in the CDF whose cumulative value is greater than the random value
     // This selects numbers proportionally to their adjustedValue.
@@ -190,7 +191,7 @@ export function generateRandomNumbers(
   // Iterate from the end of the array downwards
   for (let i = numbers.length - 1; i > 0; i--) {
     // Pick a random index from 0 to i (inclusive)
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = randomInt(i + 1)
     // Swap the element at index i with the element at the random index j
     ;[numbers[i], numbers[j]] = [numbers[j], numbers[i]]
   }
