@@ -344,9 +344,17 @@ async function processSimulationChunk(
  */
 async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
   try {
-    const response = await fetch(
-      'https://www.lotto-bayern.de/getEuroJackpotCurrentOdds'
+    // Use the same working URL pattern as single draw
+    const { generateEurojackpotUrl, EurojackpotDrawType } = await import(
+      '~/utils/dateUtils'
     )
+    const url = generateEurojackpotUrl(EurojackpotDrawType.PREVIOUS)
+
+    console.log(`Batch simulation fetching winning data from: ${url}`)
+
+    const response = await fetch(url, {
+      headers: { Accept: 'application/json' },
+    })
 
     if (!response.ok) {
       console.warn('Failed to fetch current odds, using fallback data')
@@ -360,6 +368,7 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
       return getFallbackWinningData()
     }
 
+    console.log('Batch simulation winning data fetched successfully')
     return normalizeOdds(data as EurojackpotHistoricOdds)
   } catch (error) {
     console.warn('Error fetching winning data, using fallback:', error)

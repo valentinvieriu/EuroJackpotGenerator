@@ -395,8 +395,9 @@ const bestPerformingClass = computed(() => {
 
   Object.entries(props.results.winDistribution.winsByClass).forEach(
     ([classStr, count]) => {
-      if (count > maxCount) {
-        maxCount = count
+      const numCount = Number(count)
+      if (numCount > maxCount) {
+        maxCount = numCount
         bestClass = Number(classStr)
       }
     }
@@ -478,7 +479,9 @@ const getClassBarColor = (classNum: number): string => {
 const getClassPercentage = (classNum: number): number => {
   const count = props.results.winDistribution.winsByClass[classNum] || 0
   const maxCount = Math.max(
-    ...Object.values(props.results.winDistribution.winsByClass),
+    ...Object.values(props.results.winDistribution.winsByClass).filter(
+      (v) => typeof v === 'number'
+    ),
     1
   )
   return (count / maxCount) * 100
