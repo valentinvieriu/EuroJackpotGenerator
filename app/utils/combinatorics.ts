@@ -39,25 +39,22 @@ export function expandSystemLines(main: number[], euro: number[]) {
   return lines
 }
 
-/**
- * Calculate the number of combinations for system tickets
- * C(m,5) * C(e,2)
- */
 export function combinationCount(m: number, e: number): number {
-  const C = (n: number, r: number): number => {
-    if (r < 0 || r > n) return 0
-    return [...Array(r)].reduce((p, _, i) => (p * (n - i)) / (i + 1), 1)
-  }
-  return C(m, 5) * C(e, 2)
+  return nCr(m, 5) * nCr(e, 2)
 }
 
 /**
  * Helper function to calculate binomial coefficient C(n,r)
  */
-function C(n: number, r: number): number {
+export function nCr(n: number, r: number): number {
   if (r < 0 || r > n) return 0
   if (r === 0 || r === n) return 1
-  return [...Array(r)].reduce((p, _, i) => (p * (n - i)) / (i + 1), 1)
+  r = Math.min(r, n - r)
+  let result = 1
+  for (let i = 1; i <= r; i++) {
+    result = (result * (n - (r - i))) / i
+  }
+  return result
 }
 
 /**
@@ -86,7 +83,7 @@ export function calculateWinningLineCounts(
 
       // Calculate how many lines have exactly i mains and j euros correct
       const linesWithThisMatch =
-        C(k, i) * C(m - k, 5 - i) * C(h, j) * C(e - h, 2 - j)
+        nCr(k, i) * nCr(m - k, 5 - i) * nCr(h, j) * nCr(e - h, 2 - j)
 
       if (linesWithThisMatch > 0) {
         // Determine if this (i,j) combination wins a prize

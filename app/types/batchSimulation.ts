@@ -89,8 +89,8 @@ export interface BatchSimulationProgress {
   totalSimulations: number
   /** Progress percentage (0-100) */
   progressPercentage: number
-  /** Estimated time remaining in milliseconds */
-  estimatedTimeRemaining?: number
+  /** Estimated time remaining as human-readable string */
+  estimatedTimeRemaining?: string | null
   /** Whether the simulation can be cancelled */
   canCancel: boolean
 }

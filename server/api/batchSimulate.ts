@@ -29,6 +29,8 @@ import {
 } from '~/utils/batchStatistics'
 import { combinationCount } from '~/utils/combinatorics'
 import type { Ticket } from '~/types/ticket'
+import { buildOddsMap } from '~/utils/payout'
+import { PRICE_PER_LINE } from '~/utils/pricing'
 
 /**
  * API endpoint to run batch simulations of EuroJackpot draws.
@@ -55,7 +57,7 @@ export default defineEventHandler(
 
       // Fetch current winning odds data for payout calculations
       const winningData = await fetchWinningData()
-
+      const oddsMap = buildOddsMap(winningData)
       // Calculate cost per simulation (assuming all tickets have same system price)
       const costPerSimulation = calculateTotalCost(tickets)
       const totalCost = costPerSimulation * simulationCount
@@ -96,7 +98,7 @@ export default defineEventHandler(
                 tickets,
                 chunkSize,
                 startIndex,
-                winningData,
+                oddsMap,
                 costPerSimulation
               )
 
@@ -175,7 +177,7 @@ export default defineEventHandler(
           tickets,
           chunkSize,
           startIndex,
-          winningData,
+          oddsMap,
           costPerSimulation
         )
 
@@ -300,7 +302,7 @@ async function processSimulationChunk(
   tickets: BatchSimulationRequest['tickets'],
   chunkSize: number,
   startIndex: number,
-  winningData: EurojackpotHistoricOdds,
+  oddsMap: Map<number, number>,
   costPerSimulation: number
 ): Promise<IndividualSimulationResult[]> {
   const results: IndividualSimulationResult[] = []
@@ -326,7 +328,7 @@ async function processSimulationChunk(
       tickets,
       winningMainNumbers,
       winningEuroNumbers,
-      winningData,
+      oddsMap,
       costPerSimulation, // Total cost for this simulation (all lines for all tickets)
       simulationIndex
     )
@@ -369,21 +371,106 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
  * Provides fallback winning odds data when live data is unavailable.
  */
 function getFallbackWinningData(): EurojackpotHistoricOdds {
+  const now = new Date()
+  const ts = now.getTime()
   return {
+    eurojackpotGameCycle: {
+      cycleNo: 0,
+      cycleYear: now.getFullYear(),
+      eventDate: ts,
+      eventWeekday: now.getDay(),
+      gametableValidFrom: null,
+      gametableValidTo: null,
+      key: 'fallback-batch-sim',
+      variantNo: 0,
+    },
     eurojackpotOdds: [
-      { winningClass: 1, amount: 90000000.0 }, // Jackpot
-      { winningClass: 2, amount: 1200000.0 }, // 5+1
-      { winningClass: 3, amount: 180000.0 }, // 5+0
-      { winningClass: 4, amount: 6000.0 }, // 4+2
-      { winningClass: 5, amount: 300.0 }, // 4+1
-      { winningClass: 6, amount: 150.0 }, // 3+2
-      { winningClass: 7, amount: 100.0 }, // 4+0
-      { winningClass: 8, amount: 50.0 }, // 2+2
-      { winningClass: 9, amount: 25.0 }, // 3+1
-      { winningClass: 10, amount: 15.0 }, // 3+0
-      { winningClass: 11, amount: 10.0 }, // 1+2
-      { winningClass: 12, amount: 8.0 }, // 2+1
+      {
+        amount: 90000000.0,
+        numberOfWins: 0,
+        winningClass: 1,
+        sequence: 1,
+        jackpot: true,
+      },
+      {
+        amount: 1200000.0,
+        numberOfWins: 0,
+        winningClass: 2,
+        sequence: 2,
+        jackpot: false,
+      },
+      {
+        amount: 180000.0,
+        numberOfWins: 0,
+        winningClass: 3,
+        sequence: 3,
+        jackpot: false,
+      },
+      {
+        amount: 6000.0,
+        numberOfWins: 0,
+        winningClass: 4,
+        sequence: 4,
+        jackpot: false,
+      },
+      {
+        amount: 300.0,
+        numberOfWins: 0,
+        winningClass: 5,
+        sequence: 5,
+        jackpot: false,
+      },
+      {
+        amount: 150.0,
+        numberOfWins: 0,
+        winningClass: 6,
+        sequence: 6,
+        jackpot: false,
+      },
+      {
+        amount: 100.0,
+        numberOfWins: 0,
+        winningClass: 7,
+        sequence: 7,
+        jackpot: false,
+      },
+      {
+        amount: 50.0,
+        numberOfWins: 0,
+        winningClass: 8,
+        sequence: 8,
+        jackpot: false,
+      },
+      {
+        amount: 25.0,
+        numberOfWins: 0,
+        winningClass: 9,
+        sequence: 9,
+        jackpot: false,
+      },
+      {
+        amount: 15.0,
+        numberOfWins: 0,
+        winningClass: 10,
+        sequence: 10,
+        jackpot: false,
+      },
+      {
+        amount: 10.0,
+        numberOfWins: 0,
+        winningClass: 11,
+        sequence: 11,
+        jackpot: false,
+      },
+      {
+        amount: 8.0,
+        numberOfWins: 0,
+        winningClass: 12,
+        sequence: 12,
+        jackpot: false,
+      },
     ],
+    eurojackpotTurnover: [{ amount: 0, jurisdiction: 0 }],
   }
 }
 
@@ -392,10 +479,9 @@ function getFallbackWinningData(): EurojackpotHistoricOdds {
  * For now, uses a simplified approach assuming standard system pricing.
  */
 function calculateTotalCost(tickets: Ticket[]): number {
-  const pricePerLine = 2.0
   return tickets.reduce((sum, t) => {
     const m = t.mainNumbers.length
     const e = t.euroNumbers.length
-    return sum + combinationCount(m, e) * pricePerLine
+    return sum + combinationCount(m, e) * PRICE_PER_LINE
   }, 0)
 }

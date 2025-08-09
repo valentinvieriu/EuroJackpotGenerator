@@ -1,5 +1,6 @@
 import type { EurojackpotHistoricOdds } from '~/types/winning'
 import type { Ticket } from '~/types/ticket'
+import { buildOddsMap } from '~/utils/payout'
 // determineWinClass is used in the component to assign winClass to tickets, not directly here.
 
 /**
@@ -19,13 +20,8 @@ export function calculateTotalWinnings(
     return 0
   }
 
-  // Create odds map for efficient lookup
-  const oddsMap = new Map<number, number>()
-  for (const odd of winningData.eurojackpotOdds) {
-    if (odd.winningClass >= 1 && odd.winningClass <= 12 && odd.amount >= 0) {
-      oddsMap.set(odd.winningClass, odd.amount)
-    }
-  }
+  // Use shared helper to build odds map
+  const oddsMap = buildOddsMap(winningData)
 
   let total = 0
   for (const ticket of tickets) {

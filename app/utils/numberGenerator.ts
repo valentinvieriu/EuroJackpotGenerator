@@ -1,5 +1,4 @@
 import type { StatisticsData } from '../types/statistics'
-import { MAIN_NUMBER_MAX } from './constants'
 import { randomFloat, randomInt } from './rng'
 
 /**
@@ -22,17 +21,11 @@ export function generateNumbers(
   // Use weighted generation if valid stats are provided
   if (stats && stats.length > 0) {
     try {
-      // Determine if these are main numbers or euro numbers based on the max value
-      const isMainNumbers = max === MAIN_NUMBER_MAX
-      const relevantStats = isMainNumbers ? stats : stats // In this structure, stats are already pre-filtered
-
-      return generateNumbersWithStatsInternal(count, min, max, relevantStats)
+      return generateNumbersWithStatsInternal(count, min, max, stats)
     } catch (error) {
-      // Log the error and fall back to purely random generation
       console.warn(
         `Weighted generation failed: ${error instanceof Error ? error.message : String(error)}. Falling back to random generation.`
       )
-      // Fallthrough to random generation below
     }
   }
   // Default to random generation if no stats or if weighted generation failed

@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { ref, onUnmounted, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
+import { formatDurationCompact } from '~/utils/time'
 import type { Ticket } from '~/types/ticket'
 import type {
   BatchSimulationRequest,
@@ -82,14 +83,7 @@ const timer = ref<NodeJS.Timeout | null>(null)
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase
 
-const formatEstimatedTime = (ms: number): string => {
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  if (hours > 0) return `${hours}h ${minutes % 60}m`
-  if (minutes > 0) return `${minutes}m ${seconds % 60}s`
-  return `${seconds}s`
-}
+const formatEstimatedTime = formatDurationCompact
 
 const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
   if (!props.tickets.length) return

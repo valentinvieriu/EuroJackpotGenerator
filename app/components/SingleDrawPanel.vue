@@ -64,7 +64,7 @@ import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
 import SimulationResult from './SimulationResult.vue'
-import { calculateTotalWinnings } from '~/utils/winningManager'
+import { buildOddsMap } from '~/utils/payout'
 import { calculateWinningLineCounts } from '~/utils/combinatorics'
 import { playWinSound } from '~/utils/audioUtils'
 
@@ -159,10 +159,15 @@ const simulateExtractionHandler = async (): Promise<void> => {
 
     // Total winnings
     if (latestWinningData.value?.eurojackpotOdds?.length) {
-      totalWinnings.value = calculateTotalWinnings(
-        props.tickets,
-        latestWinningData.value
-      )
+      const oddsMap = buildOddsMap(latestWinningData.value)
+      let sum = 0
+      for (const u of updates) {
+        for (const [clsStr, count] of Object.entries(u.winClassCounts)) {
+          const amount = oddsMap.get(Number(clsStr)) ?? 0
+          sum += amount * count
+        }
+      }
+      totalWinnings.value = Number(sum.toFixed(2))
     } else {
       totalWinnings.value = 0
     }
