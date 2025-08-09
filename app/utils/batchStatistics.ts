@@ -190,7 +190,7 @@ export function simulateSingleDraw(
   winningMainNumbers: number[],
   winningEuroNumbers: number[],
   winningData: EurojackpotHistoricOdds,
-  _costPerTicket: number,
+  costPerSimulation: number,
   simulationIndex: number
 ): IndividualSimulationResult {
   // Create copies of tickets to avoid modifying originals
@@ -227,8 +227,7 @@ export function simulateSingleDraw(
 
   // Calculate total winnings
   const totalWinnings = calculateTotalWinnings(ticketCopies, winningData)
-  const totalCost = tickets.length * _costPerTicket
-  const netProfit = totalWinnings - totalCost
+  const netProfit = totalWinnings - costPerSimulation
 
   // Aggregate wins by class
   const winsByClass: Record<number, number> = {}

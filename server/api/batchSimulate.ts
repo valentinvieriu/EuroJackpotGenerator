@@ -18,6 +18,8 @@ import {
   calculateBatchStatistics,
   simulateSingleDraw,
 } from '~/utils/batchStatistics'
+import { combinationCount } from '~/utils/combinatorics'
+import type { Ticket } from '~/types/ticket'
 
 /**
  * API endpoint to run batch simulations of EuroJackpot draws.
@@ -223,7 +225,7 @@ async function processSimulationChunk(
       winningMainNumbers,
       winningEuroNumbers,
       winningData,
-      costPerSimulation / tickets.length, // Cost per individual ticket
+      costPerSimulation, // Total cost for this simulation (all lines for all tickets)
       simulationIndex
     )
 
@@ -287,11 +289,11 @@ function getFallbackWinningData(): EurojackpotHistoricOdds {
  * Calculates the total cost for a set of tickets.
  * For now, uses a simplified approach assuming standard system pricing.
  */
-function calculateTotalCost(
-  tickets: BatchSimulationRequest['tickets']
-): number {
-  // This is a simplified cost calculation
-  // In a real implementation, you might want to pass the actual cost from the frontend
-  // or calculate based on ticket system type
-  return tickets.length * 2.0 // Assuming €2 per basic ticket
+function calculateTotalCost(tickets: Ticket[]): number {
+  const pricePerLine = 2.0
+  return tickets.reduce((sum, t) => {
+    const m = t.mainNumbers.length
+    const e = t.euroNumbers.length
+    return sum + combinationCount(m, e) * pricePerLine
+  }, 0)
 }
