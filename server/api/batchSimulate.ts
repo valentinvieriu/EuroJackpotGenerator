@@ -1,4 +1,12 @@
-import { H3Error, createError, defineEventHandler, readBody } from 'h3'
+import {
+  H3Error,
+  createError,
+  defineEventHandler,
+  readBody,
+  getHeader,
+  setHeader,
+  sendStream,
+} from 'h3'
 import { generateRandomNumbers } from '~/utils/numberGenerator'
 import {
   MAIN_NUMBER_MIN,
@@ -29,7 +37,7 @@ import type { Ticket } from '~/types/ticket'
  * @returns Promise resolving to BatchSimulationResult with comprehensive statistics
  */
 export default defineEventHandler(
-  async (event): Promise<BatchSimulationResult> => {
+  async (event): Promise<BatchSimulationResult | undefined> => {
     try {
       // Parse and validate request body
       const body = await readBody<BatchSimulationRequest>(event)
@@ -55,10 +63,103 @@ export default defineEventHandler(
         `Starting batch simulation: ${simulationCount} simulations with ${tickets.length} tickets`
       )
 
+      // Detect streaming preference (NDJSON)
+      const accept = (getHeader(event, 'accept') || '').toLowerCase()
+      const wantsNdjson = accept.includes('application/x-ndjson')
+
       // Run batch simulation in chunks to manage memory
       const individualResults: IndividualSimulationResult[] = []
       const chunks = Math.ceil(simulationCount / batchSize)
 
+      // If client requests NDJSON, stream incremental progress after each chunk
+      if (wantsNdjson) {
+        const stream = new TransformStream<Uint8Array, Uint8Array>()
+        const writer = stream.writable.getWriter()
+        const encoder = new TextEncoder()
+
+        setHeader(event, 'content-type', 'application/x-ndjson; charset=utf-8')
+        setHeader(event, 'cache-control', 'no-cache')
+
+        const writeLine = async (obj: unknown) => {
+          await writer.write(encoder.encode(JSON.stringify(obj) + '\n'))
+        }
+
+        ;(async () => {
+          try {
+            for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
+              const startIndex = chunkIndex * batchSize
+              const endIndex = Math.min(startIndex + batchSize, simulationCount)
+              const chunkSize = endIndex - startIndex
+
+              const chunkResults = await processSimulationChunk(
+                tickets,
+                chunkSize,
+                startIndex,
+                winningData,
+                costPerSimulation
+              )
+
+              individualResults.push(...chunkResults)
+
+              // Calculate partial statistics so far
+              const partialTotalCost = costPerSimulation * endIndex
+              const partialStats = calculateBatchStatistics(
+                individualResults,
+                partialTotalCost
+              )
+              if (!includeIndividualResults) {
+                partialStats.individualResults = undefined
+              }
+
+              // Emit progress update
+              await writeLine({
+                type: 'progress',
+                progress: {
+                  currentSimulation: endIndex,
+                  totalSimulations: simulationCount,
+                  progressPercentage: (endIndex / simulationCount) * 100,
+                },
+                summary: {
+                  totalCost: partialStats.totalCost,
+                  totalWinnings: partialStats.totalWinnings,
+                  netProfit: partialStats.netProfit,
+                  roiPercentage: partialStats.roiPercentage,
+                  maxWin: partialStats.statistics.maxWinnings,
+                  winDistribution: partialStats.winDistribution,
+                },
+              })
+
+              // Yield control to prevent blocking
+              if (chunkIndex < chunks - 1) {
+                await new Promise((resolve) => setTimeout(resolve, 1))
+              }
+            }
+
+            // Final comprehensive statistics
+            const finalResult = calculateBatchStatistics(
+              individualResults,
+              totalCost
+            )
+            if (!includeIndividualResults) {
+              finalResult.individualResults = undefined
+            }
+
+            await writeLine({ type: 'result', result: finalResult })
+          } catch (e: unknown) {
+            await writeLine({
+              type: 'error',
+              error: e instanceof Error ? e.message : String(e),
+            })
+          } finally {
+            await writer.close()
+          }
+        })()
+
+        await sendStream(event, stream.readable)
+        return undefined
+      }
+
+      // Non-streaming fallback: process synchronously and return JSON at the end
       for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
         const startIndex = chunkIndex * batchSize
         const endIndex = Math.min(startIndex + batchSize, simulationCount)

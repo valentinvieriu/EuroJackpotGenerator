@@ -638,25 +638,137 @@ const handleBatchSimulationStart = async (
       tickets: tickets.value,
     }
 
-    // Make API call
-    const results = await $fetch<BatchSimulationResult>(
-      `${apiBaseUrl}/batchSimulate`,
-      {
-        method: 'POST',
-        body: request,
-        signal: batchSimulationState.value.abortController?.signal,
-        // For long-running requests, extend timeout
-        timeout: 10 * 60 * 1000, // 10 minutes
-      }
-    )
+    // Make streaming API call (NDJSON)
+    const resp = await fetch(`${apiBaseUrl}/batchSimulate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/x-ndjson',
+      },
+      body: JSON.stringify(request),
+      signal: batchSimulationState.value.abortController?.signal ?? undefined,
+    })
 
-    // Store results and switch to results phase
-    batchSimulationState.value.results = results
-    batchSimulationState.value.phase = 'results'
+    const contentType = resp.headers.get('content-type') || ''
+
+    if (!resp.ok) {
+      const text = await resp.text()
+      throw new Error(text || `HTTP ${resp.status}`)
+    }
+
+    if (contentType.includes('application/x-ndjson') && resp.body) {
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      const consume = async (): Promise<void> => {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          let idx: number
+          while ((idx = buffer.indexOf('\n')) >= 0) {
+            const line = buffer.slice(0, idx).trim()
+            buffer = buffer.slice(idx + 1)
+            if (!line) continue
+            let msg: unknown
+            try {
+              msg = JSON.parse(line) as unknown
+            } catch {
+              console.warn('Failed to parse NDJSON line', line)
+              continue
+            }
+
+            type StreamProgress = {
+              type: 'progress'
+              progress: {
+                currentSimulation: number
+                totalSimulations: number
+                progressPercentage: number
+              }
+              summary: {
+                totalCost: number
+                totalWinnings: number
+                netProfit: number
+                roiPercentage: number
+                maxWin: number
+                winDistribution: {
+                  winsByClass: Record<number, number>
+                  totalWins: number
+                  totalLosses: number
+                  winPercentage: number
+                }
+              }
+            }
+            type StreamResult = {
+              type: 'result'
+              result: BatchSimulationResult
+            }
+            type StreamError = { type: 'error'; error: string }
+
+            const isProgress = (m: unknown): m is StreamProgress => {
+              if (typeof m !== 'object' || m === null) return false
+              const g = m as Record<string, unknown>
+              if (g.type !== 'progress') return false
+              const progress = g.progress as Record<string, unknown> | undefined
+              const summary = g.summary as Record<string, unknown> | undefined
+              return (
+                typeof progress?.currentSimulation === 'number' &&
+                typeof summary?.netProfit === 'number'
+              )
+            }
+            const isResult = (m: unknown): m is StreamResult => {
+              if (typeof m !== 'object' || m === null) return false
+              const g = m as Record<string, unknown>
+              return (
+                g.type === 'result' &&
+                typeof g.result === 'object' &&
+                g.result !== null
+              )
+            }
+            const isError = (m: unknown): m is StreamError => {
+              if (typeof m !== 'object' || m === null) return false
+              const g = m as Record<string, unknown>
+              return g.type === 'error' && typeof g.error === 'string'
+            }
+
+            if (isProgress(msg)) {
+              const current = Number(msg.progress.currentSimulation) || 0
+              batchSimulationState.value.currentSimulation = current
+              batchSimulationState.value.partialResults = {
+                simulationsCompleted: current,
+                totalWins: msg.summary.winDistribution.totalWins ?? 0,
+                winPercentage: msg.summary.winDistribution.winPercentage ?? 0,
+                currentROI: msg.summary.roiPercentage ?? 0,
+                netProfit: msg.summary.netProfit ?? 0,
+                maxWin: msg.summary.maxWin ?? 0,
+                winsByClass: msg.summary.winDistribution.winsByClass || {},
+              }
+            } else if (isResult(msg)) {
+              batchSimulationState.value.results = msg.result
+              batchSimulationState.value.phase = 'results'
+            } else if (isError(msg)) {
+              throw new Error(String(msg.error))
+            }
+          }
+        }
+      }
+
+      await consume()
+    } else {
+      // Fallback: non-streaming JSON response
+      const results = (await resp.json()) as BatchSimulationResult
+      batchSimulationState.value.results = results
+      batchSimulationState.value.phase = 'results'
+    }
 
     // Play sound based on overall performance
-    if (results.roiPercentage > 0) {
-      playWinSound(results.totalWinnings, results.totalCost)
+    if (
+      batchSimulationState.value.results &&
+      batchSimulationState.value.results.roiPercentage > 0
+    ) {
+      const r = batchSimulationState.value.results
+      playWinSound(r.totalWinnings, r.totalCost)
     }
   } catch (err: unknown) {
     console.error('Error during batch simulation:', err)
