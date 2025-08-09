@@ -162,8 +162,50 @@
     <!-- Simulation Result Display -->
     <SimulationResult v-if="simulationResult" :result="simulationResult" />
 
+    <!-- Batch Simulation Section -->
+    <BatchSimulationConfig
+      v-if="
+        tickets.length > 0 &&
+        !simulationResult &&
+        batchSimulationState.phase === 'config'
+      "
+      :ticket-count="tickets.length"
+      :cost-per-simulation="totalPrice"
+      :disabled="batchSimulationState.isRunning"
+      :can-cancel="batchSimulationState.canCancel"
+      :show-cancel-button="batchSimulationState.isRunning"
+      @start="handleBatchSimulationStart"
+      @cancel="handleBatchSimulationCancel"
+    />
+
+    <!-- Batch Simulation Progress -->
+    <BatchSimulationProgress
+      v-if="batchSimulationState.phase === 'running'"
+      :current-simulation="batchSimulationState.currentSimulation"
+      :total-simulations="batchSimulationState.totalSimulations"
+      :elapsed-time="batchSimulationState.elapsedTime"
+      :estimated-time-remaining="batchSimulationState.estimatedTimeRemaining"
+      :can-cancel="batchSimulationState.canCancel"
+      :partial-results="batchSimulationState.partialResults"
+      @cancel="handleBatchSimulationCancel"
+    />
+
+    <!-- Batch Simulation Results -->
+    <BatchSimulationResults
+      v-if="
+        batchSimulationState.phase === 'results' && batchSimulationState.results
+      "
+      :results="batchSimulationState.results"
+      @reset="handleBatchSimulationReset"
+    />
+
     <!-- Ticket List Display -->
-    <div v-if="tickets.length && !loading" class="space-y-4">
+    <div
+      v-if="
+        tickets.length && !loading && batchSimulationState.phase !== 'results'
+      "
+      class="space-y-4"
+    >
       <h2
         v-if="!simulationResult"
         class="text-2xl font-semibold text-gray-300 mb-4"
@@ -185,15 +227,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type Ref } from 'vue'
+import { ref, computed, onUnmounted, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app' // Nuxt composable for runtime config
 import type { Ticket } from '~/types/ticket'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
 import SimulationResult from './SimulationResult.vue'
 import TicketComponent from './TicketItem.vue' // Renamed import
+import BatchSimulationConfig from './BatchSimulationConfig.vue'
+import BatchSimulationProgress from './BatchSimulationProgress.vue'
+import BatchSimulationResults from './BatchSimulationResults.vue'
 import { calculateTotalWinnings } from '~/utils/winningManager'
 import { calculateWinningLineCounts } from '~/utils/combinatorics'
 import { playWinSound } from '~/utils/audioUtils' // Sound utility
+import type {
+  BatchSimulationRequest,
+  BatchSimulationResult,
+} from '~/types/batchSimulation'
 
 // --- Interfaces & Types ---
 
@@ -254,6 +303,32 @@ const latestWinningData: Ref<EurojackpotHistoricOdds | null> = ref(null)
 const totalWinnings: Ref<number> = ref(0)
 // Calculated win/loss rate percentage ((Profit / Cost) * 100). Null before simulation.
 const winLossRate: Ref<number> = ref(0) // Initialize to 0
+
+// --- Batch Simulation State ---
+const batchSimulationState = ref({
+  phase: 'config' as 'config' | 'running' | 'results',
+  isRunning: false,
+  canCancel: false,
+  currentSimulation: 0,
+  totalSimulations: 0,
+  startTime: 0,
+  elapsedTime: 0,
+  estimatedTimeRemaining: null as string | null,
+  partialResults: null as {
+    simulationsCompleted: number
+    totalWins: number
+    winPercentage: number
+    currentROI: number
+    netProfit: number
+    maxWin: number
+    winsByClass: Record<number, number>
+  } | null,
+  results: null as BatchSimulationResult | null,
+  abortController: null as AbortController | null,
+})
+
+// Timer for updating elapsed time during batch simulation
+const batchTimer = ref<NodeJS.Timeout | null>(null)
 
 // Get runtime configuration, primarily for the API base URL.
 const config = useRuntimeConfig()
@@ -499,6 +574,192 @@ const checkWinningNumbers = (): void => {
     return A === B ? a.id - b.id : A - B
   })
 }
+
+// --- Batch Simulation Methods ---
+
+/**
+ * Handles the start of batch simulation.
+ */
+const handleBatchSimulationStart = async (
+  config: BatchSimulationRequest
+): Promise<void> => {
+  if (tickets.value.length === 0) {
+    error.value = 'Please generate tickets before starting batch simulation.'
+    return
+  }
+
+  // Reset batch simulation state
+  batchSimulationState.value = {
+    phase: 'running',
+    isRunning: true,
+    canCancel: true,
+    currentSimulation: 0,
+    totalSimulations: config.simulationCount,
+    startTime: Date.now(),
+    elapsedTime: 0,
+    estimatedTimeRemaining: null,
+    partialResults: {
+      simulationsCompleted: 0,
+      totalWins: 0,
+      winPercentage: 0,
+      currentROI: 0,
+      netProfit: 0,
+      maxWin: 0,
+      winsByClass: {},
+    },
+    results: null,
+    abortController: new AbortController(),
+  }
+
+  // Start timer for elapsed time updates
+  batchTimer.value = setInterval(() => {
+    batchSimulationState.value.elapsedTime =
+      Date.now() - batchSimulationState.value.startTime
+
+    // Calculate estimated time remaining
+    if (batchSimulationState.value.currentSimulation > 0) {
+      const avgTimePerSim =
+        batchSimulationState.value.elapsedTime /
+        batchSimulationState.value.currentSimulation
+      const remainingSims =
+        batchSimulationState.value.totalSimulations -
+        batchSimulationState.value.currentSimulation
+      const estimatedMs = remainingSims * avgTimePerSim
+
+      batchSimulationState.value.estimatedTimeRemaining =
+        formatEstimatedTime(estimatedMs)
+    }
+  }, 1000)
+
+  try {
+    // Prepare request with tickets
+    const request: BatchSimulationRequest = {
+      ...config,
+      tickets: tickets.value,
+    }
+
+    // Make API call
+    const results = await $fetch<BatchSimulationResult>(
+      `${apiBaseUrl}/batchSimulate`,
+      {
+        method: 'POST',
+        body: request,
+        signal: batchSimulationState.value.abortController?.signal,
+        // For long-running requests, extend timeout
+        timeout: 10 * 60 * 1000, // 10 minutes
+      }
+    )
+
+    // Store results and switch to results phase
+    batchSimulationState.value.results = results
+    batchSimulationState.value.phase = 'results'
+
+    // Play sound based on overall performance
+    if (results.roiPercentage > 0) {
+      playWinSound(results.totalWinnings, results.totalCost)
+    }
+  } catch (err: unknown) {
+    console.error('Error during batch simulation:', err)
+
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      error.value = 'Batch simulation was cancelled.'
+    } else {
+      const errorMessage =
+        err.data?.message ||
+        err.data?.statusMessage ||
+        err.statusText ||
+        err.message ||
+        'An error occurred during batch simulation.'
+      error.value = String(errorMessage)
+    }
+
+    // Reset to config phase on error
+    batchSimulationState.value.phase = 'config'
+  } finally {
+    batchSimulationState.value.isRunning = false
+    batchSimulationState.value.canCancel = false
+
+    // Clear timer
+    if (batchTimer.value) {
+      clearInterval(batchTimer.value)
+      batchTimer.value = null
+    }
+  }
+}
+
+/**
+ * Handles cancellation of batch simulation.
+ */
+const handleBatchSimulationCancel = (): void => {
+  if (batchSimulationState.value.abortController) {
+    batchSimulationState.value.abortController.abort()
+  }
+
+  batchSimulationState.value.canCancel = false
+
+  // Clear timer
+  if (batchTimer.value) {
+    clearInterval(batchTimer.value)
+    batchTimer.value = null
+  }
+}
+
+/**
+ * Handles reset of batch simulation to start a new one.
+ */
+const handleBatchSimulationReset = (): void => {
+  batchSimulationState.value = {
+    phase: 'config',
+    isRunning: false,
+    canCancel: false,
+    currentSimulation: 0,
+    totalSimulations: 0,
+    startTime: 0,
+    elapsedTime: 0,
+    estimatedTimeRemaining: null,
+    partialResults: null,
+    results: null,
+    abortController: null,
+  }
+
+  // Also reset single simulation state
+  resetState(false)
+}
+
+/**
+ * Formats estimated time remaining in a human-readable format.
+ */
+const formatEstimatedTime = (ms: number): string => {
+  const seconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`
+  } else {
+    return `${seconds}s`
+  }
+}
+
+// --- Lifecycle ---
+
+/**
+ * Cleanup when component is unmounted
+ */
+onUnmounted(() => {
+  // Cancel any running batch simulation
+  if (batchSimulationState.value.abortController) {
+    batchSimulationState.value.abortController.abort()
+  }
+
+  // Clear timer
+  if (batchTimer.value) {
+    clearInterval(batchTimer.value)
+    batchTimer.value = null
+  }
+})
 </script>
 
 <style scoped>
