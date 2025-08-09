@@ -192,7 +192,7 @@ import type { EurojackpotHistoricOdds } from '~/types/winning'
 import SimulationResult from './SimulationResult.vue'
 import TicketComponent from './TicketItem.vue' // Renamed import
 import { calculateTotalWinnings } from '~/utils/winningManager'
-import { determineWinClass } from '~/utils/winningClasses'
+import { calculateWinningLineCounts } from '~/utils/combinatorics'
 import { playWinSound } from '~/utils/audioUtils' // Sound utility
 
 // --- Interfaces & Types ---
@@ -448,10 +448,13 @@ const simulateExtractionHandler = async (): Promise<void> => {
 
 /**
  * Compares each generated ticket against the simulated winning numbers.
+ * For system tickets, uses efficient combinatorial math to calculate per-class win counts.
+ * Formula: C(k,i) × C(m−k,5−i) × C(h,j) × C(e−h,2−j)
  * Updates each ticket object with:
- * - `winningMainNumbers`: Array of matched main numbers.
- * - `winningEuroNumbers`: Array of matched euro numbers.
- * - `winClass`: The official winning class (1-12) if applicable, otherwise undefined.
+ * - `winningMainNumbers`: Array of matched main numbers for UI highlighting.
+ * - `winningEuroNumbers`: Array of matched euro numbers for UI highlighting.
+ * - `winClassCounts`: Record of winning class counts for system tickets.
+ * - `winClass`: The best (lowest number) winning class if any.
  * Finally, sorts the tickets array to show winners first, ordered by winning class.
  */
 const checkWinningNumbers = (): void => {
@@ -466,36 +469,34 @@ const checkWinningNumbers = (): void => {
   const simEuro = simulationResult.value.euroNumbers
 
   tickets.value.forEach((ticket) => {
-    // Find numbers present in both the ticket and the simulation result.
-    const matchedMain = ticket.mainNumbers.filter((num) =>
-      simMain.includes(num)
+    // Highlight intersections for the UI bubbles
+    ticket.winningMainNumbers = ticket.mainNumbers.filter((n) =>
+      simMain.includes(n)
     )
-    const matchedEuro = ticket.euroNumbers.filter((num) =>
-      simEuro.includes(num)
+    ticket.winningEuroNumbers = ticket.euroNumbers.filter((n) =>
+      simEuro.includes(n)
     )
 
-    // Determine the winning class based on the counts of matched numbers.
-    const winClass = determineWinClass(matchedMain.length, matchedEuro.length) // Returns 1-12 or undefined
+    // Calculate k (correct mains) and h (correct euros)
+    const k = ticket.winningMainNumbers.length
+    const h = ticket.winningEuroNumbers.length
+    const m = ticket.mainNumbers.length
+    const e = ticket.euroNumbers.length
 
-    // Update the ticket object
-    ticket.winClass = winClass // Assign the determined class (or undefined)
-    ticket.winningMainNumbers = matchedMain // Store matched main numbers for highlighting
-    ticket.winningEuroNumbers = matchedEuro // Store matched euro numbers for highlighting
+    // Use efficient combinatorial calculation instead of line expansion
+    const winCounts = calculateWinningLineCounts(m, e, k, h)
+
+    ticket.winClassCounts = winCounts
+    ticket.winClass = Object.keys(winCounts)
+      .map(Number)
+      .sort((a, b) => a - b)[0] // Best class if any
   })
 
-  // Sort the tickets array:
-  // 1. Winners (tickets with a winClass) should come before non-winners.
-  // 2. Among winners, sort by winClass ascending (class 1 first).
-  // 3. Keep original relative order for non-winners or tickets with the same win class (using ticket.id).
+  // Sort winners first (best class), then by id
   tickets.value.sort((a, b) => {
-    const winA = a.winClass ?? Infinity // Assign Infinity if no win class (puts non-winners last)
-    const winB = b.winClass ?? Infinity
-
-    if (winA !== winB) {
-      return winA - winB // Sort by win class (lower number is better)
-    }
-    // If win classes are the same (or both are non-winners), maintain original order via ID.
-    return a.id - b.id
+    const A = a.winClass ?? 999
+    const B = b.winClass ?? 999
+    return A === B ? a.id - b.id : A - B
   })
 }
 </script>

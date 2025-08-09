@@ -1,4 +1,5 @@
 import { generateTickets } from '~/utils/ticketGenerator'
+import { combinationCount } from '~/utils/combinatorics'
 import type { H3Event } from 'h3'
 import { H3Error, createError, readBody, defineEventHandler } from 'h3'
 import type { Ticket } from '~/types/ticket'
@@ -92,9 +93,18 @@ export default defineEventHandler(async (event: H3Event): Promise<Ticket[]> => {
       `Generating ${ticketCount} tickets with system ${mainCount}/${euroCount}...`
     )
     const tickets = await generateTickets(ticketCount, mainCount, euroCount)
+
+    // 4. Set linesCount for each ticket
+    for (const ticket of tickets) {
+      ticket.linesCount = combinationCount(
+        ticket.mainNumbers.length,
+        ticket.euroNumbers.length
+      )
+    }
+
     console.log(`Successfully generated ${tickets.length} tickets.`)
 
-    // 4. Return the generated tickets
+    // 5. Return the generated tickets
     return tickets
   } catch (error: unknown) {
     // Log the detailed error on the server-side
