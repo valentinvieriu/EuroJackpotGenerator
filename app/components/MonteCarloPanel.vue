@@ -1,6 +1,9 @@
 <template>
   <div class="mt-6">
-    <div v-if="error" class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4">
+    <div
+      v-if="error"
+      class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4"
+    >
       {{ error }}
     </div>
 
@@ -38,7 +41,10 @@
 import { ref, onUnmounted, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
-import type { BatchSimulationRequest, BatchSimulationResult } from '~/types/batchSimulation'
+import type {
+  BatchSimulationRequest,
+  BatchSimulationResult,
+} from '~/types/batchSimulation'
 import BatchSimulationConfig from './BatchSimulationConfig.vue'
 import BatchSimulationProgress from './BatchSimulationProgress.vue'
 import BatchSimulationResults from './BatchSimulationResults.vue'
@@ -114,7 +120,8 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
     state.value.elapsedTime = Date.now() - state.value.startTime
     if (state.value.currentSimulation > 0) {
       const avg = state.value.elapsedTime / state.value.currentSimulation
-      const remaining = state.value.totalSimulations - state.value.currentSimulation
+      const remaining =
+        state.value.totalSimulations - state.value.currentSimulation
       state.value.estimatedTimeRemaining = formatEstimatedTime(remaining * avg)
     }
   }, 1000)
@@ -123,7 +130,10 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
     const request: BatchSimulationRequest = { ...cfg, tickets: props.tickets }
     const resp = await fetch(`${apiBaseUrl}/batchSimulate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/x-ndjson',
+      },
       body: JSON.stringify(request),
       signal: state.value.abortController?.signal ?? undefined,
     })
@@ -153,23 +163,63 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
               console.warn('Failed to parse NDJSON line', line)
               continue
             }
-            const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
-            if (isObj(msg) && msg.type === 'progress' && isObj(msg.progress) && isObj(msg.summary)) {
+            const isObj = (v: unknown): v is Record<string, unknown> =>
+              typeof v === 'object' && v !== null
+            if (
+              isObj(msg) &&
+              msg.type === 'progress' &&
+              isObj(msg.progress) &&
+              isObj(msg.summary)
+            ) {
               const current = Number(msg.progress?.currentSimulation) || 0
               state.value.currentSimulation = current
               state.value.partialResults = {
                 simulationsCompleted: current,
-                totalWins: (isObj(msg.summary.winDistribution) && typeof msg.summary.winDistribution.totalWins === 'number') ? msg.summary.winDistribution.totalWins : 0,
-                winPercentage: (isObj(msg.summary.winDistribution) && typeof msg.summary.winDistribution.winPercentage === 'number') ? msg.summary.winDistribution.winPercentage : 0,
-                currentROI: typeof msg.summary.roiPercentage === 'number' ? msg.summary.roiPercentage : 0,
-                netProfit: typeof msg.summary.netProfit === 'number' ? msg.summary.netProfit : 0,
-                maxWin: typeof msg.summary.maxWin === 'number' ? msg.summary.maxWin : 0,
-                winsByClass: (isObj(msg.summary.winDistribution) && typeof msg.summary.winDistribution.winsByClass === 'object' && msg.summary.winDistribution.winsByClass !== null) ? (msg.summary.winDistribution.winsByClass as Record<number, number>) : {},
+                totalWins:
+                  isObj(msg.summary.winDistribution) &&
+                  typeof msg.summary.winDistribution.totalWins === 'number'
+                    ? msg.summary.winDistribution.totalWins
+                    : 0,
+                winPercentage:
+                  isObj(msg.summary.winDistribution) &&
+                  typeof msg.summary.winDistribution.winPercentage === 'number'
+                    ? msg.summary.winDistribution.winPercentage
+                    : 0,
+                currentROI:
+                  typeof msg.summary.roiPercentage === 'number'
+                    ? msg.summary.roiPercentage
+                    : 0,
+                netProfit:
+                  typeof msg.summary.netProfit === 'number'
+                    ? msg.summary.netProfit
+                    : 0,
+                maxWin:
+                  typeof msg.summary.maxWin === 'number'
+                    ? msg.summary.maxWin
+                    : 0,
+                winsByClass:
+                  isObj(msg.summary.winDistribution) &&
+                  typeof msg.summary.winDistribution.winsByClass === 'object' &&
+                  msg.summary.winDistribution.winsByClass !== null
+                    ? (msg.summary.winDistribution.winsByClass as Record<
+                        number,
+                        number
+                      >)
+                    : {},
               }
-            } else if (isObj(msg) && msg.type === 'result' && isObj(msg.result)) {
-              state.value.results = msg.result as unknown as BatchSimulationResult
+            } else if (
+              isObj(msg) &&
+              msg.type === 'result' &&
+              isObj(msg.result)
+            ) {
+              state.value.results =
+                msg.result as unknown as BatchSimulationResult
               state.value.phase = 'results'
-            } else if (isObj(msg) && msg.type === 'error' && typeof msg.error === 'string') {
+            } else if (
+              isObj(msg) &&
+              msg.type === 'error' &&
+              typeof msg.error === 'string'
+            ) {
               throw new Error(String(msg.error))
             }
           }
@@ -190,7 +240,10 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
       error.value = 'Batch simulation was cancelled.'
     } else if (typeof err === 'object' && err !== null) {
       const anyErr = err as Record<string, unknown>
-      const msg = (anyErr.data as Record<string, unknown> | undefined)?.message || (anyErr.message as string | undefined) || 'An error occurred during batch simulation.'
+      const msg =
+        (anyErr.data as Record<string, unknown> | undefined)?.message ||
+        (anyErr.message as string | undefined) ||
+        'An error occurred during batch simulation.'
       error.value = String(msg)
     } else {
       error.value = 'An error occurred during batch simulation.'
