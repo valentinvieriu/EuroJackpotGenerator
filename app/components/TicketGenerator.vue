@@ -24,82 +24,85 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 items-end">
-          <div>
-            <label
-              for="ticketType"
-              class="mb-2 block text-gray-400 text-sm font-medium"
-              >Ticket Type:</label
-            >
-            <select
-              id="ticketType"
-              v-model="selectedTicketType"
-              class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
-              aria-label="Select Ticket System Type"
-            >
-              <option
-                v-for="type in ticketTypes"
-                :key="type.label"
-                :value="type"
-                class="bg-casino-blue-dark text-gray-200"
+        <form @submit.prevent="generateTicketsHandler">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 items-end">
+            <div>
+              <label
+                for="ticketType"
+                class="mb-2 block text-gray-400 text-sm font-medium"
+                >Ticket Type:</label
               >
-                {{ type.label }} (€{{ type.price.toFixed(2) }})
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              for="ticketCount"
-              class="mb-2 block text-gray-400 text-sm font-medium"
-              >Number of Tickets:</label
-            >
-            <input
-              id="ticketCount"
-              v-model.number="ticketCount"
-              type="number"
-              min="1"
-              :max="maxTicketsAllowed"
-              class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
-              aria-label="Number of Tickets to Generate"
-            />
-          </div>
-
-          <div class="text-right sm:text-left">
-            <label class="mb-2 block text-gray-400 text-sm font-medium"
-              >Total Price:</label
-            >
-            <div class="flex items-center justify-end sm:justify-start h-10">
-              <span class="text-xl font-semibold text-casino-gold-light"
-                >€{{ totalPrice.toFixed(2) }}</span
+              <select
+                id="ticketType"
+                v-model="selectedTicketType"
+                class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
+                aria-label="Select Ticket System Type"
               >
+                <option
+                  v-for="type in ticketTypes"
+                  :key="type.label"
+                  :value="type"
+                  class="bg-casino-blue-dark text-gray-200"
+                >
+                  {{ type.label }} (€{{ type.price.toFixed(2) }})
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                for="ticketCount"
+                class="mb-2 block text-gray-400 text-sm font-medium"
+                >Number of Tickets:</label
+              >
+              <input
+                id="ticketCount"
+                v-model.number="ticketCount"
+                type="number"
+                min="1"
+                :max="maxTicketsAllowed"
+                class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
+                aria-label="Number of Tickets to Generate"
+              />
+            </div>
+
+            <div class="text-right sm:text-left">
+              <label class="mb-2 block text-gray-400 text-sm font-medium"
+                >Total Price:</label
+              >
+              <div class="flex items-center justify-end sm:justify-start h-10">
+                <span class="text-xl font-semibold text-casino-gold-light"
+                  >€{{ totalPrice.toFixed(2) }}</span
+                >
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4">
-          <button
-            v-if="tickets.length > 0 && showGenerationForm"
-            class="px-5 py-2 rounded-md font-semibold border border-navy-muted text-ivory bg-transparent hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
-            @click="showGenerationForm = false"
-          >
-            Cancel
-          </button>
+          <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+            <button
+              v-if="tickets.length > 0 && showGenerationForm"
+              type="button"
+              class="px-5 py-2 rounded-md font-semibold border border-navy-muted text-ivory bg-transparent hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+              @click="showGenerationForm = false"
+            >
+              Cancel
+            </button>
 
-          <button
-            :disabled="loading"
-            class="bg-casino-gold text-casino-blue-dark px-5 py-2 rounded-md font-semibold hover:bg-casino-gold-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition duration-150"
-            @click="generateTicketsHandler"
-          >
-            {{
-              loading && currentAction === 'generate'
-                ? 'Generating...'
-                : tickets.length > 0
-                  ? 'Update Tickets'
-                  : 'Generate Tickets'
-            }}
-          </button>
-        </div>
+            <button
+              :disabled="loading"
+              type="submit"
+              class="bg-casino-gold text-casino-blue-dark px-5 py-2 rounded-md font-semibold hover:bg-casino-gold-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition duration-150"
+            >
+              {{
+                loading && currentAction === 'generate'
+                  ? 'Generating...'
+                  : tickets.length > 0
+                    ? 'Update Tickets'
+                    : 'Generate Tickets'
+              }}
+            </button>
+          </div>
+        </form>
       </div>
 
       <div v-if="tickets.length && !loading && !showGenerationForm">

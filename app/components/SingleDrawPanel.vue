@@ -38,23 +38,23 @@
     </div>
 
     <!-- Description and Action Button -->
-    <div class="flex justify-between items-center">
+    <form @submit.prevent="simulateExtractionHandler" class="flex justify-between items-center">
       <p class="text-gray-400 text-sm">
         Simulate a single draw to see immediate winning results and ROI
       </p>
       <button
         :disabled="loading || tickets.length === 0"
+        type="submit"
         class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-white px-5 py-2 rounded-md font-semibold hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
-        @click="simulateExtractionHandler"
       >
         {{ loading ? 'Simulating...' : 'Run Single Draw Simulation' }}
       </button>
-    </div>
+    </form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type PropType } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
@@ -199,6 +199,29 @@ const simulateExtractionHandler = async (): Promise<void> => {
     loading.value = false
   }
 }
+
+// Trigger simulation on Enter key when Single Draw panel is active
+const onEnterKey = (e: KeyboardEvent): void => {
+  if (e.key !== 'Enter') return
+  const target = e.target as HTMLElement | null
+  const tag = target?.tagName?.toLowerCase()
+  const isFormElement =
+    !!tag && (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button')
+  const isEditable = !!(target && (target as HTMLElement).isContentEditable)
+  if (isFormElement || isEditable) return
+  if (!loading.value && props.tickets.length > 0) {
+    e.preventDefault()
+    void simulateExtractionHandler()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onEnterKey)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onEnterKey)
+})
 </script>
 
 <style scoped></style>
