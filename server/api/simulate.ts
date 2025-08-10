@@ -34,7 +34,8 @@ export default defineEventHandler(async (event): Promise<SimulateResponse> => {
 
     if (method === 'GET') {
       const q = getQuery(event)
-      const seed = typeof q.seed === 'string' && q.seed.length ? q.seed : undefined
+      const seed =
+        typeof q.seed === 'string' && q.seed.length ? q.seed : undefined
       rawBody = seed ? { seed } : undefined
     } else {
       try {
@@ -47,7 +48,11 @@ export default defineEventHandler(async (event): Promise<SimulateResponse> => {
       // Test-friendly fallback: if a plain string body was attached to req, parse it
       if (rawBody === undefined) {
         const reqUnknown = event?.node?.req as unknown
-        if (reqUnknown && typeof reqUnknown === 'object' && 'body' in reqUnknown) {
+        if (
+          reqUnknown &&
+          typeof reqUnknown === 'object' &&
+          'body' in reqUnknown
+        ) {
           const maybeBody = (reqUnknown as { body?: unknown }).body
           if (maybeBody !== undefined) {
             rawBody =
