@@ -109,7 +109,10 @@ const applyHighlightsFromResults = async (
 ): Promise<void> => {
   if (results.highlightingData) {
     // Use optimized highlighting data (always available, memory efficient)
-    applyOptimizedHighlighting(results.highlightingData)
+    applyOptimizedHighlighting(
+      results.highlightingData,
+      results.totalSimulations
+    )
   } else if (
     results.individualResults &&
     results.individualResults.length > 0
@@ -127,7 +130,8 @@ const applyHighlightsFromResults = async (
  * This is the preferred method as it doesn't require storing full individual results.
  */
 const applyOptimizedHighlighting = (
-  highlightingData: TicketHighlightingData
+  highlightingData: TicketHighlightingData,
+  totalSimulations: number
 ): void => {
   const updates = props.tickets.map((ticket) => {
     const stats = highlightingData.ticketStats[ticket.id]
@@ -143,13 +147,13 @@ const applyOptimizedHighlighting = (
 
     // SIMPLE & PRACTICAL highlighting: Show numbers that actually contributed to wins
     // Adaptive highlighting: stricter for large simulations to avoid everything being highlighted
-    const totalSimulations = 1000 // Should be passed from results, reasonable default
     const isLargeSimulation = totalSimulations >= 1000
 
     // For large simulations, use higher threshold to show only standout performers
+    // For small simulations (like 100 draws), be much more lenient to show any meaningful wins
     const minWinThreshold = isLargeSimulation
       ? Math.max(5, Math.floor(stats.totalWins * 0.15)) // 15% of wins for large sims
-      : Math.max(1, Math.floor(stats.totalWins * 0.05)) // 5% of wins for small sims
+      : 1 // For small simulations, show any number that won at least once
 
     // Highlight any number that appeared in winning combinations above threshold
     const winningMainNumbers = ticket.mainNumbers.filter(
