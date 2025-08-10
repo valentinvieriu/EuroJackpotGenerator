@@ -2,15 +2,9 @@ import { generateTickets } from '~/utils/ticketGenerator'
 import { combinationCount } from '~/utils/combinatorics'
 import type { H3Event } from 'h3'
 import { H3Error, createError, readBody, defineEventHandler } from 'h3'
-import type { Ticket } from '~/types/ticket'
+import { generateRequestSchema, type Ticket } from '~/schemas'
 
-// Define reasonable limits for generation requests
-const MIN_TICKETS = 1
-const MAX_TICKETS = 500 // Adjusted limit for performance/abuse prevention
-const MIN_MAIN_COUNT = 5 // Minimum standard main numbers
-const MAX_MAIN_COUNT = 16 // Practical limit for system tickets (adjust as needed)
-const MIN_EURO_COUNT = 2 // Minimum standard euro numbers
-const MAX_EURO_COUNT = 12 // Maximum possible euro numbers
+// Validation now handled by Zod schema
 
 /**
  * API endpoint handler for generating EuroJackpot tickets.
@@ -23,70 +17,21 @@ const MAX_EURO_COUNT = 12 // Maximum possible euro numbers
  */
 export default defineEventHandler(async (event: H3Event): Promise<Ticket[]> => {
   try {
-    // 1. Read and parse the request body
-    const body = await readBody(event)
+    // 1. Parse and validate request body with Zod
+    const rawBody = await readBody(event)
+    const parseResult = generateRequestSchema.safeParse(rawBody)
 
-    // Ensure body is an object
-    if (typeof body !== 'object' || body === null) {
+    if (!parseResult.success) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid request body. Expected JSON object.',
+        statusMessage: 'Invalid request body',
+        data: {
+          errors: parseResult.error.errors,
+        },
       })
     }
 
-    // 2. Extract and validate parameters
-    const ticketCountInput = body.ticketCount
-    const mainCountInput = body.mainCount
-    const euroCountInput = body.euroCount
-
-    const ticketCount = Number.parseInt(String(ticketCountInput), 10)
-    const mainCount = Number.parseInt(String(mainCountInput), 10)
-    const euroCount = Number.parseInt(String(euroCountInput), 10)
-
-    // Validate ticketCount
-    if (
-      Number.isNaN(ticketCount) ||
-      ticketCount < MIN_TICKETS ||
-      ticketCount > MAX_TICKETS
-    ) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Number of tickets must be an integer between ${MIN_TICKETS} and ${MAX_TICKETS}.`,
-      })
-    }
-
-    // Validate mainCount
-    if (
-      Number.isNaN(mainCount) ||
-      mainCount < MIN_MAIN_COUNT ||
-      mainCount > MAX_MAIN_COUNT
-    ) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Main number count must be an integer between ${MIN_MAIN_COUNT} and ${MAX_MAIN_COUNT}.`,
-      })
-    }
-
-    // Validate euroCount
-    if (
-      Number.isNaN(euroCount) ||
-      euroCount < MIN_EURO_COUNT ||
-      euroCount > MAX_EURO_COUNT
-    ) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Euro number count must be an integer between ${MIN_EURO_COUNT} and ${MAX_EURO_COUNT}.`,
-      })
-    }
-
-    // Optional: Add validation for system ticket combinations (e.g., mainCount >= 5, euroCount >= 2)
-    if (mainCount < 5 || euroCount < 2) {
-      // This check might be redundant given MIN checks above, but good for clarity
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Invalid system combination: Main count must be at least 5, Euro count must be at least 2.`,
-      })
-    }
+    const { ticketCount, mainCount, euroCount } = parseResult.data
 
     // 3. Call the ticket generation utility
     console.log(

@@ -80,16 +80,19 @@ const state = ref({
   totalSimulations: 0,
   startTime: 0,
   elapsedTime: 0,
-  estimatedTimeRemaining: null as string | null,
-  partialResults: null as {
-    simulationsCompleted: number
-    totalWins: number
-    winPercentage: number
-    currentROI: number
-    netProfit: number
-    maxWin: number
-    winsByClass: Record<number, number>
-  } | null,
+  estimatedTimeRemaining: null as string | null | undefined,
+  partialResults: null as
+    | {
+        simulationsCompleted: number
+        totalWins: number
+        winPercentage: number
+        currentROI: number
+        netProfit: number
+        maxWin: number
+        winsByClass: Record<number, number>
+      }
+    | null
+    | undefined,
   results: null as BatchSimulationResult | null,
   abortController: null as AbortController | null,
 })
@@ -214,7 +217,7 @@ const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
   })
 
   // Analyze all simulations
-  individualResults.forEach((simResult) => {
+  individualResults.forEach((simResult: IndividualSimulationResult) => {
     if (!simResult.winningNumbers) return
 
     const simMain = simResult.winningNumbers.mainNumbers
@@ -226,8 +229,12 @@ const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
       const ticketStats = ticketWinFrequency.get(ticket.id)!
 
       // Count matches for this simulation
-      const matchingMain = ticket.mainNumbers.filter((n) => mainSet.has(n))
-      const matchingEuro = ticket.euroNumbers.filter((n) => euroSet.has(n))
+      const matchingMain = ticket.mainNumbers.filter((n: number) =>
+        mainSet.has(n)
+      )
+      const matchingEuro = ticket.euroNumbers.filter((n: number) =>
+        euroSet.has(n)
+      )
 
       const k = matchingMain.length
       const h = matchingEuro.length
@@ -241,13 +248,13 @@ const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
         ticketStats.totalWins++
 
         // Track frequency of winning numbers for this ticket
-        matchingMain.forEach((num) => {
+        matchingMain.forEach((num: number) => {
           ticketStats.mainNumbers.set(
             num,
             (ticketStats.mainNumbers.get(num) || 0) + 1
           )
         })
-        matchingEuro.forEach((num) => {
+        matchingEuro.forEach((num: number) => {
           ticketStats.euroNumbers.set(
             num,
             (ticketStats.euroNumbers.get(num) || 0) + 1
@@ -255,13 +262,16 @@ const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
         })
 
         // Accumulate win class counts
-        Object.entries(winClassCounts).forEach(([cls, count]) => {
-          const classNum = Number(cls)
-          if (count > 0) {
-            ticketStats.totalWinClassCounts[classNum] =
-              (ticketStats.totalWinClassCounts[classNum] || 0) + count
+        Object.entries(winClassCounts).forEach(
+          ([cls, count]: [string, number]) => {
+            const classNum = Number(cls)
+            if ((count as number) > 0) {
+              ticketStats.totalWinClassCounts[classNum] =
+                (ticketStats.totalWinClassCounts[classNum] || 0) +
+                (count as number)
+            }
           }
-        })
+        )
       }
     })
   })
@@ -274,10 +284,10 @@ const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
     const minFrequencyThreshold = Math.max(1, Math.floor(stats.totalWins * 0.1))
 
     const winningMainNumbers = ticket.mainNumbers.filter(
-      (n) => (stats.mainNumbers.get(n) || 0) >= minFrequencyThreshold
+      (n: number) => (stats.mainNumbers.get(n) || 0) >= minFrequencyThreshold
     )
     const winningEuroNumbers = ticket.euroNumbers.filter(
-      (n) => (stats.euroNumbers.get(n) || 0) >= minFrequencyThreshold
+      (n: number) => (stats.euroNumbers.get(n) || 0) >= minFrequencyThreshold
     )
 
     const winClass = Object.keys(stats.totalWinClassCounts)

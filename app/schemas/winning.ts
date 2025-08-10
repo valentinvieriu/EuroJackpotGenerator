@@ -1,0 +1,41 @@
+import { z } from 'zod'
+
+export const winningClassSchema = z.object({
+  amount: z.number().nonnegative(),
+  numberOfWins: z.number().int().nonnegative(),
+  // Lotto Bayern quirk: winning classes 101-112 are normalized to 1-12
+  winningClass: z.preprocess((val) => {
+    if (typeof val === 'number' && val >= 101 && val <= 112) {
+      return val - 100 // Normalize 101-112 to 1-12
+    }
+    return val
+  }, z.number().int().min(1).max(12)),
+  sequence: z.number().int().nonnegative(),
+  jackpot: z.boolean(),
+})
+
+export const turnoverSchema = z.object({
+  amount: z.number().nonnegative(),
+  jurisdiction: z.number().int(),
+})
+
+export const eurojackpotHistoricOddsSchema = z.object({
+  eurojackpotGameCycle: z.object({
+    cycleNo: z.number().int(),
+    cycleYear: z.number().int(),
+    eventDate: z.number().int(),
+    eventWeekday: z.number().int(),
+    gametableValidFrom: z.number().int().nullable(),
+    gametableValidTo: z.number().int().nullable(),
+    key: z.string(),
+    variantNo: z.number().int(),
+  }),
+  eurojackpotOdds: z.array(winningClassSchema),
+  eurojackpotTurnover: z.array(turnoverSchema),
+})
+
+export type WinningClass = z.infer<typeof winningClassSchema>
+export type Turnover = z.infer<typeof turnoverSchema>
+export type EurojackpotHistoricOdds = z.infer<
+  typeof eurojackpotHistoricOddsSchema
+>

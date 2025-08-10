@@ -17,12 +17,16 @@ import {
   EURO_NUMBERS_COUNT,
 } from '~/utils/constants'
 import type {
-  BatchSimulationRequest,
   BatchSimulationResult,
   IndividualSimulationResult,
   TicketHighlightingData,
 } from '~/types/batchSimulation'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
+import {
+  batchSimulationRequestSchema,
+  eurojackpotHistoricOddsSchema,
+  type BatchSimulationRequest,
+} from '~/schemas'
 import { normalizeOdds } from '~/utils/odds'
 import {
   calculateBatchStatistics,
@@ -46,11 +50,32 @@ import { PRICE_PER_LINE } from '~/utils/pricing'
 export default defineEventHandler(
   async (event): Promise<BatchSimulationResult | undefined> => {
     try {
-      // Parse and validate request body
-      const body = await readBody<BatchSimulationRequest>(event)
+      // First validate Accept header for NDJSON
+      const accept = (getHeader(event, 'accept') || '').toLowerCase()
+      const wantsNdjson = accept.includes('application/x-ndjson')
+      if (accept && !accept.includes('application/json') && !wantsNdjson) {
+        throw createError({
+          statusCode: 406,
+          statusMessage:
+            'Not Acceptable. Supported content types: application/json, application/x-ndjson',
+        })
+      }
 
-      // Validate input parameters
-      validateBatchSimulationRequest(body)
+      // Parse and validate request body with Zod
+      const rawBody = await readBody(event)
+      const parseResult = batchSimulationRequestSchema.safeParse(rawBody)
+
+      if (!parseResult.success) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Invalid request body',
+          data: {
+            errors: parseResult.error.errors,
+          },
+        })
+      }
+
+      const body = parseResult.data
 
       const {
         tickets,
@@ -70,9 +95,7 @@ export default defineEventHandler(
         `Starting batch simulation: ${simulationCount} simulations with ${tickets.length} tickets`
       )
 
-      // Detect streaming preference (NDJSON)
-      const accept = (getHeader(event, 'accept') || '').toLowerCase()
-      const wantsNdjson = accept.includes('application/x-ndjson')
+      // NDJSON detection already done above during validation
 
       // Run batch simulation in chunks to manage memory
       const individualResults: IndividualSimulationResult[] = []
@@ -249,78 +272,7 @@ export default defineEventHandler(
 /**
  * Validates the batch simulation request parameters.
  */
-function validateBatchSimulationRequest(
-  body: unknown
-): asserts body is BatchSimulationRequest {
-  if (!body || typeof body !== 'object') {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid request body. Expected JSON object.',
-    })
-  }
-
-  const typedBody = body as Record<string, unknown>
-
-  if (!Array.isArray(typedBody.tickets) || typedBody.tickets.length === 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid tickets array. Must be non-empty array.',
-    })
-  }
-
-  if (!Number.isInteger(body.simulationCount) || body.simulationCount < 1) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid simulation count. Must be positive integer.',
-    })
-  }
-
-  if (body.simulationCount > 10000) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Simulation count too large. Maximum allowed is 10,000.',
-    })
-  }
-
-  if (
-    body.batchSize &&
-    (!Number.isInteger(body.batchSize) ||
-      body.batchSize < 1 ||
-      body.batchSize > 1000)
-  ) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid batch size. Must be integer between 1 and 1000.',
-    })
-  }
-
-  // Validate ticket structure
-  for (const ticket of body.tickets) {
-    if (
-      !ticket.mainNumbers ||
-      !Array.isArray(ticket.mainNumbers) ||
-      ticket.mainNumbers.length < 5
-    ) {
-      throw createError({
-        statusCode: 400,
-        statusMessage:
-          'Invalid ticket: mainNumbers must be array with at least 5 numbers.',
-      })
-    }
-
-    if (
-      !ticket.euroNumbers ||
-      !Array.isArray(ticket.euroNumbers) ||
-      ticket.euroNumbers.length < 2
-    ) {
-      throw createError({
-        statusCode: 400,
-        statusMessage:
-          'Invalid ticket: euroNumbers must be array with at least 2 numbers.',
-      })
-    }
-  }
-}
+// Validation now handled by Zod schemas
 
 /**
  * Processes a chunk of simulations to manage memory usage.
@@ -453,15 +405,27 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
       return getFallbackWinningData()
     }
 
-    const data = await response.json()
+    const rawData = await response.json()
+    const parseResult = eurojackpotHistoricOddsSchema.safeParse(rawData)
 
-    if (!data?.eurojackpotOdds || !Array.isArray(data.eurojackpotOdds)) {
-      console.warn('Invalid odds data structure, using fallback')
-      return getFallbackWinningData()
+    if (!parseResult.success) {
+      console.warn(
+        'Invalid odds data structure from external API, using fallback:',
+        parseResult.error.errors
+      )
+      throw createError({
+        statusCode: 502,
+        statusMessage: 'Bad Gateway: External API returned invalid data',
+        data: {
+          errors: parseResult.error.errors,
+        },
+      })
     }
 
-    console.log('Batch simulation winning data fetched successfully')
-    return normalizeOdds(data as EurojackpotHistoricOdds)
+    console.log(
+      'Batch simulation winning data fetched and validated successfully'
+    )
+    return parseResult.data
   } catch (error) {
     console.warn('Error fetching winning data, using fallback:', error)
     return normalizeOdds(getFallbackWinningData())

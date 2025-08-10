@@ -1,7 +1,9 @@
-import type { H3Error } from 'h3'
-import { generateEurojackpotUrl, EurojackpotDrawType } from '~/utils/dateUtils' // Import enum too
-import type { EurojackpotHistoricOdds } from '~/types/winning'
-import { normalizeOdds } from '~/utils/odds'
+import { H3Error } from 'h3'
+import { generateEurojackpotUrl, EurojackpotDrawType } from '~/utils/dateUtils'
+import {
+  eurojackpotHistoricOddsSchema,
+  type EurojackpotHistoricOdds,
+} from '~/schemas'
 
 /**
  * NOTE: Winning class normalization now lives in `~/utils/odds.ts` as a shared utility.
@@ -60,36 +62,23 @@ export default defineEventHandler(
         )
       }
 
-      // --- Parse and Validate JSON ---
-      const responseData = (await response.json()) as unknown // Parse as unknown first for safety
+      // --- Parse and Validate JSON with Zod ---
+      const rawData = await response.json()
+      const parseResult = eurojackpotHistoricOddsSchema.safeParse(rawData)
 
-      // Basic validation: Check if it's an object and has the expected top-level keys
-      if (
-        typeof responseData !== 'object' ||
-        responseData === null ||
-        !('eurojackpotGameCycle' in responseData) ||
-        !('eurojackpotOdds' in responseData)
-      ) {
-        throw new Error(
-          'Fetched data is not a valid EurojackpotHistoricOdds object.'
-        )
-      }
-      // Now we can safely cast
-      data = responseData as EurojackpotHistoricOdds
-
-      console.log('Winning data fetched successfully.')
-
-      // --- Normalize Winning Classes ---
-      if (data && Array.isArray(data.eurojackpotOdds)) {
-        data = normalizeOdds(data)
-        console.log('Winning classes normalized (if necessary).')
-      } else {
-        // This case indicates a problem with the fetched data structure even after basic validation.
+      if (!parseResult.success) {
+        // For external API errors, we'll use fallback rather than throwing
         console.warn(
-          'Fetched data is missing or has an invalid eurojackpotOdds array. Proceeding, but calculations might fail.'
+          'External API returned invalid data:',
+          parseResult.error?.errors || parseResult.error
         )
-        // data might still be returned, but subsequent processing should be robust
+        throw new Error(
+          `External API returned invalid data: ${parseResult.error?.message || 'Unknown validation error'}`
+        )
       }
+
+      data = parseResult.data
+      console.log('Winning data fetched and validated successfully.')
 
       // --- Return successfully fetched and processed data ---
       return data
