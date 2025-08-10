@@ -6,57 +6,69 @@
 **Owner:** TBD
 **Approvers:** TBD
 
-## 1. Change Log *(Optional)*
-| Version | Date       | Description                                   | Author |
-|--------:|------------|-----------------------------------------------|--------|
-| 1.0     | 2025-08-10 | Consolidated final PRD from prior draft docs  | —      |
+## 1. Change Log _(Optional)_
+
+| Version | Date       | Description                                  | Author |
+| ------: | ---------- | -------------------------------------------- | ------ |
+|     1.0 | 2025-08-10 | Consolidated final PRD from prior draft docs | —      |
 
 ## 2. Overview
+
 EuroJackpot Simulator is a web application that lets users explore EuroJackpot **system tickets** (5/50 + 2/12), run a **single mock draw**, or execute **large-scale Monte Carlo simulations**. It shows **costs, potential winnings, ROI, and distributions** using official win-class structures and (optionally) historically weighted number generation. It is an educational/entertainment tool and **does not predict real draws**.
 
 ## 3. Objectives
+
 - Help users **understand costs and typical outcomes** of system tickets.
 - Enable **experimentation** via single-draw and mass simulations with clear summaries (ROI, win rate, distributions).
 - Provide a **fast, responsive** experience, resilient to external API hiccups (fallbacks, caching).
 - Promote **responsible play** with clear, on-page disclaimers.
 
 ## 4. Success Metrics
+
 - **Engagement:** Average session duration > 3 minutes.
 - **Feature Adoption:** ≥ 20% of users who generate tickets run a simulation (single or Monte Carlo).
 - **Performance:** P95 API latency for `/api/generate` and `/api/simulate` < 1500 ms.
 - **Reliability:** API error rate < 0.1% (with graceful fallbacks).
 - **Completion:** % of Monte Carlo runs started that finish successfully.
 
-## 5. Timeline *(Optional)*
-- **V1 (public):** System ticket generation, Single Draw, Monte Carlo with progress and final analytics, JSON export (when enabled), payout/statistics from public sources, fallbacks, disclaimer.
-- **Post-V1 (ideas):** Local "save my setup", i18n/currency options, deeper explainers. *(Ideas only; not committed.)*
+## 5. Timeline _(Optional)_
 
-## 6. Personas *(Optional)*
+- **V1 (public):** System ticket generation, Single Draw, Monte Carlo with progress and final analytics, JSON export (when enabled), payout/statistics from public sources, fallbacks, disclaimer.
+- **Post-V1 (ideas):** Local "save my setup", i18n/currency options, deeper explainers. _(Ideas only; not committed.)_
+
+## 6. Personas _(Optional)_
+
 - **Curious players:** Compare systems (e.g., 5/7 vs 6/3) and see costs.
 - **Strategy hobbyists:** Run **100–10,000** simulations to observe tendencies and variance.
 - **Budget-minded users:** Understand **€2.00/line** pricing and total run costs.
 
-## 7. User Scenarios *(Optional)*
+## 7. User Scenarios _(Optional)_
+
 1. **Generate & Single Draw:** User selects a system preset and ticket count (1–500); app shows total price; a single mock draw highlights matches and shows winnings and ROI.
 2. **Monte Carlo Run:** User configures **100–10,000** simulations; progress streams via NDJSON with partial stats; final report shows totals, ROI, distributions, and percentiles; optional JSON export when enabled; cancel stops after current batch.
 
 ## 8. Scope
+
 **In Scope**
+
 - System ticket generation (unique tickets per batch; **€2.00/line** pricing).
 - Single mock draw with highlights and winnings from win-class payouts (with fallbacks).
 - Monte Carlo simulation with real-time progress (NDJSON), final analytics, and optional result export.
 - Responsible-play disclaimer and accessible, responsive UI.
 
 **Out of Scope**
+
 - Real-money play, accounts, payments, or checkout.
 - Predicting actual future draws.
 - Historical draw lookup by date (beyond odds/frequency data used for simulation).
 
-## 9. Non-Goals *(Optional)*
+## 9. Non-Goals _(Optional)_
+
 - Personalized number advice or guaranteed profit strategies.
 - Social features or cloud saves (beyond optional local export).
 
 ## 10. Requirements
+
 - **FR-1: Ticket Generation**
   - Users choose system presets (e.g., 5/2, 5/3… 7/3 or equivalent counts).
   - Generate **1–500** unique tickets per request.
@@ -91,37 +103,44 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
   - Latest versions of major desktop browsers (Chrome, Firefox, Safari, Edge).
 
 ## 11. Assumptions and Dependencies
+
 - **Rules:** EuroJackpot 5/50 + 2/12; win classes **1–12**.
 - **Pricing:** **€2.00 per line**.
 - **External Data:** Lotto Bayern public endpoints for payout odds (classes may appear as **101–112**, normalized to **1–12**) and frequency stats.
 - **Platform:** Nuxt 4 + Vue 3 frontend; Nitro serverless API on **Cloudflare Workers**.
 
 ## 12. Open Questions
+
 - Offer a UI toggle to compare **uniform vs historically weighted** generation?
 - Soft warning/cap on large total spend per run?
 - Country-specific disclaimers where appropriate?
 
-## 13. Release Plan *(Optional)*
+## 13. Release Plan _(Optional)_
+
 - **Mode:** Public V1
 - **Criteria:** Functional requirements met; fallbacks verified; performance targets met; disclaimer present; basic analytics enabled.
 - **Notes:** Gradual iteration post-V1 for UX polish and optional features.
 
-## 14. Analytics & Telemetry *(Optional)*
+## 14. Analytics & Telemetry _(Optional)_
+
 - **Events/KPIs:** ticket generation, single-draw runs, Monte Carlo starts/completions, export usage, fallback usage, error counts.
 - **Review Cadence:** Weekly KPI review against Success Metrics.
 - **Data Considerations:** No PII stored; exports are user-initiated.
 
-## 15. Messaging *(Optional)*
+## 15. Messaging _(Optional)_
+
 - **Target audience:** Lottery enthusiasts and data-curious users.
 - **Key message:** "A safe, educational sandbox to explore EuroJackpot system tickets, costs, and typical outcomes — **not** a prediction tool."
 
-## 16. Approvals *(Optional)*
+## 16. Approvals _(Optional)_
+
 - [ ] Product:
 - [ ] Engineering:
 - [ ] Design:
 - [ ] Legal/Compliance:
 
-## 17. Related Documents *(Optional)*
+## 17. Related Documents _(Optional)_
+
 - [Architecture](./ARCHITECTURE.md)
 - [Common Guide](./COMMON_GUIDE.md)
 - [Prior Architecture Drafts](./gpt_1_ARCHITECTURE.md), [./gemini_1_ARCHITECTURE.md]
