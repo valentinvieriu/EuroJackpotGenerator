@@ -58,6 +58,7 @@ import { computed, ref, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
+import type { SimulateResponse } from '~/schemas'
 import SimulatedExtraction from './SimulatedExtraction.vue'
 import { buildOddsMap } from '~/utils/payout'
 import { calculateWinningLineCounts } from '~/utils/combinatorics'
@@ -111,13 +112,12 @@ const simulateExtractionHandler = async (): Promise<void> => {
   reset()
   try {
     const [simResponse, winDataResponse] = await Promise.all([
-      $fetch<Pick<Ticket, 'mainNumbers' | 'euroNumbers'>>(
-        `${apiBaseUrl}/simulate`
-      ),
+      $fetch<SimulateResponse>(`${apiBaseUrl}/simulate`),
       $fetch<EurojackpotHistoricOdds>(`${apiBaseUrl}/fetchWinningData`),
     ])
 
-    simulationResult.value = simResponse
+    // Adapt to new API: { draw: { mainNumbers, euroNumbers }, meta: {...} }
+    simulationResult.value = simResponse.draw
     latestWinningData.value = winDataResponse
 
     if (

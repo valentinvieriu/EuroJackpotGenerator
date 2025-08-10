@@ -4,6 +4,7 @@ import {
   getHeader,
   setHeader,
   sendStream,
+  createError,
 } from 'h3'
 import { generateRandomNumbers } from '~/utils/numberGenerator'
 import {
@@ -22,6 +23,7 @@ import type {
 import type { EurojackpotHistoricOdds } from '~/types/winning'
 import {
   batchSimulationRequestSchema,
+  eurojackpotHistoricOddsSchema,
   type BatchSimulationRequest,
 } from '~/schemas'
 import { validateInput, handleEndpointError } from '../utils/validation'
@@ -51,9 +53,22 @@ export default defineEventHandler(
       // 1. Validate Accept header for NDJSON
       const accept = (getHeader(event, 'accept') || '').toLowerCase()
       const wantsNdjson = accept.includes('application/x-ndjson')
-
-      if (accept && !accept.includes('application/json') && !wantsNdjson) {
-        throw new Error('Unsupported Accept header')
+      // Accept common JSON accepts, NDJSON, or */* (very common from fetch/clients)
+      const acceptsAnything = accept.includes('*/*')
+      if (
+        accept &&
+        !acceptsAnything &&
+        !accept.includes('application/json') &&
+        !wantsNdjson
+      ) {
+        throw createError({
+          statusCode: 406,
+          statusMessage: 'Not Acceptable',
+          data: {
+            message:
+              'Unsupported Accept header. Expected application/json or application/x-ndjson.',
+          },
+        })
       }
 
       // 2. Validate input at the edge
@@ -375,8 +390,10 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
     })
 
     if (!response.ok) {
-      console.warn('Failed to fetch current odds, using fallback data')
-      return getFallbackWinningData()
+      console.warn(
+        'Failed to fetch current odds, using normalized fallback data'
+      )
+      return normalizeOdds(getFallbackWinningData())
     }
 
     const rawData = await response.json()
@@ -384,24 +401,22 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
 
     if (!parseResult.success) {
       console.warn(
-        'Invalid odds data structure from external API, using fallback:',
+        'Invalid odds data structure from external API, using normalized fallback:',
         parseResult.error.issues
       )
-      throw createError({
-        statusCode: 502,
-        statusMessage: 'Bad Gateway: External API returned invalid data',
-        data: {
-          errors: parseResult.error.issues,
-        },
-      })
+      return normalizeOdds(getFallbackWinningData())
     }
 
     console.log(
       'Batch simulation winning data fetched and validated successfully'
     )
-    return parseResult.data
+    // Always normalize validated data to ensure consistent class numbering etc.
+    return normalizeOdds(parseResult.data)
   } catch (error) {
-    console.warn('Error fetching winning data, using fallback:', error)
+    console.warn(
+      'Error fetching winning data, using normalized fallback:',
+      error
+    )
     return normalizeOdds(getFallbackWinningData())
   }
 }

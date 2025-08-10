@@ -8,8 +8,39 @@ import { eurojackpotHistoricOddsSchema } from './winning'
 export const generateResponseSchema = z.array(ticketSchema)
 
 export const simulateResponseSchema = z.object({
-  mainNumbers: z.array(z.number().int().min(1).max(50)).length(5),
-  euroNumbers: z.array(z.number().int().min(1).max(12)).length(2),
+  draw: z.object({
+    mainNumbers: z
+      .array(z.number().int().min(1).max(50))
+      .length(5)
+      .refine(
+        (nums) =>
+          nums
+            .slice()
+            .sort((a, b) => a - b)
+            .every((v, i) => v === nums[i]),
+        {
+          message: 'Main numbers must be sorted',
+        }
+      ),
+    euroNumbers: z
+      .array(z.number().int().min(1).max(12))
+      .length(2)
+      .refine(
+        (nums) =>
+          nums
+            .slice()
+            .sort((a, b) => a - b)
+            .every((v, i) => v === nums[i]),
+        {
+          message: 'Euro numbers must be sorted',
+        }
+      ),
+  }),
+  meta: z.object({
+    algorithm: z.enum(['uniform', 'weighted']),
+    seed: z.string().optional(),
+    generatedAt: z.string().datetime(),
+  }),
 })
 
 export const fetchWinningDataResponseSchema = eurojackpotHistoricOddsSchema

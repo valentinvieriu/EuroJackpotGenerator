@@ -15,7 +15,12 @@ export const winningClassSchema = z.object({
 })
 
 export const turnoverSchema = z.object({
-  amount: z.number().nonnegative(),
+  // Some Lotto Bayern payloads use -1 to denote unknown/NA turnover.
+  // Clamp negatives to 0 during parsing so validation succeeds and we can use live odds.
+  amount: z.preprocess(
+    (val) => (typeof val === 'number' && val < 0 ? 0 : val),
+    z.number().nonnegative()
+  ),
   jurisdiction: z.number().int(),
 })
 
