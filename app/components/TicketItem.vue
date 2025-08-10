@@ -43,6 +43,7 @@
           :key="'euro-' + number"
           :number="number"
           :is-winner="ticket.winningEuroNumbers?.includes(number) || false"
+          type="euro"
         />
       </div>
     </div>

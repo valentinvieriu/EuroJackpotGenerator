@@ -33,6 +33,7 @@
             :key="number"
             :number="number"
             :is-winner="true"
+            type="euro"
           />
         </div>
       </div>

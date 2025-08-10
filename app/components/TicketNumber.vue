@@ -1,29 +1,34 @@
 <template>
   <div
     :class="[
-      // Base styles: size, shape, text
-      'inline-flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold',
-      // Text color
-      'text-casino-blue-dark', // Dark text provides good contrast on the yellow ball
-      // Base shadow for 3D effect
-      'shadow-ball',
-      // Base background gradient (applied via custom class below)
-      'bg-gradient-radial from-ball-yellow to-ball-yellow-shadow',
-      // Transitions for hover/winner effects
-      'transition-all duration-300 ease-in-out',
-      // --- Conditional styles for WINNING numbers ---
+      // Base styles: size, text, transitions
+      'inline-flex items-center justify-center text-lg font-bold transition-all duration-300 ease-in-out',
+      // Type-specific styles
+      type === 'euro'
+        ? [
+            // Star shape and size
+            'w-12 h-12 star-shape',
+            // Star colors and shadow
+            'text-casino-blue-dark shadow-star',
+            'bg-gradient-radial from-star-gold to-star-gold-shadow',
+          ]
+        : [
+            // Ball shape and size
+            'w-10 h-10 rounded-full',
+            // Ball colors and shadow
+            'text-casino-blue-dark shadow-ball',
+            'bg-gradient-radial from-ball-yellow to-ball-yellow-shadow',
+          ],
+      // Winner effects
       {
-        // Enhanced shadow/glow for winners
-        'shadow-ball-winner': isWinner,
-        // Brighter gradient for winners
-        'from-ball-yellow-light to-ball-yellow-dark': isWinner,
-        // Slight scale-up effect for winners
+        // Scale-up effect for winners
         'scale-110': isWinner,
-        // Override base shadow if winner
-        '!shadow-ball-winner': isWinner, // Use !important implicitly via Tailwind order or explicit `!`
-        // Override base gradient if winner
-        'bg-gradient-radial from-ball-yellow-light to-ball-yellow-dark':
-          isWinner,
+        // Star winner styles
+        'shadow-star-winner from-star-gold-light to-star-gold-dark':
+          isWinner && type === 'euro',
+        // Ball winner styles
+        'shadow-ball-winner from-ball-yellow-light to-ball-yellow-dark':
+          isWinner && type === 'main',
       },
     ]"
   >
@@ -33,14 +38,18 @@
 
 <script setup lang="ts">
 interface Props {
-  /** The number to display inside the ball. */
+  /** The number to display inside the ball/star. */
   number: number
   /** Flag indicating if this number is part of a winning combination. */
   isWinner: boolean
+  /** The type of number - determines if it's displayed as a ball or star. */
+  type?: 'main' | 'euro'
 }
 
-// Define component props with types.
-defineProps<Props>()
+// Define component props with types and defaults.
+withDefaults(defineProps<Props>(), {
+  type: 'main',
+})
 </script>
 
 <style scoped>
@@ -57,6 +66,23 @@ defineProps<Props>()
     var(--tw-gradient-from),
     var(--tw-gradient-to)
   );
+}
+
+/* Star shape using clip-path for a 5-pointed star */
+.star-shape {
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  border-radius: 0; /* Override any border-radius */
 }
 
 /* Ensure winner styles correctly override base styles if specificity issues arise,

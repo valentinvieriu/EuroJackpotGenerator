@@ -27,11 +27,20 @@ module.exports = {
           dark: '#eab308', // yellow-600
           shadow: '#ca8a04', // yellow-700 for shadow tones
         },
+        'star-gold': {
+          light: '#fbbf24', // amber-400
+          DEFAULT: '#f59e0b', // amber-500
+          dark: '#d97706', // amber-600
+          shadow: '#b45309', // amber-700 for shadow tones
+        },
       },
       boxShadow: {
         ball: 'inset -3px -3px 8px rgba(0,0,0,0.3), inset 3px 3px 5px rgba(255,255,255,0.4), 0px 0px 10px rgba(0,0,0,0.2)',
         'ball-winner':
           'inset -3px -3px 8px rgba(0,0,0,0.3), inset 3px 3px 5px rgba(255,255,255,0.4), 0 0 15px 5px rgba(250, 204, 21, 0.7)', // Added glow
+        star: '0 0 8px rgba(0,0,0,0.3), inset 0 0 5px rgba(255,255,255,0.3)',
+        'star-winner':
+          '0 0 8px rgba(0,0,0,0.3), inset 0 0 5px rgba(255,255,255,0.3), 0 0 15px 5px rgba(245, 158, 11, 0.7)', // Added glow
       },
       fontFamily: {
         // sans: ['Inter', 'sans-serif'], // Example if you want to change font
