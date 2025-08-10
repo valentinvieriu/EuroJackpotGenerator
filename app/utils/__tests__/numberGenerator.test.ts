@@ -11,7 +11,7 @@ describe('number generator', () => {
       expect(n).toBeGreaterThanOrEqual(1)
       expect(n).toBeLessThanOrEqual(50)
     }
-    const sorted = [...nums].sort((a,b)=>a-b)
+    const sorted = [...nums].sort((a, b) => a - b)
     expect(nums).toEqual(sorted)
   })
 

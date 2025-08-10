@@ -39,9 +39,11 @@ describe('/api/fetchWinningData', () => {
   })
 
   it('returns validated winning data when external API succeeds', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(
-      new Response(JSON.stringify(validOdds), { status: 200 })
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch' as any)
+      .mockResolvedValue(
+        new Response(JSON.stringify(validOdds), { status: 200 })
+      )
     const { default: handler } = await import('../fetchWinningData')
     const res = await handler({} as any)
 

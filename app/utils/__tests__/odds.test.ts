@@ -16,8 +16,20 @@ describe('odds normalization', () => {
   it('normalizeOdds maps all entries', () => {
     const input = {
       eurojackpotOdds: [
-        { amount: 0, numberOfWins: 0, winningClass: 101, sequence: 0, jackpot: false },
-        { amount: 0, numberOfWins: 0, winningClass: 112, sequence: 0, jackpot: false },
+        {
+          amount: 0,
+          numberOfWins: 0,
+          winningClass: 101,
+          sequence: 0,
+          jackpot: false,
+        },
+        {
+          amount: 0,
+          numberOfWins: 0,
+          winningClass: 112,
+          sequence: 0,
+          jackpot: false,
+        },
       ],
     }
     const out = normalizeOdds(input)

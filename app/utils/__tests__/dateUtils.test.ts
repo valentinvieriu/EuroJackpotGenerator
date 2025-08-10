@@ -8,7 +8,11 @@ describe('dateUtils', () => {
     const urlPrev = generateEurojackpotUrl(EurojackpotDrawType.PREVIOUS)
     const urlNext = generateEurojackpotUrl(EurojackpotDrawType.NEXT)
 
-    expect(urlPrev).toMatch(/getEurojackpotHistoricOdds\?gckey=\d{4}-\d{2}-[25]$/)
-    expect(urlNext).toMatch(/getEurojackpotHistoricOdds\?gckey=\d{4}-\d{2}-[25]$/)
+    expect(urlPrev).toMatch(
+      /getEurojackpotHistoricOdds\?gckey=\d{4}-\d{2}-[25]$/
+    )
+    expect(urlNext).toMatch(
+      /getEurojackpotHistoricOdds\?gckey=\d{4}-\d{2}-[25]$/
+    )
   })
 })

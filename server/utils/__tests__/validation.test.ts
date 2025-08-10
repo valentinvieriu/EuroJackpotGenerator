@@ -24,11 +24,17 @@ describe('validation utils', () => {
 
   it('fetchWithTimeout returns response (no timeout)', async () => {
     const payload = { ok: true }
-    vi.spyOn(globalThis, 'fetch' as any).mockImplementation((_url: string, _opts: any) => {
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(new Response(JSON.stringify(payload), { status: 200 })), 5)
-      })
-    })
+    vi.spyOn(globalThis, 'fetch' as any).mockImplementation(
+      (_url: string, _opts: any) => {
+        return new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve(new Response(JSON.stringify(payload), { status: 200 })),
+            5
+          )
+        })
+      }
+    )
     const res = await fetchWithTimeout('http://example.com', { timeout: 50 })
     expect(res.ok).toBe(true)
   })

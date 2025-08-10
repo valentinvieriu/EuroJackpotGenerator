@@ -27,7 +27,7 @@ describe('combinatorics', () => {
   it('kCombinations produces correct count', () => {
     const combos = kCombinations([1, 2, 3, 4, 5], 3)
     expect(combos.length).toBe(nCr(5, 3)) // 10
-    expect(combos.some(c => c.join(',') === '1,2,3')).toBe(true)
+    expect(combos.some((c) => c.join(',') === '1,2,3')).toBe(true)
   })
 
   it('expandSystemLines produces Cartesian of C(m,5) and C(e,2)', () => {

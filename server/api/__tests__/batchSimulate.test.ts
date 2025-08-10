@@ -8,7 +8,9 @@ vi.mock('h3', () => {
   return {
     defineEventHandler: (fn: any) => fn,
     readBody: vi.fn(async () => mockBody),
-    getHeader: vi.fn((_e: any, name: string) => mockHeaders[name.toLowerCase()] ?? ''),
+    getHeader: vi.fn(
+      (_e: any, name: string) => mockHeaders[name.toLowerCase()] ?? ''
+    ),
     setHeader: setHeaderMock,
     sendStream: vi.fn(),
     createError: (opts: any) => ({ name: 'H3Error', ...opts }),
@@ -49,9 +51,11 @@ describe('/api/batchSimulate (JSON response)', () => {
 
   it('returns aggregated batch results without individual results by default', async () => {
     // Stub external fetch used inside the route to fetch odds
-    const fetchSpy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(
-      new Response(JSON.stringify(validOddsPayload), { status: 200 })
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch' as any)
+      .mockResolvedValue(
+        new Response(JSON.stringify(validOddsPayload), { status: 200 })
+      )
 
     const { default: handler } = await import('../batchSimulate')
     mockBody = {
