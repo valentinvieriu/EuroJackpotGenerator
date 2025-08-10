@@ -28,7 +28,24 @@ import { generateSeededRandomNumbers } from '../utils/seededRng'
 export default defineEventHandler(async (event): Promise<SimulateResponse> => {
   try {
     // 1. Validate input (optional seed parameter)
-    const rawBody = await readBody(event).catch(() => ({})) // Default to empty object if no body
+    // Prefer actual readBody, but allow a test-friendly fallback when a plain object body is provided
+    let rawBody: unknown = {}
+    try {
+      const reqUnknown = event?.node?.req as unknown
+      let maybeBody: unknown | undefined
+      if (reqUnknown && typeof reqUnknown === 'object' && 'body' in reqUnknown) {
+        maybeBody = (reqUnknown as { body?: unknown }).body
+      }
+
+      if (maybeBody !== undefined) {
+        rawBody =
+          typeof maybeBody === 'string' ? JSON.parse(maybeBody) : maybeBody
+      } else {
+        rawBody = await readBody(event)
+      }
+    } catch {
+      rawBody = {}
+    }
     const input = validateInput(
       simulateRequestSchema,
       rawBody,

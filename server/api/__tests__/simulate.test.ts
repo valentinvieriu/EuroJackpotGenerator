@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 
-// Helper function to simulate API calls
+// Helper function to simulate API calls without mutating module exports
 async function simulateApiCall(body?: Record<string, unknown>) {
   const { default: handler } = await import('../simulate')
 
-  // Mock H3 event object
+  // Minimal H3-like event with a test-friendly body the handler can read
   const mockEvent = {
     node: {
       req: {
@@ -14,24 +14,10 @@ async function simulateApiCall(body?: Record<string, unknown>) {
     },
   }
 
-  // Mock readBody to return the test data
-  const originalReadBody = (await import('h3')).readBody
-  const mockReadBody = body
-    ? () => Promise.resolve(body)
-    : () => Promise.reject(new Error('No body'))
-
-  // Temporarily replace readBody
-  ;(await import('h3')).readBody = mockReadBody as typeof originalReadBody
-
-  try {
-    const result = await handler(
-      mockEvent as unknown as Parameters<typeof handler>[0]
-    )
-    return result
-  } finally {
-    // Restore original readBody
-    ;(await import('h3')).readBody = originalReadBody
-  }
+  const result = await handler(
+    mockEvent as unknown as Parameters<typeof handler>[0]
+  )
+  return result
 }
 
 describe('/api/simulate', () => {
