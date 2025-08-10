@@ -33,7 +33,11 @@ export default defineEventHandler(async (event): Promise<SimulateResponse> => {
     try {
       const reqUnknown = event?.node?.req as unknown
       let maybeBody: unknown | undefined
-      if (reqUnknown && typeof reqUnknown === 'object' && 'body' in reqUnknown) {
+      if (
+        reqUnknown &&
+        typeof reqUnknown === 'object' &&
+        'body' in reqUnknown
+      ) {
         maybeBody = (reqUnknown as { body?: unknown }).body
       }
 
