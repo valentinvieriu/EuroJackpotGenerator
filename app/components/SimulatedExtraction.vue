@@ -1,19 +1,17 @@
 <template>
-  <div
-    class="bg-gradient-to-br from-casino-blue-light via-casino-blue to-casino-blue-dark rounded-lg shadow-xl p-6 mt-6 border border-casino-gold/50"
-  >
-    <h2
-      class="text-3xl font-semibold mb-6 text-center text-casino-gold-light tracking-wide"
+  <div class="p-4 border border-casino-gold/30 rounded-lg bg-casino-blue/30">
+    <h3
+      class="text-xl font-semibold mb-4 text-center text-casino-gold-light tracking-wide"
     >
       Simulated Extraction
-    </h2>
+    </h3>
     <div class="flex flex-col md:flex-row justify-around items-center gap-6">
       <div class="text-center">
-        <h3
+        <h4
           class="font-semibold text-lg mb-3 text-gray-300 uppercase tracking-wider"
         >
           Main Numbers
-        </h3>
+        </h4>
         <div class="flex flex-wrap gap-3 justify-center">
           <TicketNumber
             v-for="number in result.mainNumbers"
@@ -24,11 +22,11 @@
         </div>
       </div>
       <div class="text-center">
-        <h3
+        <h4
           class="font-semibold text-lg mb-3 text-gray-300 uppercase tracking-wider"
         >
           Euro Numbers
-        </h3>
+        </h4>
         <div class="flex flex-wrap gap-3 justify-center">
           <TicketNumber
             v-for="number in result.euroNumbers"

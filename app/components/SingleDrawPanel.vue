@@ -1,66 +1,58 @@
 <template>
-  <div class="mt-6">
+  <div>
+    <!-- Error -->
     <div
-      class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
+      v-if="error"
+      class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4"
     >
-      <!-- Error -->
-      <div
-        v-if="error"
-        class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4"
-      >
-        {{ error }}
-      </div>
+      {{ error }}
+    </div>
 
-      <div class="mb-6">
-        <h2 class="text-2xl font-semibold text-gray-200 mb-2">
-          Single Draw Simulation
-        </h2>
-        <p class="text-gray-400 text-sm">
-          Simulate a single draw to see immediate winning results and ROI
-        </p>
-      </div>
+    <!-- Simulated Extraction (at the very top when available) -->
+    <div v-if="simulationResult" class="mb-6">
+      <SimulatedExtraction :result="simulationResult" />
+    </div>
 
-      <!-- Summary (after simulation) -->
-      <div
-        v-if="simulationResult"
-        class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
-      >
-        <div class="text-center">
-          <div class="text-sm text-gray-400">Total Winnings</div>
-          <div class="text-xl font-semibold text-casino-gold">
-            €{{ totalWinnings.toFixed(2) }}
-          </div>
-        </div>
-        <div class="text-center">
-          <div class="text-sm text-gray-400">Profit / Loss</div>
-          <div
-            :class="[
-              'text-xl font-semibold',
-              winLossRate >= 0 ? 'text-green-400' : 'text-red-400',
-            ]"
-          >
-            {{ winLossRate >= 0 ? '+' : '' }}€{{
-              profitLossAmount.toFixed(2)
-            }}
-            ({{ winLossRate.toFixed(1) }}%)
-          </div>
+    <!-- Results Summary (below extraction when available) -->
+    <div
+      v-if="simulationResult"
+      class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+    >
+      <div class="text-center">
+        <div class="text-sm text-gray-400">Total Winnings</div>
+        <div class="text-xl font-semibold text-casino-gold">
+          €{{ totalWinnings.toFixed(2) }}
         </div>
       </div>
-
-      <!-- Action Button -->
-      <div class="flex justify-end">
-        <button
-          :disabled="loading || tickets.length === 0"
-          class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
-          @click="simulateExtractionHandler"
+      <div class="text-center">
+        <div class="text-sm text-gray-400">Profit / Loss</div>
+        <div
+          :class="[
+            'text-xl font-semibold',
+            winLossRate >= 0 ? 'text-green-400' : 'text-red-400',
+          ]"
         >
-          {{ loading ? 'Simulating...' : 'Run Single Draw Simulation' }}
-        </button>
+          {{ winLossRate >= 0 ? '+' : '' }}€{{
+            profitLossAmount.toFixed(2)
+          }}
+          ({{ winLossRate.toFixed(1) }}%)
+        </div>
       </div>
     </div>
 
-    <!-- Simulated Extraction (outside wrapper) -->
-    <SimulatedExtraction v-if="simulationResult" :result="simulationResult" />
+    <!-- Description and Action Button -->
+    <div class="flex justify-between items-center">
+      <p class="text-gray-400 text-sm">
+        Simulate a single draw to see immediate winning results and ROI
+      </p>
+      <button
+        :disabled="loading || tickets.length === 0"
+        class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+        @click="simulateExtractionHandler"
+      >
+        {{ loading ? 'Simulating...' : 'Run Single Draw Simulation' }}
+      </button>
+    </div>
   </div>
 </template>
 

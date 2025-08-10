@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-6">
+  <div>
     <div
       v-if="error"
       class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4"
