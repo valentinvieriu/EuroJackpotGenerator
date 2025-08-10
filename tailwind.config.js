@@ -1,4 +1,3 @@
-/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     './app/components/**/*.{js,vue,ts}',
@@ -11,40 +10,49 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Gilded Jackpot Palette
         'casino-blue': {
-          light: '#1a2a4a', // Lighter shade for accents/hover
-          DEFAULT: '#0f172a', // Main background blue (like slate-900)
-          dark: '#0a101f', // Darker shade
+          light: '#2C3E50', // muted navy for panels/borders
+          DEFAULT: '#0A192F', // rich midnight blue background
+          dark: '#06121F',
         },
         'casino-gold': {
-          light: '#fef08a', // Lighter yellow-gold (like yellow-200)
-          DEFAULT: '#eab308', // Main gold (like yellow-600)
-          dark: '#b45309', // Darker amber/gold (like amber-700)
+          light: '#FFF1A8',
+          DEFAULT: '#FFD700', // sharp bright gold for highlights/borders
+          dark: '#B8860B',
         },
+        ivory: '#FFFFF0', // number text color
+        'navy-muted': '#2C3E50',
+        'vip-orange': {
+          light: '#FF6A33',
+          DEFAULT: '#FF4500', // CTA
+          dark: '#CC3700',
+        },
+
+        // Keep "ball/star" tokens but align them to the new gold scheme
         'ball-yellow': {
-          light: '#fde047', // yellow-400
-          DEFAULT: '#facc15', // yellow-500
-          dark: '#eab308', // yellow-600
-          shadow: '#ca8a04', // yellow-700 for shadow tones
+          light: '#FFF1A8',
+          DEFAULT: '#FFD700',
+          dark: '#DAA520',
+          shadow: '#B8860B',
         },
         'star-gold': {
-          light: '#fbbf24', // amber-400
-          DEFAULT: '#f59e0b', // amber-500
-          dark: '#d97706', // amber-600
-          shadow: '#b45309', // amber-700 for shadow tones
+          light: '#FFE08A',
+          DEFAULT: '#FFC107',
+          dark: '#B8860B',
+          shadow: '#8B6508',
         },
       },
       boxShadow: {
-        ball: 'inset -3px -3px 8px rgba(0,0,0,0.3), inset 3px 3px 5px rgba(255,255,255,0.4), 0px 0px 10px rgba(0,0,0,0.2)',
+        // Softer, premium shadows
+        ball: 'inset -3px -5px 10px rgba(0,0,0,0.35), inset 3px 4px 6px rgba(255,255,255,0.35), 0 2px 10px rgba(0,0,0,0.25)',
         'ball-winner':
-          'inset -3px -3px 8px rgba(0,0,0,0.3), inset 3px 3px 5px rgba(255,255,255,0.4), 0 0 15px 5px rgba(250, 204, 21, 0.7)', // Added glow
-        star: '0 0 8px rgba(0,0,0,0.3), inset 0 0 5px rgba(255,255,255,0.3)',
+          'inset -4px -6px 12px rgba(0,0,0,0.35), inset 3px 5px 7px rgba(255,255,255,0.35)',
+        star: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 6px rgba(255,255,255,0.35)',
         'star-winner':
-          '0 0 8px rgba(0,0,0,0.3), inset 0 0 5px rgba(255,255,255,0.3), 0 0 15px 5px rgba(245, 158, 11, 0.7)', // Added glow
+          '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 6px rgba(255,255,255,0.35)',
       },
-      fontFamily: {
-        // sans: ['Inter', 'sans-serif'], // Example if you want to change font
-      },
+      fontFamily: {},
     },
   },
   plugins: [],

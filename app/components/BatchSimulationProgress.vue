@@ -12,15 +12,13 @@
         </div>
       </div>
 
-      <!-- Progress Bar -->
       <div class="w-full bg-casino-blue rounded-full h-3 mb-3">
         <div
-          class="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-300 ease-out"
+          class="bg-gradient-to-r from-vip-orange to-vip-orange-light h-3 rounded-full transition-all duration-300 ease-out"
           :style="{ width: `${progressPercentage}%` }"
         />
       </div>
 
-      <!-- Progress Details -->
       <div class="flex justify-between items-center text-sm">
         <span class="text-gray-300">
           {{ currentSimulation.toLocaleString() }} /
@@ -32,7 +30,6 @@
       </div>
     </div>
 
-    <!-- Statistics Preview (Real-time) -->
     <div
       v-if="partialResults"
       class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
@@ -77,7 +74,6 @@
       </div>
     </div>
 
-    <!-- Time Estimates -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div class="text-center p-3 bg-casino-blue/30 rounded-lg">
         <div class="text-sm text-gray-400 mb-1">Estimated Time Remaining</div>
@@ -85,7 +81,6 @@
           {{ estimatedTimeRemaining || '---' }}
         </div>
       </div>
-
       <div class="text-center p-3 bg-casino-blue/30 rounded-lg">
         <div class="text-sm text-gray-400 mb-1">Processing Speed</div>
         <div class="text-lg font-medium text-gray-200">
@@ -94,7 +89,6 @@
       </div>
     </div>
 
-    <!-- Top Winning Classes (Live Update) -->
     <div v-if="partialResults?.winsByClass" class="mb-6">
       <h4 class="text-lg font-medium text-gray-200 mb-3">
         Win Distribution (Live)
@@ -113,7 +107,6 @@
       </div>
     </div>
 
-    <!-- Cancel Button -->
     <div v-if="canCancel" class="text-center">
       <button
         class="bg-red-600 text-white px-4 py-2 rounded-md font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
@@ -132,28 +125,12 @@
 import { computed, type PropType } from 'vue'
 import { formatDuration as formatTime } from '~/utils/time'
 
-// --- Props ---
 const props = defineProps({
-  currentSimulation: {
-    type: Number,
-    default: 0,
-  },
-  totalSimulations: {
-    type: Number,
-    required: true,
-  },
-  elapsedTime: {
-    type: Number,
-    default: 0,
-  },
-  estimatedTimeRemaining: {
-    type: String,
-    default: null,
-  },
-  canCancel: {
-    type: Boolean,
-    default: true,
-  },
+  currentSimulation: { type: Number, default: 0 },
+  totalSimulations: { type: Number, required: true },
+  elapsedTime: { type: Number, default: 0 },
+  estimatedTimeRemaining: { type: String, default: null },
+  canCancel: { type: Boolean, default: true },
   partialResults: {
     type: Object as PropType<{
       simulationsCompleted: number
@@ -168,12 +145,8 @@ const props = defineProps({
   },
 })
 
-// --- Emits ---
-defineEmits<{
-  cancel: []
-}>()
+defineEmits<{ cancel: [] }>()
 
-// --- Computed Properties ---
 const progressPercentage = computed(() => {
   if (props.totalSimulations === 0) return 0
   return Math.min((props.currentSimulation / props.totalSimulations) * 100, 100)
@@ -181,7 +154,7 @@ const progressPercentage = computed(() => {
 
 const processingSpeed = computed(() => {
   if (props.elapsedTime === 0) return 0
-  return (props.currentSimulation / props.elapsedTime) * 1000 // per second
+  return (props.currentSimulation / props.elapsedTime) * 1000
 })
 
 const winRateColor = computed(() => {
@@ -200,27 +173,25 @@ const roiColor = computed(() => {
   return 'text-red-400'
 })
 
-// --- Methods ---
 const formatElapsedTime = formatTime
 
 const getClassColor = (classNum: number): string => {
   if (!props.partialResults?.winsByClass[classNum]) return 'text-gray-500'
-
   switch (classNum) {
     case 1:
     case 2:
     case 3:
-      return 'text-yellow-400' // Jackpot classes
+      return 'text-yellow-400'
     case 4:
     case 5:
     case 6:
-      return 'text-green-400' // High value classes
+      return 'text-green-400'
     case 7:
     case 8:
     case 9:
-      return 'text-blue-400' // Mid value classes
+      return 'text-blue-400'
     default:
-      return 'text-gray-300' // Lower value classes
+      return 'text-gray-300'
   }
 }
 </script>

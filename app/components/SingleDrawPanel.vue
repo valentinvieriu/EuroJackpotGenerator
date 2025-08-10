@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Error -->
     <div
       v-if="error"
       class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4"
@@ -8,12 +7,10 @@
       {{ error }}
     </div>
 
-    <!-- Simulated Extraction (at the very top when available) -->
     <div v-if="simulationResult" class="mb-6">
       <SimulatedExtraction :result="simulationResult" />
     </div>
 
-    <!-- Results Summary (below extraction when available) -->
     <div
       v-if="simulationResult"
       class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
@@ -47,7 +44,7 @@
       </p>
       <button
         :disabled="loading || tickets.length === 0"
-        class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-white px-5 py-2 rounded-md font-semibold hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
         @click="simulateExtractionHandler"
       >
         {{ loading ? 'Simulating...' : 'Run Single Draw Simulation' }}
@@ -89,14 +86,15 @@ const apiBaseUrl = config.public.apiBase
 
 const loading = ref(false)
 const error = ref('')
+
 const simulationResult = ref<Pick<
   Ticket,
   'mainNumbers' | 'euroNumbers'
 > | null>(null)
 const latestWinningData = ref<EurojackpotHistoricOdds | null>(null)
+
 const totalWinnings = ref(0)
 const winLossRate = ref(0)
-
 const profitLossAmount = computed(() => totalWinnings.value - props.totalPrice)
 
 const reset = (): void => {
@@ -118,8 +116,10 @@ const simulateExtractionHandler = async (): Promise<void> => {
       ),
       $fetch<EurojackpotHistoricOdds>(`${apiBaseUrl}/fetchWinningData`),
     ])
+
     simulationResult.value = simResponse
     latestWinningData.value = winDataResponse
+
     if (
       !simulationResult.value?.mainNumbers ||
       !simulationResult.value?.euroNumbers
@@ -127,9 +127,9 @@ const simulateExtractionHandler = async (): Promise<void> => {
       throw new Error('Invalid simulation result received from API.')
     }
 
-    // Compute highlights and class counts per ticket
     const simMain = simulationResult.value.mainNumbers
     const simEuro = simulationResult.value.euroNumbers
+
     const updates = props.tickets.map((ticket) => {
       const winningMainNumbers = ticket.mainNumbers.filter((n: number) =>
         simMain.includes(n)
@@ -137,14 +137,17 @@ const simulateExtractionHandler = async (): Promise<void> => {
       const winningEuroNumbers = ticket.euroNumbers.filter((n: number) =>
         simEuro.includes(n)
       )
+
       const k = winningMainNumbers.length
       const h = winningEuroNumbers.length
       const m = ticket.mainNumbers.length
       const e = ticket.euroNumbers.length
+
       const winClassCounts = calculateWinningLineCounts(m, e, k, h)
       const winClass = Object.keys(winClassCounts)
         .map(Number)
         .sort((a, b) => a - b)[0]
+
       return {
         id: ticket.id,
         winningMainNumbers,
@@ -153,9 +156,9 @@ const simulateExtractionHandler = async (): Promise<void> => {
         winClass,
       }
     })
+
     emit('apply-highlights', updates)
 
-    // Total winnings
     if (latestWinningData.value?.eurojackpotOdds?.length) {
       const oddsMap = buildOddsMap(latestWinningData.value)
       let sum = 0
@@ -170,7 +173,6 @@ const simulateExtractionHandler = async (): Promise<void> => {
       totalWinnings.value = 0
     }
 
-    // Rate
     const cost = props.totalPrice
     if (cost > 0) {
       const profit = totalWinnings.value - cost

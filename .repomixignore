@@ -38,7 +38,6 @@ repomix.config.json
 eslint.config.js
 .prettierignore
 .prettierrc
-tailwind.config.js
 tsconfig.json
 nuxt.config.ts
 nitro.config.ts

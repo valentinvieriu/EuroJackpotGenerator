@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Ticket } from '~/types/ticket'
-import TicketNumber from './TicketNumber.vue'
+import TicketNumber from './TicketNumber3DSimple.vue'
 
 interface Props {
   ticket: Ticket

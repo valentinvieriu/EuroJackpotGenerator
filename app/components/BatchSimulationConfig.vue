@@ -13,7 +13,6 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <!-- Number of Simulations -->
       <div>
         <label
           for="simulationCount"
@@ -37,7 +36,6 @@
         </select>
       </div>
 
-      <!-- Batch Size -->
       <div>
         <label
           for="batchSize"
@@ -57,7 +55,6 @@
         </select>
       </div>
 
-      <!-- Include Detailed Results -->
       <div>
         <label class="mb-2 block text-gray-400 text-sm font-medium">
           Detailed Results:
@@ -83,7 +80,6 @@
         </p>
       </div>
 
-      <!-- Estimated Runtime -->
       <div>
         <label class="mb-2 block text-gray-400 text-sm font-medium">
           Estimated Runtime:
@@ -96,7 +92,6 @@
       </div>
     </div>
 
-    <!-- Cost Analysis Preview -->
     <div
       v-if="ticketCount > 0"
       class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
@@ -116,6 +111,7 @@
           }}
         </div>
       </div>
+
       <div class="text-center">
         <div class="text-sm text-gray-400">Break-even Target</div>
         <div class="text-lg font-semibold text-yellow-400">
@@ -123,6 +119,7 @@
         </div>
         <div class="text-xs text-gray-500">Win rate needed to break even</div>
       </div>
+
       <div class="text-center">
         <div class="text-sm text-gray-400">Expected Scenarios</div>
         <div class="text-lg font-semibold text-casino-gold-light">
@@ -134,7 +131,6 @@
       </div>
     </div>
 
-    <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row justify-end gap-3">
       <button
         v-if="showCancelButton"
@@ -147,7 +143,7 @@
 
       <button
         :disabled="disabled || ticketCount === 0"
-        class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-5 py-2 rounded-md font-semibold hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-white px-5 py-2 rounded-md font-semibold hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
         @click="handleStartSimulation"
       >
         <svg
@@ -175,7 +171,6 @@
       </button>
     </div>
 
-    <!-- Warning for Large Simulations -->
     <div
       v-if="config.simulationCount >= 5000"
       class="mt-4 p-3 bg-yellow-900/50 border border-yellow-500 rounded-md"
@@ -209,44 +204,25 @@
 import { computed } from 'vue'
 import type { BatchSimulationRequest } from '~/types/batchSimulation'
 
-// --- Props ---
 const props = defineProps({
-  ticketCount: {
-    type: Number,
-    default: 0,
-  },
-  costPerSimulation: {
-    type: Number,
-    default: 2.0,
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  canCancel: {
-    type: Boolean,
-    default: false,
-  },
-  showCancelButton: {
-    type: Boolean,
-    default: false,
-  },
+  ticketCount: { type: Number, default: 0 },
+  costPerSimulation: { type: Number, default: 2.0 },
+  disabled: { type: Boolean, default: false },
+  canCancel: { type: Boolean, default: false },
+  showCancelButton: { type: Boolean, default: false },
 })
 
-// --- Emits ---
 const emit = defineEmits<{
   start: [config: BatchSimulationRequest]
   cancel: []
 }>()
 
-// --- Reactive State ---
 const config = reactive({
   simulationCount: 1000,
   batchSize: 100,
   includeIndividualResults: false,
 })
 
-// --- Constants ---
 const simulationOptions = [
   { value: 100, label: '100 (Quick Test)' },
   { value: 250, label: '250 (Small Analysis)' },
@@ -257,50 +233,37 @@ const simulationOptions = [
   { value: 10000, label: '10,000 (Maximum)' },
 ]
 
-// --- Computed Properties ---
 const totalSimulationCost = computed(
   () => config.simulationCount * props.costPerSimulation
 )
 
 const breakEvenPercentage = computed(() => {
   if (props.costPerSimulation <= 0) return 0
-  // Simplified break-even calculation - would need actual payout data for accuracy
-  const averageWinAmount = 12.5 // Rough estimate based on EuroJackpot payouts
+  const averageWinAmount = 12.5
   return (props.costPerSimulation / averageWinAmount) * 100
 })
 
 const estimatedRuntime = computed(() => {
-  // Rough estimation based on simulation count
-  const baseTimePerThousand = 2 // seconds per 1000 simulations
+  const baseTimePerThousand = 2
   const totalSeconds = (config.simulationCount / 1000) * baseTimePerThousand
-
-  if (totalSeconds < 60) {
-    return `~${Math.ceil(totalSeconds)}s`
-  } else if (totalSeconds < 3600) {
-    return `~${Math.ceil(totalSeconds / 60)}m`
-  } else {
-    return `~${Math.ceil(totalSeconds / 3600)}h`
-  }
+  if (totalSeconds < 60) return `~${Math.ceil(totalSeconds)}s`
+  if (totalSeconds < 3600) return `~${Math.ceil(totalSeconds / 60)}m`
+  return `~${Math.ceil(totalSeconds / 3600)}h`
 })
 
-// --- Methods ---
 const handleStartSimulation = () => {
   if (props.ticketCount === 0) return
-
   const request: Omit<BatchSimulationRequest, 'tickets'> = {
     simulationCount: config.simulationCount,
     batchSize: config.batchSize,
     includeIndividualResults: config.includeIndividualResults,
   }
-
   emit('start', request as BatchSimulationRequest)
 }
 
-// --- Watchers ---
 watch(
   () => config.simulationCount,
   (newValue) => {
-    // Auto-disable individual results for large simulations
     if (newValue > 1000) {
       config.includeIndividualResults = false
     }
