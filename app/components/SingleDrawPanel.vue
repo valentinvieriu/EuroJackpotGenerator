@@ -131,10 +131,10 @@ const simulateExtractionHandler = async (): Promise<void> => {
     const simMain = simulationResult.value.mainNumbers
     const simEuro = simulationResult.value.euroNumbers
     const updates = props.tickets.map((ticket) => {
-      const winningMainNumbers = ticket.mainNumbers.filter((n) =>
+      const winningMainNumbers = ticket.mainNumbers.filter((n: number) =>
         simMain.includes(n)
       )
-      const winningEuroNumbers = ticket.euroNumbers.filter((n) =>
+      const winningEuroNumbers = ticket.euroNumbers.filter((n: number) =>
         simEuro.includes(n)
       )
       const k = winningMainNumbers.length
@@ -162,7 +162,7 @@ const simulateExtractionHandler = async (): Promise<void> => {
       for (const u of updates) {
         for (const [clsStr, count] of Object.entries(u.winClassCounts)) {
           const amount = oddsMap.get(Number(clsStr)) ?? 0
-          sum += amount * count
+          sum += amount * (count as number)
         }
       }
       totalWinnings.value = Number(sum.toFixed(2))
