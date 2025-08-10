@@ -1,60 +1,66 @@
 <template>
   <div class="mt-6">
-    <!-- Error -->
     <div
-      v-if="error"
-      class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4"
+      class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
     >
-      {{ error }}
-    </div>
-
-    <!-- Summary (after simulation) -->
-    <div
-      v-if="simulationResult"
-      class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 items-end"
-    >
-      <div class="text-right sm:text-left">
-        <label class="mb-2 block text-gray-400 text-sm font-medium"
-          >Total Winnings:</label
-        >
-        <div class="flex items-center justify-end sm:justify-start h-10">
-          <span class="text-xl font-semibold text-casino-gold"
-            >€{{ totalWinnings.toFixed(2) }}</span
-          >
-        </div>
+      <!-- Error -->
+      <div
+        v-if="error"
+        class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4"
+      >
+        {{ error }}
       </div>
-      <div class="text-right sm:text-left">
-        <label class="mb-2 block text-gray-400 text-sm font-medium"
-          >Profit / Loss:</label
-        >
-        <div class="flex items-center justify-end sm:justify-start h-10">
-          <span
+
+      <div class="mb-6">
+        <h2 class="text-2xl font-semibold text-gray-200 mb-2">
+          Single Draw Simulation
+        </h2>
+        <p class="text-gray-400 text-sm">
+          Simulate a single draw to see immediate winning results and ROI
+        </p>
+      </div>
+
+      <!-- Summary (after simulation) -->
+      <div
+        v-if="simulationResult"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+      >
+        <div class="text-center">
+          <div class="text-sm text-gray-400">Total Winnings</div>
+          <div class="text-xl font-semibold text-casino-gold">
+            €{{ totalWinnings.toFixed(2) }}
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="text-sm text-gray-400">Profit / Loss</div>
+          <div
             :class="[
               'text-xl font-semibold',
               winLossRate >= 0 ? 'text-green-400' : 'text-red-400',
             ]"
           >
-            {{ winLossRate >= 0 ? '+' : '' }}{{ profitLossAmount.toFixed(2) }}€
+            {{ winLossRate >= 0 ? '+' : '' }}€{{
+              profitLossAmount.toFixed(2)
+            }}
             ({{ winLossRate.toFixed(1) }}%)
-          </span>
+          </div>
         </div>
       </div>
-      <div />
+
+      <!-- Action Button -->
+      <div class="flex justify-end">
+        <button
+          :disabled="loading || tickets.length === 0"
+          class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+          @click="simulateExtractionHandler"
+        >
+          {{ loading ? 'Simulating...' : 'Run Single Draw Simulation' }}
+        </button>
+      </div>
     </div>
 
-    <!-- Action -->
-    <div class="flex justify-end mb-4">
-      <button
-        :disabled="loading || tickets.length === 0"
-        class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
-        @click="simulateExtractionHandler"
-      >
-        {{ loading ? 'Simulating...' : 'Run Single Draw' }}
-      </button>
-    </div>
-
-    <!-- Result numbers -->
-    <SimulationResult v-if="simulationResult" :result="simulationResult" />
+    <!-- Simulated Extraction (outside wrapper) -->
+    <SimulatedExtraction v-if="simulationResult" :result="simulationResult" />
   </div>
 </template>
 
@@ -63,7 +69,7 @@ import { computed, ref, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
-import SimulationResult from './SimulationResult.vue'
+import SimulatedExtraction from './SimulatedExtraction.vue'
 import { buildOddsMap } from '~/utils/payout'
 import { calculateWinningLineCounts } from '~/utils/combinatorics'
 import { playWinSound } from '~/utils/audioUtils'
