@@ -1,5 +1,5 @@
 import { generateRandomNumbers } from '~/utils/numberGenerator'
-import { defineEventHandler, readBody } from 'h3'
+import { defineEventHandler, readBody, getMethod, getQuery } from 'h3'
 import {
   MAIN_NUMBER_MIN,
   MAIN_NUMBER_MAX,
@@ -28,27 +28,33 @@ import { generateSeededRandomNumbers } from '../utils/seededRng'
 export default defineEventHandler(async (event): Promise<SimulateResponse> => {
   try {
     // 1. Validate input (optional seed parameter)
-    // Prefer actual readBody, but allow a test-friendly fallback when a plain object body is provided
-    let rawBody: unknown = {}
-    try {
-      const reqUnknown = event?.node?.req as unknown
-      let maybeBody: unknown | undefined
-      if (
-        reqUnknown &&
-        typeof reqUnknown === 'object' &&
-        'body' in reqUnknown
-      ) {
-        maybeBody = (reqUnknown as { body?: unknown }).body
-      }
+    // Accept both GET (query param) and POST (JSON body). Cloudflare Workers may yield null for empty bodies.
+    let rawBody: unknown | undefined
+    const method = (getMethod(event) || '').toUpperCase()
 
-      if (maybeBody !== undefined) {
-        rawBody =
-          typeof maybeBody === 'string' ? JSON.parse(maybeBody) : maybeBody
-      } else {
-        rawBody = await readBody(event)
+    if (method === 'GET') {
+      const q = getQuery(event)
+      const seed = typeof q.seed === 'string' && q.seed.length ? q.seed : undefined
+      rawBody = seed ? { seed } : undefined
+    } else {
+      try {
+        const body = await readBody(event)
+        // Normalize null/empty-string to undefined so Zod .optional().default({}) applies
+        rawBody = body == null || body === '' ? undefined : body
+      } catch {
+        rawBody = undefined
       }
-    } catch {
-      rawBody = {}
+      // Test-friendly fallback: if a plain string body was attached to req, parse it
+      if (rawBody === undefined) {
+        const reqUnknown = event?.node?.req as unknown
+        if (reqUnknown && typeof reqUnknown === 'object' && 'body' in reqUnknown) {
+          const maybeBody = (reqUnknown as { body?: unknown }).body
+          if (maybeBody !== undefined) {
+            rawBody =
+              typeof maybeBody === 'string' ? JSON.parse(maybeBody) : maybeBody
+          }
+        }
+      }
     }
     const input = validateInput(
       simulateRequestSchema,
