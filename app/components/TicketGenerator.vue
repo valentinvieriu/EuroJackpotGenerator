@@ -1,29 +1,16 @@
 <template>
   <div>
-    <!-- Control Panel Section -->
+    <!-- Step 1: Ticket Generation Panel -->
     <div
       class="bg-casino-blue-dark rounded-lg shadow-xl p-6 mb-8 border border-casino-blue-light/30"
     >
-      <!-- Mode Switch -->
       <div class="mb-6">
-        <div
-          class="inline-flex rounded-lg overflow-hidden border border-casino-blue-light/30"
-        >
-          <button
-            :class="tabClass('single')"
-            aria-pressed="mode === 'single'"
-            @click="setMode('single')"
-          >
-            Single Draw
-          </button>
-          <button
-            :class="tabClass('montecarlo')"
-            aria-pressed="mode === 'montecarlo'"
-            @click="setMode('montecarlo')"
-          >
-            Monte Carlo
-          </button>
-        </div>
+        <h2 class="text-xl font-semibold text-casino-gold-light mb-2">
+          Step 1: Generate Tickets
+        </h2>
+        <p class="text-gray-400 text-sm">
+          Configure and generate your EuroJackpot tickets first
+        </p>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 items-end">
         <!-- Ticket Type Selection -->
@@ -95,7 +82,97 @@
               : 'Generate Tickets'
           }}
         </button>
-        <!-- Single-draw action button is inside SingleDrawPanel -->
+      </div>
+    </div>
+
+    <!-- Step 2: Simulation Mode Selection (only shown after tickets are generated) -->
+    <div
+      v-if="tickets.length > 0 && !loading"
+      class="bg-casino-blue-dark rounded-lg shadow-xl p-6 mb-8 border border-casino-blue-light/30"
+    >
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold text-casino-gold-light mb-2">
+          Step 2: Choose Simulation Type
+        </h2>
+        <p class="text-gray-400 text-sm">
+          Select how you want to simulate your {{ tickets.length }} ticket{{
+            tickets.length !== 1 ? 's' : ''
+          }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Single Draw Option -->
+        <div
+          :class="[
+            'border-2 rounded-lg p-4 cursor-pointer transition duration-200',
+            mode === 'single'
+              ? 'border-casino-gold bg-casino-gold/10'
+              : 'border-casino-blue-light/30 hover:border-casino-blue-light/60',
+          ]"
+          @click="setMode('single')"
+        >
+          <div class="flex items-start space-x-3">
+            <div
+              :class="[
+                'w-4 h-4 rounded-full border-2 mt-1 flex-shrink-0',
+                mode === 'single'
+                  ? 'border-casino-gold bg-casino-gold'
+                  : 'border-gray-400',
+              ]"
+            />
+            <div>
+              <h3 class="text-lg font-medium text-gray-200 mb-2">
+                Single Draw
+              </h3>
+              <p class="text-sm text-gray-400 mb-2">
+                Simulate one lottery draw to see which tickets win and calculate
+                your return on investment.
+              </p>
+              <div class="text-xs text-casino-gold-light">
+                ✓ Instant results<br />
+                ✓ Detailed ticket highlighting<br />
+                ✓ ROI calculation
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monte Carlo Option -->
+        <div
+          :class="[
+            'border-2 rounded-lg p-4 cursor-pointer transition duration-200',
+            mode === 'montecarlo'
+              ? 'border-casino-gold bg-casino-gold/10'
+              : 'border-casino-blue-light/30 hover:border-casino-blue-light/60',
+          ]"
+          @click="setMode('montecarlo')"
+        >
+          <div class="flex items-start space-x-3">
+            <div
+              :class="[
+                'w-4 h-4 rounded-full border-2 mt-1 flex-shrink-0',
+                mode === 'montecarlo'
+                  ? 'border-casino-gold bg-casino-gold'
+                  : 'border-gray-400',
+              ]"
+            />
+            <div>
+              <h3 class="text-lg font-medium text-gray-200 mb-2">
+                Monte Carlo Simulation
+              </h3>
+              <p class="text-sm text-gray-400 mb-2">
+                Run hundreds or thousands of simulations to analyze long-term
+                performance and probability distributions.
+              </p>
+              <div class="text-xs text-casino-gold-light">
+                ✓ Statistical analysis<br />
+                ✓ Profitability insights<br />
+                ✓ Real-time progress
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -132,33 +209,63 @@
       {{ error }}
     </div>
 
-    <!-- Panels -->
-    <SingleDrawPanel
-      v-if="mode === 'single' && tickets.length > 0"
-      :key="singlePanelKey"
-      :tickets="tickets"
-      :total-price="totalPrice"
-      @apply-highlights="applyHighlightsOnTickets"
-    />
-    <MonteCarloPanel
-      v-if="mode === 'montecarlo' && tickets.length > 0"
-      :key="montePanelKey"
-      :tickets="tickets"
-      :cost-per-simulation="totalPrice"
-    />
+    <!-- Step 3: Simulation Panels (only shown after mode selection) -->
+    <div v-if="tickets.length > 0 && !loading">
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold text-casino-gold-light mb-2">
+          Step 3: Run
+          {{ mode === 'single' ? 'Single Draw' : 'Monte Carlo' }} Simulation
+        </h2>
+        <p class="text-gray-400 text-sm">
+          {{
+            mode === 'single'
+              ? 'Simulate a single lottery draw to see your results'
+              : 'Configure and run multiple simulations for statistical analysis'
+          }}
+        </p>
+      </div>
 
-    <!-- Ticket List Display -->
-    <div v-if="tickets.length && !loading" class="space-y-4">
-      <h2 class="text-2xl font-semibold text-gray-300 mb-4">
-        Generated Tickets ({{ tickets.length }})
-      </h2>
-      <!-- Use TicketComponent which is renamed from Ticket to avoid naming conflict -->
-      <TicketComponent
-        v-for="ticket in tickets"
-        :key="ticket.id"
-        :ticket="ticket"
-        :ticket-number="ticket.id"
+      <SingleDrawPanel
+        v-if="mode === 'single'"
+        :key="singlePanelKey"
+        :tickets="tickets"
+        :total-price="totalPrice"
+        @apply-highlights="applyHighlightsOnTickets"
       />
+      <MonteCarloPanel
+        v-if="mode === 'montecarlo'"
+        :key="montePanelKey"
+        :tickets="tickets"
+        :cost-per-simulation="totalPrice"
+      />
+    </div>
+
+    <!-- Generated Tickets Display -->
+    <div v-if="tickets.length && !loading" class="mt-8">
+      <div
+        class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-casino-gold-light">
+            Generated Tickets ({{ tickets.length }})
+          </h2>
+          <button
+            class="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-red-500"
+            @click="clearTickets"
+          >
+            Clear All
+          </button>
+        </div>
+        <div class="space-y-4">
+          <!-- Use TicketComponent which is renamed from Ticket to avoid naming conflict -->
+          <TicketComponent
+            v-for="ticket in tickets"
+            :key="ticket.id"
+            :ticket="ticket"
+            :ticket-number="ticket.id"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -250,13 +357,13 @@ const setMode = (m: 'single' | 'montecarlo'): void => {
   error.value = ''
 }
 
-const tabClass = (target: 'single' | 'montecarlo') =>
-  [
-    'px-4 py-2 text-sm font-medium focus:outline-none transition',
-    mode.value === target
-      ? 'bg-casino-gold text-casino-blue-dark'
-      : 'bg-casino-blue hover:bg-casino-blue-light/20 text-gray-300',
-  ].join(' ')
+const clearTickets = (): void => {
+  tickets.value = []
+  error.value = ''
+  // Reset panel keys to clear any previous simulation results
+  singlePanelKey.value++
+  montePanelKey.value++
+}
 
 /**
  * Handles the 'Generate Tickets' button click.
