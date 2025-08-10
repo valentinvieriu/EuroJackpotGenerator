@@ -9,60 +9,70 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         <div
-          class="text-center p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+          class="text-center p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20 min-h-[120px] flex flex-col justify-center"
         >
           <div class="text-sm text-gray-400 mb-1">Total Investment</div>
-          <div class="text-2xl font-bold text-red-400">
+          <div
+            class="text-lg lg:text-xl font-bold text-red-400 break-words leading-tight"
+          >
             €{{
               results.totalCost.toLocaleString('en-GB', {
                 minimumFractionDigits: 2,
               })
             }}
           </div>
-          <div class="text-xs text-gray-500">
+          <div class="text-xs text-gray-500 mt-1">
             {{ results.totalSimulations.toLocaleString() }} simulations
           </div>
         </div>
 
         <div
-          class="text-center p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+          class="text-center p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20 min-h-[120px] flex flex-col justify-center"
         >
           <div class="text-sm text-gray-400 mb-1">Total Winnings</div>
-          <div class="text-2xl font-bold text-green-400">
+          <div
+            class="text-lg lg:text-xl font-bold text-green-400 break-words leading-tight"
+          >
             €{{
               results.totalWinnings.toLocaleString('en-GB', {
                 minimumFractionDigits: 2,
               })
             }}
           </div>
-          <div class="text-xs text-gray-500">Across all simulations</div>
+          <div class="text-xs text-gray-500 mt-1">Across all simulations</div>
         </div>
 
         <div
-          class="text-center p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+          class="text-center p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20 min-h-[120px] flex flex-col justify-center"
         >
           <div class="text-sm text-gray-400 mb-1">Net Result</div>
-          <div class="text-2xl font-bold" :class="netProfitColor">
+          <div
+            class="text-lg lg:text-xl font-bold break-words leading-tight"
+            :class="netProfitColor"
+          >
             {{ results.netProfit >= 0 ? '+' : '' }}€{{
               results.netProfit.toLocaleString('en-GB', {
                 minimumFractionDigits: 2,
               })
             }}
           </div>
-          <div class="text-xs text-gray-500">
+          <div class="text-xs text-gray-500 mt-1">
             {{ results.netProfit >= 0 ? 'Profit' : 'Loss' }}
           </div>
         </div>
 
         <div
-          class="text-center p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+          class="text-center p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20 min-h-[120px] flex flex-col justify-center"
         >
           <div class="text-sm text-gray-400 mb-1">Return on Investment</div>
-          <div class="text-2xl font-bold" :class="roiColor">
+          <div
+            class="text-lg lg:text-xl font-bold break-words leading-tight"
+            :class="roiColor"
+          >
             {{ results.roiPercentage >= 0 ? '+' : ''
             }}{{ results.roiPercentage.toFixed(1) }}%
           </div>
-          <div class="text-xs text-gray-500">Overall performance</div>
+          <div class="text-xs text-gray-500 mt-1">Overall performance</div>
         </div>
       </div>
 

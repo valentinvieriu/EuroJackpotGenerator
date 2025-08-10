@@ -223,6 +223,7 @@
             :key="montePanelKey"
             :tickets="tickets"
             :cost-per-simulation="totalPrice"
+            @apply-highlights="applyHighlightsOnTickets"
           />
         </div>
       </div>

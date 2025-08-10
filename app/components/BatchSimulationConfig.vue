@@ -12,7 +12,7 @@
       </p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div>
         <label
           for="simulationCount"
@@ -53,31 +53,6 @@
           <option :value="100">100 (Balanced)</option>
           <option :value="200">200 (Memory Efficient)</option>
         </select>
-      </div>
-
-      <div>
-        <label class="mb-2 block text-gray-400 text-sm font-medium">
-          Detailed Results:
-        </label>
-        <div class="flex items-center h-10">
-          <label class="inline-flex items-center">
-            <input
-              v-model="config.includeIndividualResults"
-              type="checkbox"
-              class="rounded border-casino-blue-light/50 bg-casino-blue text-casino-gold focus:ring-casino-gold focus:ring-offset-casino-blue-dark"
-              :disabled="disabled || config.simulationCount > 1000"
-            />
-            <span class="ml-2 text-sm text-gray-300">
-              Save individual results
-            </span>
-          </label>
-        </div>
-        <p
-          v-if="config.simulationCount > 1000"
-          class="text-xs text-gray-500 mt-1"
-        >
-          Disabled for >1000 simulations
-        </p>
       </div>
 
       <div>
@@ -131,44 +106,71 @@
       </div>
     </div>
 
-    <div class="flex flex-col sm:flex-row justify-end gap-3">
-      <button
-        v-if="showCancelButton"
-        :disabled="disabled && !canCancel"
-        class="bg-red-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
-        @click="$emit('cancel')"
-      >
-        Cancel Simulation
-      </button>
+    <div
+      class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4"
+    >
+      <!-- Export Options -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        <label class="inline-flex items-center">
+          <input
+            v-model="config.includeIndividualResults"
+            type="checkbox"
+            class="rounded border-casino-blue-light/50 bg-casino-blue text-casino-gold focus:ring-casino-gold focus:ring-offset-casino-blue-dark"
+            :disabled="disabled || config.simulationCount > 1000"
+          />
+          <span class="ml-2 text-sm text-gray-300">
+            Export individual results
+          </span>
+        </label>
+        <p class="text-xs text-gray-500 sm:ml-2">
+          {{
+            config.simulationCount > 1000
+              ? '(Disabled for >1000 simulations)'
+              : '(For detailed JSON export)'
+          }}
+        </p>
+      </div>
 
-      <button
-        :disabled="disabled || ticketCount === 0"
-        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-white px-5 py-2 rounded-md font-semibold hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
-        @click="handleStartSimulation"
-      >
-        <svg
-          v-if="disabled"
-          class="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
+      <!-- Action Buttons -->
+      <div class="flex gap-3">
+        <button
+          v-if="showCancelButton"
+          :disabled="disabled && !canCancel"
+          class="bg-red-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+          @click="$emit('cancel')"
         >
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            class="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          />
-        </svg>
-        {{ disabled ? 'Running Simulation...' : 'Start Mass Simulation' }}
-      </button>
+          Cancel Simulation
+        </button>
+
+        <button
+          :disabled="disabled || ticketCount === 0"
+          class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-white px-5 py-2 rounded-md font-semibold hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+          @click="handleStartSimulation"
+        >
+          <svg
+            v-if="disabled"
+            class="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          {{ disabled ? 'Running Simulation...' : 'Start Mass Simulation' }}
+        </button>
+      </div>
     </div>
 
     <div

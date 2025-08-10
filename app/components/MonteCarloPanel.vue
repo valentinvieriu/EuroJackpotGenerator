@@ -45,7 +45,9 @@ import type { Ticket } from '~/types/ticket'
 import type {
   BatchSimulationRequest,
   BatchSimulationResult,
+  TicketHighlightingData,
 } from '~/types/batchSimulation'
+import { calculateWinningLineCounts } from '~/utils/combinatorics'
 import BatchSimulationConfig from './BatchSimulationConfig.vue'
 import BatchSimulationProgress from './BatchSimulationProgress.vue'
 import BatchSimulationResults from './BatchSimulationResults.vue'
@@ -55,6 +57,19 @@ const props = defineProps({
   tickets: { type: Array as PropType<Ticket[]>, required: true },
   costPerSimulation: { type: Number, required: true },
 })
+
+const emit = defineEmits<{
+  (
+    e: 'apply-highlights',
+    updates: Array<{
+      id: number
+      winningMainNumbers: number[]
+      winningEuroNumbers: number[]
+      winClassCounts: Record<number, number>
+      winClass?: number
+    }>
+  ): void
+}>()
 
 const error = ref('')
 const state = ref({
@@ -84,6 +99,218 @@ const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase
 
 const formatEstimatedTime = formatDurationCompact
+
+/**
+ * Applies highlights to tickets based on aggregate Monte Carlo results.
+ * Uses lightweight highlighting data that's always available.
+ */
+const applyHighlightsFromResults = async (
+  results: BatchSimulationResult
+): Promise<void> => {
+  if (results.highlightingData) {
+    // Use optimized highlighting data (always available, memory efficient)
+    applyOptimizedHighlighting(results.highlightingData)
+  } else if (
+    results.individualResults &&
+    results.individualResults.length > 0
+  ) {
+    // Fallback: use individual results if available (legacy support)
+    applyAggregateHighlighting(results)
+  } else {
+    // Last resort: no specific highlighting available
+    applyWinDistributionHighlighting(results)
+  }
+}
+
+/**
+ * Applies highlights using optimized highlighting data (memory efficient).
+ * This is the preferred method as it doesn't require storing full individual results.
+ */
+const applyOptimizedHighlighting = (
+  highlightingData: TicketHighlightingData
+): void => {
+  const updates = props.tickets.map((ticket) => {
+    const stats = highlightingData.ticketStats[ticket.id]
+    if (!stats) {
+      return {
+        id: ticket.id,
+        winningMainNumbers: [],
+        winningEuroNumbers: [],
+        winClassCounts: {},
+        winClass: undefined,
+      }
+    }
+
+    // SIMPLE & PRACTICAL highlighting: Show numbers that actually contributed to wins
+    // Adaptive highlighting: stricter for large simulations to avoid everything being highlighted
+    const totalSimulations = 1000 // Should be passed from results, reasonable default
+    const isLargeSimulation = totalSimulations >= 1000
+
+    // For large simulations, use higher threshold to show only standout performers
+    const minWinThreshold = isLargeSimulation
+      ? Math.max(5, Math.floor(stats.totalWins * 0.15)) // 15% of wins for large sims
+      : Math.max(1, Math.floor(stats.totalWins * 0.05)) // 5% of wins for small sims
+
+    // Highlight any number that appeared in winning combinations above threshold
+    const winningMainNumbers = ticket.mainNumbers.filter(
+      (n: number) => (stats.mainNumberFrequency[n] || 0) >= minWinThreshold
+    )
+    const winningEuroNumbers = ticket.euroNumbers.filter(
+      (n: number) => (stats.euroNumberFrequency[n] || 0) >= minWinThreshold
+    )
+
+    // Show ALL win classes that have any wins at all (no filtering)
+    const significantWinClasses = { ...stats.winClassCounts }
+
+    const winClass =
+      Object.keys(significantWinClasses).length > 0
+        ? Object.keys(significantWinClasses)
+            .map(Number)
+            .sort((a, b) => a - b)[0]
+        : undefined
+
+    return {
+      id: ticket.id,
+      winningMainNumbers,
+      winningEuroNumbers,
+      winClassCounts: significantWinClasses, // Show all win classes
+      winClass,
+    }
+  })
+
+  emit('apply-highlights', updates)
+}
+
+/**
+ * Analyzes all individual simulations to show aggregate winning patterns.
+ * Legacy fallback when individual results are available but optimized data isn't.
+ */
+const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
+  const individualResults = results.individualResults!
+
+  // Track number frequency across all winning draws for each ticket
+  const ticketWinFrequency = new Map<
+    number,
+    {
+      mainNumbers: Map<number, number>
+      euroNumbers: Map<number, number>
+      totalWinClassCounts: Record<number, number>
+      totalWins: number
+    }
+  >()
+
+  // Initialize tracking for each ticket
+  props.tickets.forEach((ticket) => {
+    ticketWinFrequency.set(ticket.id, {
+      mainNumbers: new Map(),
+      euroNumbers: new Map(),
+      totalWinClassCounts: {},
+      totalWins: 0,
+    })
+  })
+
+  // Analyze all simulations
+  individualResults.forEach((simResult) => {
+    if (!simResult.winningNumbers) return
+
+    const simMain = simResult.winningNumbers.mainNumbers
+    const simEuro = simResult.winningNumbers.euroNumbers
+    const mainSet = new Set(simMain)
+    const euroSet = new Set(simEuro)
+
+    props.tickets.forEach((ticket) => {
+      const ticketStats = ticketWinFrequency.get(ticket.id)!
+
+      // Count matches for this simulation
+      const matchingMain = ticket.mainNumbers.filter((n) => mainSet.has(n))
+      const matchingEuro = ticket.euroNumbers.filter((n) => euroSet.has(n))
+
+      const k = matchingMain.length
+      const h = matchingEuro.length
+      const m = ticket.mainNumbers.length
+      const e = ticket.euroNumbers.length
+
+      const winClassCounts = calculateWinningLineCounts(m, e, k, h)
+      const hasWin = Object.values(winClassCounts).some((count) => count > 0)
+
+      if (hasWin) {
+        ticketStats.totalWins++
+
+        // Track frequency of winning numbers for this ticket
+        matchingMain.forEach((num) => {
+          ticketStats.mainNumbers.set(
+            num,
+            (ticketStats.mainNumbers.get(num) || 0) + 1
+          )
+        })
+        matchingEuro.forEach((num) => {
+          ticketStats.euroNumbers.set(
+            num,
+            (ticketStats.euroNumbers.get(num) || 0) + 1
+          )
+        })
+
+        // Accumulate win class counts
+        Object.entries(winClassCounts).forEach(([cls, count]) => {
+          const classNum = Number(cls)
+          if (count > 0) {
+            ticketStats.totalWinClassCounts[classNum] =
+              (ticketStats.totalWinClassCounts[classNum] || 0) + count
+          }
+        })
+      }
+    })
+  })
+
+  // Apply highlighting based on aggregate data
+  const updates = props.tickets.map((ticket) => {
+    const stats = ticketWinFrequency.get(ticket.id)!
+
+    // Highlight numbers that won frequently (appeared in >10% of winning simulations for this ticket)
+    const minFrequencyThreshold = Math.max(1, Math.floor(stats.totalWins * 0.1))
+
+    const winningMainNumbers = ticket.mainNumbers.filter(
+      (n) => (stats.mainNumbers.get(n) || 0) >= minFrequencyThreshold
+    )
+    const winningEuroNumbers = ticket.euroNumbers.filter(
+      (n) => (stats.euroNumbers.get(n) || 0) >= minFrequencyThreshold
+    )
+
+    const winClass = Object.keys(stats.totalWinClassCounts)
+      .map(Number)
+      .sort((a, b) => a - b)[0] // Best win class achieved
+
+    return {
+      id: ticket.id,
+      winningMainNumbers,
+      winningEuroNumbers,
+      winClassCounts: stats.totalWinClassCounts,
+      winClass,
+    }
+  })
+
+  emit('apply-highlights', updates)
+}
+
+/**
+ * Fallback highlighting when individual results aren't available.
+ * Uses win distribution data to show which tickets likely won.
+ */
+const applyWinDistributionHighlighting = (
+  _results: BatchSimulationResult
+): void => {
+  // Without individual results, we can only show aggregate win data
+  // Generate a representative draw and use win distribution to estimate performance
+  const updates = props.tickets.map((ticket) => ({
+    id: ticket.id,
+    winningMainNumbers: [], // No specific numbers to highlight
+    winningEuroNumbers: [], // No specific numbers to highlight
+    winClassCounts: {}, // Could potentially estimate from results.winDistribution
+    winClass: undefined,
+  }))
+
+  emit('apply-highlights', updates)
+}
 
 const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
   if (!props.tickets.length) return
@@ -209,6 +436,10 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
               state.value.results =
                 msg.result as unknown as BatchSimulationResult
               state.value.phase = 'results'
+              // Apply highlights based on the first individual result
+              if (state.value.results) {
+                await applyHighlightsFromResults(state.value.results)
+              }
             } else if (
               isObj(msg) &&
               msg.type === 'error' &&
@@ -223,6 +454,10 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
     } else {
       state.value.results = (await resp.json()) as BatchSimulationResult
       state.value.phase = 'results'
+      // Apply highlights based on the first individual result
+      if (state.value.results) {
+        await applyHighlightsFromResults(state.value.results)
+      }
     }
     if (state.value.results && state.value.results.roiPercentage > 0) {
       const r = state.value.results

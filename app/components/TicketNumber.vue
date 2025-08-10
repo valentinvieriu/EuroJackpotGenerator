@@ -4,7 +4,7 @@
       'inline-flex items-center justify-center text-lg font-bold transition-all duration-300 ease-in-out',
       type === 'euro'
         ? [
-            'w-12 h-12 star-shape',
+            'w-10 h-10 star-shape',
             // NON-winner star (muted navy)
             !isWinner
               ? 'text-ivory shadow-star bg-gradient-radial from-casino-blue-light to-casino-blue-dark'

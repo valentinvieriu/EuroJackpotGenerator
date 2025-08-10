@@ -19,6 +19,8 @@ export interface BatchSimulationResult {
   statistics: SimulationStatistics
   /** Individual simulation results (optional, for detailed analysis) */
   individualResults?: IndividualSimulationResult[]
+  /** Lightweight data for ticket highlighting (always included) */
+  highlightingData?: TicketHighlightingData
 }
 
 export interface WinDistribution {
@@ -80,6 +82,23 @@ export interface BatchSimulationRequest {
   includeIndividualResults?: boolean
   /** Batch size for processing (default: 100) */
   batchSize?: number
+}
+
+export interface TicketHighlightingData {
+  /** Per-ticket aggregated winning data for highlighting */
+  ticketStats: Record<
+    number,
+    {
+      /** How many times each main number appeared in winning draws for this ticket */
+      mainNumberFrequency: Record<number, number>
+      /** How many times each euro number appeared in winning draws for this ticket */
+      euroNumberFrequency: Record<number, number>
+      /** Total win class counts across all simulations */
+      winClassCounts: Record<number, number>
+      /** Total number of simulations this ticket won */
+      totalWins: number
+    }
+  >
 }
 
 export interface BatchSimulationProgress {

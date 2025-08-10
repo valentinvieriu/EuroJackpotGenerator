@@ -20,6 +20,7 @@ import type {
   BatchSimulationRequest,
   BatchSimulationResult,
   IndividualSimulationResult,
+  TicketHighlightingData,
 } from '~/types/batchSimulation'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
 import { normalizeOdds } from '~/utils/odds'
@@ -27,7 +28,10 @@ import {
   calculateBatchStatistics,
   simulateSingleDraw,
 } from '~/utils/batchStatistics'
-import { combinationCount } from '~/utils/combinatorics'
+import {
+  combinationCount,
+  calculateWinningLineCounts,
+} from '~/utils/combinatorics'
 import type { Ticket } from '~/types/ticket'
 import { buildOddsMap } from '~/utils/payout'
 import { PRICE_PER_LINE } from '~/utils/pricing'
@@ -74,6 +78,19 @@ export default defineEventHandler(
       const individualResults: IndividualSimulationResult[] = []
       const chunks = Math.ceil(simulationCount / batchSize)
 
+      // Initialize lightweight highlighting data collection
+      const highlightingData: TicketHighlightingData = {
+        ticketStats: {},
+      }
+      tickets.forEach((ticket) => {
+        highlightingData.ticketStats[ticket.id] = {
+          mainNumberFrequency: {},
+          euroNumberFrequency: {},
+          winClassCounts: {},
+          totalWins: 0,
+        }
+      })
+
       // If client requests NDJSON, stream incremental progress after each chunk
       if (wantsNdjson) {
         const stream = new TransformStream<Uint8Array, Uint8Array>()
@@ -99,7 +116,8 @@ export default defineEventHandler(
                 chunkSize,
                 startIndex,
                 oddsMap,
-                costPerSimulation
+                costPerSimulation,
+                highlightingData
               )
 
               individualResults.push(...chunkResults)
@@ -147,6 +165,9 @@ export default defineEventHandler(
               finalResult.individualResults = undefined
             }
 
+            // Always include lightweight highlighting data
+            finalResult.highlightingData = highlightingData
+
             await writeLine({ type: 'result', result: finalResult })
           } catch (e: unknown) {
             await writeLine({
@@ -178,7 +199,8 @@ export default defineEventHandler(
           chunkSize,
           startIndex,
           oddsMap,
-          costPerSimulation
+          costPerSimulation,
+          highlightingData
         )
 
         individualResults.push(...chunkResults)
@@ -200,6 +222,9 @@ export default defineEventHandler(
       if (!includeIndividualResults) {
         batchResult.individualResults = undefined
       }
+
+      // Always include lightweight highlighting data
+      batchResult.highlightingData = highlightingData
 
       return batchResult
     } catch (error: unknown) {
@@ -234,7 +259,9 @@ function validateBatchSimulationRequest(
     })
   }
 
-  if (!Array.isArray(body.tickets) || body.tickets.length === 0) {
+  const typedBody = body as Record<string, unknown>
+
+  if (!Array.isArray(typedBody.tickets) || typedBody.tickets.length === 0) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Invalid tickets array. Must be non-empty array.',
@@ -303,7 +330,8 @@ async function processSimulationChunk(
   chunkSize: number,
   startIndex: number,
   oddsMap: Map<number, number>,
-  costPerSimulation: number
+  costPerSimulation: number,
+  highlightingData: TicketHighlightingData
 ): Promise<IndividualSimulationResult[]> {
   const results: IndividualSimulationResult[] = []
 
@@ -333,10 +361,74 @@ async function processSimulationChunk(
       simulationIndex
     )
 
+    // Collect lightweight highlighting data
+    collectHighlightingDataFromResult(
+      tickets,
+      winningMainNumbers,
+      winningEuroNumbers,
+      result,
+      highlightingData
+    )
+
     results.push(result)
   }
 
   return results
+}
+
+/**
+ * Collects lightweight highlighting data from a simulation result.
+ * Much more memory-efficient than storing full individual results.
+ */
+function collectHighlightingDataFromResult(
+  tickets: BatchSimulationRequest['tickets'],
+  winningMainNumbers: number[],
+  winningEuroNumbers: number[],
+  result: IndividualSimulationResult,
+  highlightingData: TicketHighlightingData
+): void {
+  const mainSet = new Set(winningMainNumbers)
+  const euroSet = new Set(winningEuroNumbers)
+
+  tickets.forEach((ticket) => {
+    const ticketStats = highlightingData.ticketStats[ticket.id]
+
+    // Calculate wins for THIS specific ticket in THIS simulation
+    const matchingMain = ticket.mainNumbers.filter((n) => mainSet.has(n))
+    const matchingEuro = ticket.euroNumbers.filter((n) => euroSet.has(n))
+
+    const k = matchingMain.length
+    const h = matchingEuro.length
+    const m = ticket.mainNumbers.length
+    const e = ticket.euroNumbers.length
+
+    const ticketWinCounts = calculateWinningLineCounts(m, e, k, h)
+    const hasWin = Object.values(ticketWinCounts).some((count) => count > 0)
+
+    if (hasWin) {
+      ticketStats.totalWins++
+
+      // Track winning number frequencies for this ticket
+      matchingMain.forEach((num) => {
+        ticketStats.mainNumberFrequency[num] =
+          (ticketStats.mainNumberFrequency[num] || 0) + 1
+      })
+
+      matchingEuro.forEach((num) => {
+        ticketStats.euroNumberFrequency[num] =
+          (ticketStats.euroNumberFrequency[num] || 0) + 1
+      })
+    }
+
+    // Accumulate win class counts for THIS specific ticket
+    Object.entries(ticketWinCounts).forEach(([cls, count]) => {
+      const classNum = Number(cls)
+      if (count > 0) {
+        ticketStats.winClassCounts[classNum] =
+          (ticketStats.winClassCounts[classNum] || 0) + count
+      }
+    })
+  })
 }
 
 /**

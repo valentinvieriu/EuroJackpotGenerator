@@ -15,7 +15,7 @@
       </span>
       <span
         v-if="ticket.winClass"
-        class="ml-2 font-bold text-casino-gold-light"
+        :class="['ml-2 font-bold', getWinClassTextClass(ticket.winClass)]"
       >
         - Winner Class {{ ticket.winClass }}!
       </span>
@@ -60,7 +60,7 @@
         <span
           v-for="{ winClass, count } in winClassBreakdown"
           :key="winClass"
-          class="text-xs px-2 py-1 rounded bg-casino-gold/20 text-casino-gold-light font-medium"
+          :class="getWinClassChipClasses(winClass)"
         >
           {{ count }}×Class {{ winClass }}
         </span>
@@ -90,4 +90,27 @@ const winClassBreakdown = computed(() => {
     .map(([winClass, count]) => ({ winClass: Number(winClass), count }))
     .sort((a, b) => a.winClass - b.winClass)
 })
+
+const getWinClassTextClass = (winClass: number) => {
+  // Higher classes (lower numbers) get more prominent gold styling
+  if (winClass >= 1 && winClass <= 3) {
+    return 'text-casino-gold animate-pulse'
+  } else if (winClass >= 4 && winClass <= 7) {
+    return 'text-casino-gold-light'
+  } else {
+    return 'text-casino-gold-dark'
+  }
+}
+
+const getWinClassChipClasses = (winClass: number) => {
+  const baseClasses = 'px-2 py-1 rounded-full text-xs font-semibold'
+
+  if (winClass >= 1 && winClass <= 3) {
+    return `${baseClasses} bg-casino-gold text-casino-blue-dark shadow-lg animate-pulse`
+  } else if (winClass >= 4 && winClass <= 7) {
+    return `${baseClasses} bg-casino-gold-light text-casino-blue-dark shadow-md`
+  } else {
+    return `${baseClasses} bg-casino-gold-dark text-ivory shadow-sm`
+  }
+}
 </script>

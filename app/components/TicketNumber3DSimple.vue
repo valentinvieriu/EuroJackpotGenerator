@@ -3,11 +3,7 @@
     ref="canvasRef"
     :width="canvasSize"
     :height="canvasSize"
-    :class="[
-      'ticket-number-3d',
-      type === 'euro' ? 'w-16 h-16' : 'w-12 h-12',
-      { 'scale-110': isWinner },
-    ]"
+    :class="['ticket-number-3d', 'w-12 h-12', { 'scale-110': isWinner }]"
     @click="$emit('click')"
   />
 </template>
@@ -30,7 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const canvasRef = ref<HTMLCanvasElement>()
-const canvasSize = computed(() => (props.type === 'euro' ? 120 : 100))
+const canvasSize = computed(() => 100)
 
 // Gilded Jackpot palette
 const palette = {
