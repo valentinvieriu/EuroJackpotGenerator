@@ -1,141 +1,90 @@
-import { H3Error } from 'h3'
+import { defineEventHandler } from 'h3'
 import { generateEurojackpotUrl, EurojackpotDrawType } from '~/utils/dateUtils'
 import {
-  eurojackpotHistoricOddsSchema,
-  type EurojackpotHistoricOdds,
+  fetchWinningDataResponseSchema,
+  type FetchWinningDataResponse,
 } from '~/schemas'
-
-/**
- * NOTE: Winning class normalization now lives in `~/utils/odds.ts` as a shared utility.
- */
+import {
+  validateExternalResponse,
+  validateOutput,
+  handleEndpointError,
+  fetchWithTimeout,
+} from '../utils/validation'
 
 /**
  * API endpoint handler to fetch the latest available EuroJackpot winning numbers and odds data.
- * - Fetches data for the most recent 'previous' draw using the Lotto Bayern API URL structure.
- * - Includes a fetch timeout.
- * - Normalizes the winning class numbers (e.g., 101 -> 1).
- * - Provides hardcoded fallback data if the API fetch fails or returns invalid data.
- *
- * @param event The H3 event object.
- * @returns A promise resolving to the EurojackpotHistoricOdds object (either fetched or fallback).
- * @throws {H3Error} Propagates H3-specific errors. For general errors, logs them and returns fallback data.
+ * Validates input/output at the edges and handles all error cases properly.
  */
 export default defineEventHandler(
-  async (_event): Promise<EurojackpotHistoricOdds> => {
-    let data: EurojackpotHistoricOdds | null = null
-    let fetchError: Error | null = null // Store specific error for logging fallback reason
-    const controller = new AbortController() // For implementing fetch timeout
-    const timeoutDuration = 8000 // 8 seconds timeout
-
-    // Set timeout to abort the fetch request if it takes too long
-    const timeoutId = setTimeout(() => {
-      console.warn(`Fetch timeout triggered after ${timeoutDuration}ms.`)
-      controller.abort()
-    }, timeoutDuration)
-
+  async (): Promise<FetchWinningDataResponse> => {
     try {
-      // Generate the URL for the *previous* draw relative to today.
+      // 1. Generate URL for external API
       const url = generateEurojackpotUrl(EurojackpotDrawType.PREVIOUS)
       console.log(`Attempting to fetch winning data from: ${url}`)
 
-      // Fetch data from the external API
-      const response = await fetch(url, {
-        signal: controller.signal, // Link fetch to the AbortController
-        headers: { Accept: 'application/json' }, // Request JSON response
-        // Consider cache-control headers if needed, e.g., 'Cache-Control': 'no-cache'
+      // 2. Fetch from external API with timeout
+      const response = await fetchWithTimeout(url, {
+        timeout: 8000,
+        headers: { Accept: 'application/json' },
       })
 
-      // Clear the timeout timer as the fetch completed (successfully or not)
-      clearTimeout(timeoutId)
-
-      // --- Handle HTTP Response ---
       if (!response.ok) {
-        // Try to get more details from the response body for better error diagnosis
-        let errorBody = `(Status: ${response.status})`
-        try {
-          errorBody = await response.text()
-        } catch {
-          /* Ignore error reading body */
-        }
-        throw new Error(
-          `HTTP error fetching winning data: ${response.status}. Body: ${errorBody}`
-        )
+        console.warn('Failed to fetch current odds, using fallback data')
+        return getFallbackWinningData()
       }
 
-      // --- Parse and Validate JSON with Zod ---
+      // 3. Parse and validate external response
       const rawData = await response.json()
-      const parseResult = eurojackpotHistoricOddsSchema.safeParse(rawData)
+      const validatedData = validateExternalResponse(
+        fetchWinningDataResponseSchema,
+        rawData,
+        'Lotto Bayern API'
+      )
 
-      if (!parseResult.success) {
-        // For external API errors, we'll use fallback rather than throwing
-        console.warn(
-          'External API returned invalid data:',
-          parseResult.error?.errors || parseResult.error
-        )
-        throw new Error(
-          `External API returned invalid data: ${parseResult.error?.message || 'Unknown validation error'}`
-        )
-      }
-
-      data = parseResult.data
       console.log('Winning data fetched and validated successfully.')
 
-      // --- Return successfully fetched and processed data ---
-      return data
+      // 4. Validate output at the edge
+      return validateOutput(
+        fetchWinningDataResponseSchema,
+        validatedData,
+        'winning data response'
+      )
     } catch (error: unknown) {
-      // Clear timeout just in case error occurred before fetch completed but after timeout was set
-      clearTimeout(timeoutId)
-
-      if (error instanceof H3Error) {
-        throw error // Re-throw H3 specific errors directly
+      // If external validation fails, fall back to local data
+      if (
+        error &&
+        typeof error === 'object' &&
+        'statusCode' in error &&
+        error.statusCode === 502
+      ) {
+        console.warn('Using fallback winning data due to external API error')
+        return getFallbackWinningData()
       }
 
-      // Handle fetch errors (including AbortError from timeout) and parsing/validation errors
-      fetchError = error instanceof Error ? error : new Error(String(error)) // Store the error
-      console.error(
-        `Error during winning data fetch or processing: ${fetchError.message}`
-      )
-      // Fallback mechanism will be triggered below as 'data' is still null.
+      handleEndpointError(error, '/api/fetchWinningData')
     }
-
-    // --- Fallback Mechanism ---
-    // If 'data' is still null at this point, it means the try block failed.
-    if (!data) {
-      console.warn(
-        `Using fallback winning data due to error: ${fetchError?.message ?? 'Unknown error'}`
-      )
-      data = getFallbackWinningData() // Use the predefined fallback data
-    }
-
-    // Return either the successfully fetched/normalized data or the fallback data.
-    return data
   }
 )
 
 /**
  * Provides a hardcoded set of fallback EuroJackpot odds data.
  * This is used if the live API fetch fails. The winning classes are already normalized (1-12).
- * Amounts are representative estimates and may not reflect actual recent jackpots/payouts.
- *
- * @returns A complete EurojackpotHistoricOdds object with fallback values.
  */
-function getFallbackWinningData(): EurojackpotHistoricOdds {
-  const fallbackDate = new Date() // Use current date for fallback context
-  // Ensure timestamps are numbers or null
+function getFallbackWinningData(): FetchWinningDataResponse {
+  const fallbackDate = new Date()
   const fallbackTimestamp = fallbackDate.getTime()
 
   return {
     eurojackpotGameCycle: {
-      cycleNo: 0, // Placeholder
+      cycleNo: 0,
       cycleYear: fallbackDate.getFullYear(),
-      eventDate: fallbackTimestamp, // Example timestamp
-      eventWeekday: fallbackDate.getDay(), // Example weekday
-      gametableValidFrom: null, // Or a placeholder timestamp if needed
-      gametableValidTo: null, // Or a placeholder timestamp if needed
-      key: 'fallback-data-key', // Identifier for fallback
-      variantNo: 0, // Placeholder
+      eventDate: fallbackTimestamp,
+      eventWeekday: fallbackDate.getDay(),
+      gametableValidFrom: null,
+      gametableValidTo: null,
+      key: 'fallback-data-key',
+      variantNo: 0,
     },
-    // Odds using standard winningClass 1-12 and estimated amounts
     eurojackpotOdds: [
       {
         amount: 10000000.0,
@@ -150,7 +99,7 @@ function getFallbackWinningData(): EurojackpotHistoricOdds {
         winningClass: 2,
         sequence: 2,
         jackpot: false,
-      }, // Example wins > 0
+      },
       {
         amount: 100000.0,
         numberOfWins: 3,
@@ -222,9 +171,6 @@ function getFallbackWinningData(): EurojackpotHistoricOdds {
         jackpot: false,
       },
     ],
-    // Turnover data might be less critical for fallback, provide placeholders
-    eurojackpotTurnover: [
-      { amount: 50000000.0, jurisdiction: 0 }, // Example overall turnover
-    ],
+    eurojackpotTurnover: [{ amount: 50000000.0, jurisdiction: 0 }],
   }
 }

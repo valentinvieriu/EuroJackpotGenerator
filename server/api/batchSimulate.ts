@@ -1,6 +1,4 @@
 import {
-  H3Error,
-  createError,
   defineEventHandler,
   readBody,
   getHeader,
@@ -24,9 +22,9 @@ import type {
 import type { EurojackpotHistoricOdds } from '~/types/winning'
 import {
   batchSimulationRequestSchema,
-  eurojackpotHistoricOddsSchema,
   type BatchSimulationRequest,
 } from '~/schemas'
+import { validateInput, handleEndpointError } from '../utils/validation'
 import { normalizeOdds } from '~/utils/odds'
 import {
   calculateBatchStatistics,
@@ -50,32 +48,21 @@ import { PRICE_PER_LINE } from '~/utils/pricing'
 export default defineEventHandler(
   async (event): Promise<BatchSimulationResult | undefined> => {
     try {
-      // First validate Accept header for NDJSON
+      // 1. Validate Accept header for NDJSON
       const accept = (getHeader(event, 'accept') || '').toLowerCase()
       const wantsNdjson = accept.includes('application/x-ndjson')
+
       if (accept && !accept.includes('application/json') && !wantsNdjson) {
-        throw createError({
-          statusCode: 406,
-          statusMessage:
-            'Not Acceptable. Supported content types: application/json, application/x-ndjson',
-        })
+        throw new Error('Unsupported Accept header')
       }
 
-      // Parse and validate request body with Zod
+      // 2. Validate input at the edge
       const rawBody = await readBody(event)
-      const parseResult = batchSimulationRequestSchema.safeParse(rawBody)
-
-      if (!parseResult.success) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: 'Invalid request body',
-          data: {
-            errors: parseResult.error.errors,
-          },
-        })
-      }
-
-      const body = parseResult.data
+      const body = validateInput(
+        batchSimulationRequestSchema,
+        rawBody,
+        'batch simulation request'
+      )
 
       const {
         tickets,
@@ -251,20 +238,7 @@ export default defineEventHandler(
 
       return batchResult
     } catch (error: unknown) {
-      console.error('Error in batch simulation endpoint:', error)
-
-      if (error instanceof H3Error) {
-        throw error
-      }
-
-      throw createError({
-        statusCode: 500,
-        statusMessage:
-          'An internal server error occurred during batch simulation.',
-        data: {
-          message: error instanceof Error ? error.message : String(error),
-        },
-      })
+      handleEndpointError(error, '/api/batchSimulate')
     }
   }
 )
@@ -336,7 +310,7 @@ function collectHighlightingDataFromResult(
   tickets: BatchSimulationRequest['tickets'],
   winningMainNumbers: number[],
   winningEuroNumbers: number[],
-  result: IndividualSimulationResult,
+  _result: IndividualSimulationResult,
   highlightingData: TicketHighlightingData
 ): void {
   const mainSet = new Set(winningMainNumbers)
@@ -411,13 +385,13 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
     if (!parseResult.success) {
       console.warn(
         'Invalid odds data structure from external API, using fallback:',
-        parseResult.error.errors
+        parseResult.error.issues
       )
       throw createError({
         statusCode: 502,
         statusMessage: 'Bad Gateway: External API returned invalid data',
         data: {
-          errors: parseResult.error.errors,
+          errors: parseResult.error.issues,
         },
       })
     }
