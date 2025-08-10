@@ -38,7 +38,10 @@
     </div>
 
     <!-- Description and Action Button -->
-    <form @submit.prevent="simulateExtractionHandler" class="flex justify-between items-center">
+    <form
+      @submit.prevent="simulateExtractionHandler"
+      class="flex justify-between items-center"
+    >
       <p class="text-gray-400 text-sm">
         Simulate a single draw to see immediate winning results and ROI
       </p>
@@ -206,7 +209,11 @@ const onEnterKey = (e: KeyboardEvent): void => {
   const target = e.target as HTMLElement | null
   const tag = target?.tagName?.toLowerCase()
   const isFormElement =
-    !!tag && (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button')
+    !!tag &&
+    (tag === 'input' ||
+      tag === 'textarea' ||
+      tag === 'select' ||
+      tag === 'button')
   const isEditable = !!(target && (target as HTMLElement).isContentEditable)
   if (isFormElement || isEditable) return
   if (!loading.value && props.tickets.length > 0) {
