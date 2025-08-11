@@ -86,7 +86,9 @@
           </h3>
           <div class="space-y-2">
             <div class="flex justify-between">
-              <span class="text-gray-300">Expected per simulation:</span>
+              <span class="text-gray-300"
+                >Average winnings per simulation:</span
+              >
               <span class="font-medium text-gray-200"
                 >€{{ results.expectedValue.toFixed(2) }}</span
               >
@@ -326,9 +328,56 @@
 <script setup lang="ts">
 import { computed, type PropType } from 'vue'
 import type { BatchSimulationResult } from '~/types/batchSimulation'
+import { combinationCount } from '~/utils/combinatorics'
+
+/**
+ * Gets the probability of winning any prize class for a single line
+ * Based on EuroJackpot class probabilities
+ */
+function getWinClassProbability(winClass: number): number {
+  const probabilities: Record<number, number> = {
+    1: 1 / 139838160,
+    2: 1 / 6991908,
+    3: 1 / 3107515,
+    4: 1 / 621503,
+    5: 1 / 31075,
+    6: 1 / 14125,
+    7: 1 / 13811,
+    8: 1 / 985,
+    9: 1 / 706,
+    10: 1 / 314,
+    11: 1 / 188,
+    12: 1 / 49,
+  }
+  return probabilities[winClass] || 0
+}
+
+/**
+ * Calculates the expected win rate for a given number of lines per simulation
+ * Formula: 1 - (1 - p_any)^L where p_any = 1 - ∏(1 - p_class)
+ */
+function calculateExpectedWinRate(linesPerSimulation: number): number {
+  // Calculate probability of ANY win on a single line: p_any = 1 - ∏(1 - p_class)
+  let noWinProbability = 1
+  for (let winClass = 1; winClass <= 12; winClass++) {
+    const classProbability = getWinClassProbability(winClass)
+    noWinProbability *= 1 - classProbability
+  }
+  const perLineProbability = 1 - noWinProbability
+
+  // Calculate probability of at least one win in L lines: 1 - (1 - p_any)^L
+  const expectedWinRate =
+    1 - Math.pow(1 - perLineProbability, linesPerSimulation)
+
+  return expectedWinRate * 100 // Convert to percentage
+}
 
 const props = defineProps({
   results: { type: Object as PropType<BatchSimulationResult>, required: true },
+  tickets: {
+    type: Array as PropType<import('~/types/ticket').Ticket[]>,
+    required: true,
+  },
 })
 defineEmits<{ reset: [] }>()
 
@@ -379,11 +428,29 @@ const bestPerformingClass = computed(() => {
   return { classNum: bestClass, count: maxCount }
 })
 
+// Calculate total lines per simulation across all tickets
+const linesPerSimulation = computed(() => {
+  return props.tickets.reduce((total, ticket) => {
+    const mainCount = ticket.mainNumbers.length
+    const euroCount = ticket.euroNumbers.length
+    return total + combinationCount(mainCount, euroCount)
+  }, 0)
+})
+
 const winRateVsExpected = computed(() => {
-  const expectedRate = 15
+  const expectedRate = calculateExpectedWinRate(linesPerSimulation.value)
   const actualRate = props.results.winDistribution.winPercentage
   return ((actualRate - expectedRate) / expectedRate) * 100
 })
+
+/**
+ * Formats probability as user-friendly odds (e.g., "1 in 49")
+ */
+const formatProbabilityAsOdds = (probability: number): string => {
+  if (probability === 0) return ''
+  const odds = Math.round(1 / probability)
+  return `1 in ${odds.toLocaleString()}`
+}
 
 const getClassDescription = (classNum: number): string => {
   const descriptions: Record<number, string> = {
@@ -400,7 +467,12 @@ const getClassDescription = (classNum: number): string => {
     11: '(1+2)',
     12: '(2+1)',
   }
-  return descriptions[classNum] || ''
+
+  const description = descriptions[classNum] || ''
+  const probability = getWinClassProbability(classNum)
+  const odds = formatProbabilityAsOdds(probability)
+
+  return odds ? `${description} • ${odds}` : description
 }
 
 const getClassColor = (classNum: number): string => {

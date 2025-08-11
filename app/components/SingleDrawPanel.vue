@@ -39,8 +39,8 @@
 
     <!-- Description and Action Button -->
     <form
-      @submit.prevent="simulateExtractionHandler"
       class="flex justify-between items-center"
+      @submit.prevent="simulateExtractionHandler"
     >
       <p class="text-gray-400 text-sm">
         Simulate a single draw to see immediate winning results and ROI

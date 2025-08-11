@@ -32,6 +32,7 @@
     <BatchSimulationResults
       v-if="state.phase === 'results' && state.results"
       :results="state.results"
+      :tickets="tickets"
       @reset="handleReset"
     />
   </div>

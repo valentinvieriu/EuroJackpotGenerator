@@ -164,6 +164,8 @@ export default defineEventHandler(
                   currentSimulation: endIndex,
                   totalSimulations: simulationCount,
                   progressPercentage: (endIndex / simulationCount) * 100,
+                  estimatedTimeRemaining: null,
+                  canCancel: true,
                 },
                 summary: {
                   totalCost: partialStats.totalCost,
