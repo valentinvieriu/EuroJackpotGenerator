@@ -10,6 +10,7 @@ import {
   calculateWinningLineCounts,
   combinationCount,
 } from '~/utils/combinatorics'
+import { getWinClassProbability } from '~/utils/winProbabilities'
 
 export function calculateBatchStatistics(
   individualResults: IndividualSimulationResult[],
@@ -226,22 +227,4 @@ export function calculateTheoreticalExpectedValue(
     }
   }
   return expectedValue
-}
-
-function getWinClassProbability(winClass: number): number {
-  const probabilities: Record<number, number> = {
-    1: 1 / 139838160,
-    2: 1 / 6991908,
-    3: 1 / 3107515,
-    4: 1 / 621503,
-    5: 1 / 31075,
-    6: 1 / 14125,
-    7: 1 / 13811,
-    8: 1 / 985,
-    9: 1 / 706,
-    10: 1 / 314,
-    11: 1 / 188,
-    12: 1 / 49,
-  }
-  return probabilities[winClass] || 0
 }

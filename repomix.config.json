@@ -4,8 +4,9 @@
     "maxFileSize": 52428800
   },
   "output": {
+    "instructionFilePath": "ai_docs/RepoPrompt.md",
     "filePath": "ai_docs/repomix-output.md",
-    "style": "markdown",
+    "style": "xml",
     "headerText": "",
     "parsableStyle": false,
     "fileSummary": true,

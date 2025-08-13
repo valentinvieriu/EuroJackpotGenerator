@@ -329,47 +329,22 @@
 import { computed, type PropType } from 'vue'
 import type { BatchSimulationResult } from '~/types/batchSimulation'
 import { combinationCount } from '~/utils/combinatorics'
-
-/**
- * Gets the probability of winning any prize class for a single line
- * Based on EuroJackpot class probabilities
- */
-function getWinClassProbability(winClass: number): number {
-  const probabilities: Record<number, number> = {
-    1: 1 / 139838160,
-    2: 1 / 6991908,
-    3: 1 / 3107515,
-    4: 1 / 621503,
-    5: 1 / 31075,
-    6: 1 / 14125,
-    7: 1 / 13811,
-    8: 1 / 985,
-    9: 1 / 706,
-    10: 1 / 314,
-    11: 1 / 188,
-    12: 1 / 49,
-  }
-  return probabilities[winClass] || 0
-}
+import { getWinClassProbability } from '~/utils/winProbabilities'
 
 /**
  * Calculates the expected win rate for a given number of lines per simulation
  * Formula: 1 - (1 - p_any)^L where p_any = 1 - ∏(1 - p_class)
  */
 function calculateExpectedWinRate(linesPerSimulation: number): number {
-  // Calculate probability of ANY win on a single line: p_any = 1 - ∏(1 - p_class)
-  let noWinProbability = 1
+  // Per-line probability of *any* win = sum of mutually exclusive class probabilities
+  let pAny = 0
   for (let winClass = 1; winClass <= 12; winClass++) {
-    const classProbability = getWinClassProbability(winClass)
-    noWinProbability *= 1 - classProbability
+    pAny += getWinClassProbability(winClass)
   }
-  const perLineProbability = 1 - noWinProbability
-
-  // Calculate probability of at least one win in L lines: 1 - (1 - p_any)^L
+  pAny = Math.min(Math.max(pAny, 0), 1)
   const expectedWinRate =
-    1 - Math.pow(1 - perLineProbability, linesPerSimulation)
-
-  return expectedWinRate * 100 // Convert to percentage
+    1 - Math.pow(1 - pAny, Math.max(linesPerSimulation, 0))
+  return expectedWinRate * 100
 }
 
 const props = defineProps({
@@ -440,7 +415,9 @@ const linesPerSimulation = computed(() => {
 const winRateVsExpected = computed(() => {
   const expectedRate = calculateExpectedWinRate(linesPerSimulation.value)
   const actualRate = props.results.winDistribution.winPercentage
-  return ((actualRate - expectedRate) / expectedRate) * 100
+  return expectedRate > 0
+    ? ((actualRate - expectedRate) / expectedRate) * 100
+    : 0
 })
 
 /**

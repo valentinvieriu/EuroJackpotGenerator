@@ -12,30 +12,17 @@ export enum EurojackpotDrawType {
  * @returns The ISO 8601 week number (1-53).
  */
 function getISOWeekNumber(date: Date): number {
-  // Create a copy to avoid modifying the original date
-  const target = new Date(date.valueOf())
-
-  // Calculate the day number (0=Sunday, 1=Monday,..., 6=Saturday)
-  // Adjust to make Monday=0, Sunday=6
-  const dayNr = (date.getDay() + 6) % 7
-
-  // Set the target to the Thursday of the current week
-  target.setDate(target.getDate() - dayNr + 3)
-
-  // Get the first Thursday of the year
-  const firstThursday = new Date(target.getFullYear(), 0, 4) // January 4th is always in week 1
-
-  // Adjust firstThursday to be the Thursday of week 1
-  firstThursday.setDate(
-    firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
   )
-
-  // Calculate the difference in weeks
-  // getTime() returns milliseconds since epoch
-  const diffInMilliseconds = target.getTime() - firstThursday.getTime()
-  const weeks = Math.ceil(diffInMilliseconds / (7 * 24 * 60 * 60 * 1000)) + 1 // Add 1 because week numbering starts at 1
-
-  return weeks
+  // Thursday in current week decides the year.
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+  // First week of the year begins with the Monday of the week that contains Jan 4th.
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil(
+    ((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7
+  )
+  return weekNo
 }
 
 /**

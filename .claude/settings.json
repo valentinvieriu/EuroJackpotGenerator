@@ -1,4 +1,7 @@
 {
+  "env": {
+    "NODE_ENV": "development"
+  },
   "permissions": {
     "allow": [
       "Write",
@@ -13,12 +16,13 @@
       "TodoRead",
       "TodoWrite"
     ],
-    "deny": []
+    "deny": ["Bash(awk:*)"]
   },
   "features": {
     "extendedThinking": true,
     "toolUse": true,
-    "codeExecution": true
+    "codeExecution": true,
+    "autoUpdates": true
   },
   "preferences": {
     "verbosity": "concise",
@@ -27,14 +31,9 @@
     "lintBeforeCommit": true
   },
   "mcpServers": {
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@context7/mcp-server"],
-      "env": {
-        "CONTEXT7_MCP_SERVER_URL": "https://mcp.context7.com/sse"
-      }
-    }
+    "enableAllProjectMcpServers": true
   },
+  "enabledMcpjsonServers": ["context7", "nuxt"],
   "hooks": {
     "PostToolUse": [
       {

@@ -46,6 +46,7 @@ import type { Ticket } from '~/types/ticket'
 import type {
   BatchSimulationRequest,
   BatchSimulationResult,
+  IndividualSimulationResult,
   TicketHighlightingData,
 } from '~/types/batchSimulation'
 import { calculateWinningLineCounts } from '~/utils/combinatorics'
@@ -98,7 +99,7 @@ const state = ref({
   abortController: null as AbortController | null,
 })
 
-const timer = ref<NodeJS.Timeout | null>(null)
+const timer = ref<ReturnType<typeof setInterval> | null>(null)
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase
 
