@@ -12,7 +12,7 @@
       </p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div>
         <label
           for="simulationCount"
@@ -23,8 +23,13 @@
         <select
           id="simulationCount"
           v-model.number="config.simulationCount"
-          class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
+          class="w-full min-w-0 px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
           :disabled="disabled"
+          :title="
+            simulationOptions.find(
+              (opt) => opt.value === config.simulationCount
+            )?.label || ''
+          "
         >
           <option
             v-for="option in simulationOptions"
@@ -54,54 +59,120 @@
           <option :value="200">200 (Memory Efficient)</option>
         </select>
       </div>
-
-      <div>
-        <label class="mb-2 block text-gray-400 text-sm font-medium">
-          Estimated Runtime:
-        </label>
-        <div class="flex items-center justify-start h-10">
-          <span class="text-sm text-casino-gold-light font-medium">
-            {{ estimatedRuntime }}
-          </span>
-        </div>
-      </div>
     </div>
 
+    <!-- Key Performance Indicators -->
     <div
       v-if="ticketCount > 0"
-      class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+      class="mb-6 p-5 bg-gradient-to-r from-casino-blue/40 to-casino-blue-light/20 rounded-lg border border-casino-gold/20 backdrop-blur-sm"
     >
-      <div class="text-center">
-        <div class="text-sm text-gray-400">Total Cost</div>
-        <div class="text-lg font-semibold text-red-400">
-          €{{
-            totalSimulationCost.toLocaleString('en-GB', {
-              minimumFractionDigits: 2,
-            })
-          }}
+      <h3
+        class="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2"
+      >
+        <svg
+          class="w-5 h-5 text-casino-gold"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Simulation Summary
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div
+          class="text-center bg-casino-blue-dark/50 p-4 rounded-lg border border-red-400/30"
+        >
+          <div class="flex items-center justify-center gap-2 mb-2">
+            <svg
+              class="w-4 h-4 text-red-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+              />
+            </svg>
+            <span class="text-sm text-gray-300 font-medium">Total Cost</span>
+            <span
+              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-900/50 text-red-300 border border-red-400/30"
+            >
+              HIGH
+            </span>
+          </div>
+          <div class="text-2xl font-bold text-red-400">
+            €{{
+              totalSimulationCost.toLocaleString('en-GB', {
+                minimumFractionDigits: 2,
+              })
+            }}
+          </div>
+          <div class="text-xs text-gray-500 mt-1">
+            {{ config.simulationCount.toLocaleString() }} × €{{
+              costPerSimulation.toFixed(2)
+            }}
+          </div>
         </div>
-        <div class="text-xs text-gray-500">
-          {{ config.simulationCount.toLocaleString() }} × €{{
-            costPerSimulation.toFixed(2)
-          }}
-        </div>
-      </div>
 
-      <div class="text-center">
-        <div class="text-sm text-gray-400">Break-even Target</div>
-        <div class="text-lg font-semibold text-yellow-400">
-          {{ breakEvenPercentage.toFixed(1) }}%
+        <div
+          class="text-center bg-casino-blue-dark/50 p-4 rounded-lg border border-yellow-400/30"
+        >
+          <div class="flex items-center justify-center gap-2 mb-2">
+            <svg
+              class="w-4 h-4 text-yellow-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <span class="text-sm text-gray-300 font-medium"
+              >Break-even Target</span
+            >
+            <span
+              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-900/50 text-yellow-300 border border-yellow-400/30"
+            >
+              TARGET
+            </span>
+          </div>
+          <div class="text-2xl font-bold text-yellow-400">
+            {{ breakEvenPercentage.toFixed(1) }}%
+          </div>
+          <div class="text-xs text-gray-500 mt-1">
+            Win rate needed to break even
+          </div>
         </div>
-        <div class="text-xs text-gray-500">Win rate needed to break even</div>
-      </div>
 
-      <div class="text-center">
-        <div class="text-sm text-gray-400">Expected Scenarios</div>
-        <div class="text-lg font-semibold text-casino-gold-light">
-          {{ Math.round(config.simulationCount * 0.15) }}
-        </div>
-        <div class="text-xs text-gray-500">
-          Estimated winning simulations (~15%)
+        <div
+          class="text-center bg-casino-blue-dark/50 p-4 rounded-lg border border-casino-gold/30"
+        >
+          <div class="flex items-center justify-center gap-2 mb-2">
+            <svg
+              class="w-4 h-4 text-casino-gold"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+              />
+            </svg>
+            <span class="text-sm text-gray-300 font-medium"
+              >Expected Scenarios</span
+            >
+            <span
+              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-casino-gold/20 text-casino-gold border border-casino-gold/30"
+            >
+              EST.
+            </span>
+          </div>
+          <div class="text-2xl font-bold text-casino-gold">
+            {{ Math.round(config.simulationCount * 0.15) }}
+          </div>
+          <div class="text-xs text-gray-500 mt-1">
+            Estimated winning simulations (~15%)
+          </div>
         </div>
       </div>
     </div>
@@ -243,14 +314,6 @@ const breakEvenPercentage = computed(() => {
   if (props.costPerSimulation <= 0) return 0
   const averageWinAmount = 12.5
   return (props.costPerSimulation / averageWinAmount) * 100
-})
-
-const estimatedRuntime = computed(() => {
-  const baseTimePerThousand = 2
-  const totalSeconds = (config.simulationCount / 1000) * baseTimePerThousand
-  if (totalSeconds < 60) return `~${Math.ceil(totalSeconds)}s`
-  if (totalSeconds < 3600) return `~${Math.ceil(totalSeconds / 60)}m`
-  return `~${Math.ceil(totalSeconds / 3600)}h`
 })
 
 const handleStartSimulation = () => {
