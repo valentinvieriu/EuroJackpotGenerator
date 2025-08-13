@@ -110,18 +110,6 @@ const getPrizeTooltip = (winClass: number, count: number) => {
   const totalPrize = calculatePrizeAmount(winClass, count)
   const prizeAmount = oddsMap.value.get(winClass) ?? 0
 
-  // Debug information
-  if (import.meta.dev) {
-    console.log('Prize tooltip debug:', {
-      winClass,
-      count,
-      prizeAmount,
-      totalPrize,
-      hasWinningData: !!props.winningData,
-      oddsMapSize: oddsMap.value.size,
-    })
-  }
-
   if (totalPrize > 0) {
     return `Total Prize: €${totalPrize.toFixed(2)}`
   }
