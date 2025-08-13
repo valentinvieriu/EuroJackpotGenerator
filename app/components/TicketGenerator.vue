@@ -321,7 +321,6 @@ import type { EurojackpotHistoricOdds } from '~/types/winning'
 import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
-import SummaryCard from './SummaryCard.vue'
 import StepperInput from './StepperInput.vue'
 
 interface TicketType {
