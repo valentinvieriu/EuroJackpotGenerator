@@ -2,7 +2,9 @@
   <div
     :class="[
       'transition-all duration-500 ease-in-out',
-      tickets.length > 0 ? 'grid grid-cols-1 lg:grid-cols-5 gap-6' : 'block',
+      tickets.length > 0
+        ? 'space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-6'
+        : 'block',
     ]"
   >
     <div
@@ -17,20 +19,27 @@
       >
         <div class="mb-6">
           <h2 class="text-xl font-semibold text-casino-gold-light mb-2">
-            {{ tickets.length === 0 ? 'Generate Tickets' : 'Modify Tickets' }}
+            {{ tickets.length === 0 ? 'Ticket Settings' : 'Modify Tickets' }}
           </h2>
           <p class="text-gray-400 text-sm">
-            Configure and generate your EuroJackpot tickets
+            Configure your EuroJackpot number generation
           </p>
         </div>
 
         <form @submit.prevent="generateTicketsHandler">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 items-end">
+          <div
+            :class="[
+              'grid gap-4 mb-6',
+              tickets.length > 0
+                ? 'grid-cols-1 md:grid-cols-2 items-start' // Constrained: max 2 columns, align to top
+                : 'grid-cols-1 lg:grid-cols-3 items-end', // Full width: up to 3 columns, align to bottom
+            ]"
+          >
             <div>
               <label
                 for="ticketType"
                 class="mb-2 block text-gray-400 text-sm font-medium"
-                >Ticket Type:</label
+                >Pick Format:</label
               >
               <select
                 id="ticketType"
@@ -50,60 +59,102 @@
             </div>
 
             <div>
-              <label
-                for="ticketCount"
-                class="mb-2 block text-gray-400 text-sm font-medium"
-                >Number of Tickets:</label
+              <label class="mb-2 block text-gray-400 text-sm font-medium"
+                >Quantity:</label
               >
-              <input
-                id="ticketCount"
-                v-model.number="ticketCount"
-                type="number"
-                min="1"
-                :max="maxTicketsAllowed"
-                class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
-                aria-label="Number of Tickets to Generate"
-              />
+              <div
+                :class="[
+                  'flex gap-3',
+                  tickets.length > 0
+                    ? 'flex-col items-start' // Constrained: stack vertically
+                    : 'items-center', // Full width: horizontal alignment
+                ]"
+              >
+                <StepperInput
+                  v-model="ticketCount"
+                  :min="1"
+                  :max="maxTicketsAllowed"
+                />
+                <span
+                  :class="[
+                    'text-sm text-gray-400',
+                    tickets.length > 0 ? 'text-xs' : '', // Smaller text when constrained
+                  ]"
+                >
+                  €{{ selectedTicketType.price.toFixed(2) }} per ticket
+                </span>
+              </div>
             </div>
 
             <div class="text-right sm:text-left">
               <label class="mb-2 block text-gray-400 text-sm font-medium"
-                >Total Price:</label
+                >Total:</label
               >
-              <div class="flex items-center justify-end sm:justify-start h-10">
-                <span class="text-xl font-semibold text-casino-gold-light"
+              <div
+                class="flex flex-col items-end sm:items-start justify-center h-10"
+              >
+                <span class="text-2xl font-bold text-casino-gold-light"
                   >€{{ totalPrice.toFixed(2) }}</span
                 >
+                <span class="text-xs text-gray-400 -mt-1">
+                  €{{ selectedTicketType.price.toFixed(2) }} × {{ ticketCount }}
+                </span>
               </div>
             </div>
           </div>
 
-          <div class="mt-6">
-            <label
-              class="inline-flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-            >
-              <input
-                v-model="useStatistics"
-                type="checkbox"
-                class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light rounded focus:ring-casino-gold focus:ring-2"
-              />
-              <span class="text-sm text-gray-200">
-                Use previous draw statistics for number selection (
-                <a
-                  href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-casino-gold hover:text-casino-gold-light underline"
-                  @click.stop
-                >
-                  source
-                </a>
-                )
-              </span>
+          <div class="mt-8">
+            <label class="mb-3 block text-gray-400 text-sm font-medium">
+              Selection Method:
             </label>
+            <div class="space-y-3">
+              <label
+                class="flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+              >
+                <input
+                  v-model="selectionMethod"
+                  value="random"
+                  type="radio"
+                  name="selectionMethod"
+                  class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
+                />
+                <span class="text-sm text-gray-200">
+                  <strong>Random (recommended)</strong><br />
+                  <span class="text-xs text-gray-400"
+                    >Pure random number selection</span
+                  >
+                </span>
+              </label>
+              <label
+                class="flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+              >
+                <input
+                  v-model="selectionMethod"
+                  value="weighted"
+                  type="radio"
+                  name="selectionMethod"
+                  class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
+                />
+                <span class="text-sm text-gray-200">
+                  <strong>Weighted by past frequencies</strong><br />
+                  <span class="text-xs text-gray-400">
+                    Past draws don't affect future results.
+                    <a
+                      href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-casino-gold hover:text-casino-gold-light underline"
+                      @click.stop
+                    >
+                      Method details
+                    </a>
+                  </span>
+                </span>
+              </label>
+            </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+          <div class="flex flex-col sm:flex-row justify-end gap-3 mt-8">
             <button
               v-if="tickets.length > 0 && showGenerationForm"
               type="button"
@@ -116,14 +167,14 @@
             <button
               :disabled="loading"
               type="submit"
-              class="bg-casino-gold text-casino-blue-dark px-5 py-2 rounded-md font-semibold hover:bg-casino-gold-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition duration-150"
+              class="bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-6 py-3 rounded-md font-bold hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition-all duration-150 text-lg shadow-lg"
             >
               {{
                 loading && currentAction === 'generate'
                   ? 'Generating...'
                   : tickets.length > 0
-                    ? 'Update Tickets'
-                    : 'Generate Tickets'
+                    ? 'Update Numbers'
+                    : 'Generate Numbers'
               }}
             </button>
           </div>
@@ -270,6 +321,8 @@ import type { EurojackpotHistoricOdds } from '~/types/winning'
 import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
+import SummaryCard from './SummaryCard.vue'
+import StepperInput from './StepperInput.vue'
 
 interface TicketType {
   label: string
@@ -279,27 +332,52 @@ interface TicketType {
 }
 
 const ticketTypes: ReadonlyArray<TicketType> = [
-  { label: 'System 5/2', mainCount: 5, euroCount: 2, price: 2.0 },
-  { label: 'System 5/3', mainCount: 5, euroCount: 3, price: 6.0 },
-  { label: 'System 5/4', mainCount: 5, euroCount: 4, price: 12.0 },
-  { label: 'System 5/5', mainCount: 5, euroCount: 5, price: 20.0 },
-  { label: 'System 5/6', mainCount: 5, euroCount: 6, price: 30.0 },
-  { label: 'System 5/7', mainCount: 5, euroCount: 7, price: 42.0 },
-  { label: 'System 5/8', mainCount: 5, euroCount: 8, price: 56.0 },
-  { label: 'System 5/9', mainCount: 5, euroCount: 9, price: 72.0 },
-  { label: 'System 5/10', mainCount: 5, euroCount: 10, price: 90.0 },
-  { label: 'System 5/11', mainCount: 5, euroCount: 11, price: 110.0 },
-  { label: 'System 5/12', mainCount: 5, euroCount: 12, price: 132.0 },
-  { label: 'System 6/2', mainCount: 6, euroCount: 2, price: 12.0 },
-  { label: 'System 6/3', mainCount: 6, euroCount: 3, price: 36.0 },
-  { label: 'System 7/2', mainCount: 7, euroCount: 2, price: 42.0 },
-  { label: 'System 7/3', mainCount: 7, euroCount: 3, price: 126.0 },
+  {
+    label: '5 main + 2 Euro numbers (standard)',
+    mainCount: 5,
+    euroCount: 2,
+    price: 2.0,
+  },
+  { label: '5 main + 3 Euro numbers', mainCount: 5, euroCount: 3, price: 6.0 },
+  { label: '5 main + 4 Euro numbers', mainCount: 5, euroCount: 4, price: 12.0 },
+  { label: '5 main + 5 Euro numbers', mainCount: 5, euroCount: 5, price: 20.0 },
+  { label: '5 main + 6 Euro numbers', mainCount: 5, euroCount: 6, price: 30.0 },
+  { label: '5 main + 7 Euro numbers', mainCount: 5, euroCount: 7, price: 42.0 },
+  { label: '5 main + 8 Euro numbers', mainCount: 5, euroCount: 8, price: 56.0 },
+  { label: '5 main + 9 Euro numbers', mainCount: 5, euroCount: 9, price: 72.0 },
+  {
+    label: '5 main + 10 Euro numbers',
+    mainCount: 5,
+    euroCount: 10,
+    price: 90.0,
+  },
+  {
+    label: '5 main + 11 Euro numbers',
+    mainCount: 5,
+    euroCount: 11,
+    price: 110.0,
+  },
+  {
+    label: '5 main + 12 Euro numbers',
+    mainCount: 5,
+    euroCount: 12,
+    price: 132.0,
+  },
+  { label: '6 main + 2 Euro numbers', mainCount: 6, euroCount: 2, price: 12.0 },
+  { label: '6 main + 3 Euro numbers', mainCount: 6, euroCount: 3, price: 36.0 },
+  { label: '7 main + 2 Euro numbers', mainCount: 7, euroCount: 2, price: 42.0 },
+  {
+    label: '7 main + 3 Euro numbers',
+    mainCount: 7,
+    euroCount: 3,
+    price: 126.0,
+  },
 ]
 
 const maxTicketsAllowed = 500
 const selectedTicketType: Ref<TicketType> = ref(ticketTypes[0])
 const ticketCount: Ref<number> = ref(1)
-const useStatistics = ref(true)
+const selectionMethod = ref<'random' | 'weighted'>('weighted')
 const tickets: Ref<Ticket[]> = ref([])
 const loading: Ref<boolean> = ref(false)
 const currentAction: Ref<'generate' | 'simulate' | null> = ref(null)
@@ -383,7 +461,8 @@ const generateTicketsHandler = async (): Promise<void> => {
         ticketCount: ticketCount.value,
         mainCount: selectedTicketType.value.mainCount,
         euroCount: selectedTicketType.value.euroCount,
-        algorithm: useStatistics.value ? 'weighted' : 'uniform',
+        algorithm:
+          selectionMethod.value === 'weighted' ? 'weighted' : 'uniform',
       },
     })
     tickets.value = generatedTickets
