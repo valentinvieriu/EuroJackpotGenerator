@@ -160,6 +160,7 @@
               :key="ticket.id"
               :ticket="ticket"
               :ticket-number="ticket.id"
+              :winning-data="latestWinningData"
             />
           </div>
         </div>
@@ -245,6 +246,7 @@
             :tickets="tickets"
             :total-price="totalPrice"
             @apply-highlights="applyHighlightsOnTickets"
+            @winning-data-updated="updateWinningData"
           />
           <MonteCarloPanel
             v-if="mode === 'montecarlo'"
@@ -252,6 +254,7 @@
             :tickets="tickets"
             :cost-per-simulation="totalPrice"
             @apply-highlights="applyHighlightsOnTickets"
+            @winning-data-updated="updateWinningData"
           />
         </div>
       </div>
@@ -263,6 +266,7 @@
 import { ref, computed, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
+import type { EurojackpotHistoricOdds } from '~/types/winning'
 import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
@@ -300,6 +304,7 @@ const tickets: Ref<Ticket[]> = ref([])
 const loading: Ref<boolean> = ref(false)
 const currentAction: Ref<'generate' | 'simulate' | null> = ref(null)
 const error: Ref<string> = ref('')
+const latestWinningData: Ref<EurojackpotHistoricOdds | null> = ref(null)
 
 // UI mode
 const mode = ref<'single' | 'montecarlo'>('single')
@@ -394,6 +399,10 @@ const generateTicketsHandler = async (): Promise<void> => {
     loading.value = false
     currentAction.value = null
   }
+}
+
+const updateWinningData = (data: EurojackpotHistoricOdds): void => {
+  latestWinningData.value = data
 }
 
 const applyHighlightsOnTickets = (

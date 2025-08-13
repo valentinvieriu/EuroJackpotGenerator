@@ -60,7 +60,8 @@
         <span
           v-for="{ winClass, count } in winClassBreakdown"
           :key="winClass"
-          :class="getWinClassChipClasses(winClass)"
+          :class="[getWinClassChipClasses(winClass), 'cursor-help']"
+          :title="getPrizeTooltip(winClass, count)"
         >
           {{ count }}×Class {{ winClass }}
         </span>
@@ -72,11 +73,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Ticket } from '~/types/ticket'
+import type { EurojackpotHistoricOdds } from '~/types/winning'
 import TicketNumber from './TicketNumber3DSimple.vue'
+import { buildOddsMap } from '~/utils/payout'
 
 interface Props {
   ticket: Ticket
   ticketNumber: number
+  winningData?: EurojackpotHistoricOdds | null
 }
 
 const props = defineProps<Props>()
@@ -90,6 +94,39 @@ const winClassBreakdown = computed(() => {
     .map(([winClass, count]) => ({ winClass: Number(winClass), count }))
     .sort((a, b) => a.winClass - b.winClass)
 })
+
+const oddsMap = computed(() => {
+  return props.winningData
+    ? buildOddsMap(props.winningData)
+    : new Map<number, number>()
+})
+
+const calculatePrizeAmount = (winClass: number, count: number) => {
+  const prizeAmount = oddsMap.value.get(winClass) ?? 0
+  return prizeAmount * count
+}
+
+const getPrizeTooltip = (winClass: number, count: number) => {
+  const totalPrize = calculatePrizeAmount(winClass, count)
+  const prizeAmount = oddsMap.value.get(winClass) ?? 0
+
+  // Debug information
+  if (import.meta.dev) {
+    console.log('Prize tooltip debug:', {
+      winClass,
+      count,
+      prizeAmount,
+      totalPrize,
+      hasWinningData: !!props.winningData,
+      oddsMapSize: oddsMap.value.size,
+    })
+  }
+
+  if (totalPrize > 0) {
+    return `Total Prize: €${totalPrize.toFixed(2)}`
+  }
+  return `${count}×Class ${winClass} winning lines${prizeAmount === 0 && props.winningData ? ' (No prize data available)' : ''}`
+}
 
 const getWinClassTextClass = (winClass: number) => {
   // Higher classes (lower numbers) get more prominent gold styling

@@ -43,6 +43,7 @@ import { ref, onUnmounted, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
 import { formatDurationCompact } from '~/utils/time'
 import type { Ticket } from '~/types/ticket'
+import type { EurojackpotHistoricOdds } from '~/types/winning'
 import type {
   BatchSimulationRequest,
   BatchSimulationResult,
@@ -71,6 +72,7 @@ const emit = defineEmits<{
       winClass?: number
     }>
   ): void
+  (e: 'winning-data-updated', data: EurojackpotHistoricOdds): void
 }>()
 
 const error = ref('')
@@ -331,6 +333,16 @@ const applyWinDistributionHighlighting = (
 const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
   if (!props.tickets.length) return
   error.value = ''
+
+  // Fetch winning data for prize tooltips
+  try {
+    const winningData = await $fetch<EurojackpotHistoricOdds>(
+      `${apiBaseUrl}/fetchWinningData`
+    )
+    emit('winning-data-updated', winningData)
+  } catch (winningDataError) {
+    console.warn('Failed to fetch winning data for tooltips:', winningDataError)
+  }
   state.value = {
     phase: 'running',
     isRunning: true,

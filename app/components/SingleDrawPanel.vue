@@ -83,6 +83,7 @@ const emit = defineEmits<{
       winClass?: number
     }>
   ): void
+  (e: 'winning-data-updated', data: EurojackpotHistoricOdds): void
 }>()
 
 const config = useRuntimeConfig()
@@ -122,6 +123,7 @@ const simulateExtractionHandler = async (): Promise<void> => {
     // Adapt to new API: { draw: { mainNumbers, euroNumbers }, meta: {...} }
     simulationResult.value = simResponse.draw
     latestWinningData.value = winDataResponse
+    emit('winning-data-updated', winDataResponse)
 
     if (
       !simulationResult.value?.mainNumbers ||
