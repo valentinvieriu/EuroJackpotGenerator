@@ -13,6 +13,11 @@ import {
 // Note: This resets if the server restarts. For persistent IDs, a different approach would be needed.
 let ticketIdCounter = 1
 
+type Algorithm = 'uniform' | 'weighted'
+interface Options {
+  algorithm?: Algorithm
+}
+
 /**
  * Generates a specified number of unique EuroJackpot tickets.
  * Numbers can be generated based on historical statistics (if available and fetched successfully) or purely randomly.
@@ -27,7 +32,8 @@ let ticketIdCounter = 1
 export async function generateTickets(
   ticketCount: number,
   mainCount: number,
-  euroCount: number
+  euroCount: number,
+  options: Options = {}
 ): Promise<Ticket[]> {
   // Basic validation for inputs
   if (!Number.isInteger(ticketCount) || ticketCount <= 0) {
@@ -52,23 +58,25 @@ export async function generateTickets(
     )
   }
 
+  const algorithm: Algorithm = options.algorithm ?? 'weighted'
+
+  // Decide whether to fetch stats
   let statsData: StatisticsData | null = null
-  try {
-    // Attempt to fetch statistics for weighted number generation.
-    statsData = await fetchStatistics()
-    if (!statsData) {
-      console.warn(
-        'Statistics data unavailable, proceeding with purely random number generation.'
+  if (algorithm === 'weighted') {
+    try {
+      statsData = await fetchStatistics()
+      if (!statsData) {
+        console.warn(
+          'Statistics unavailable; falling back to uniform generation.'
+        )
+      }
+    } catch (error) {
+      console.error(
+        'Failed to fetch statistics, using uniform generation:',
+        error instanceof Error ? error.message : String(error)
       )
     }
-  } catch (error) {
-    // Log the error but continue with random generation as a fallback.
-    console.error(
-      'Failed to fetch statistics, using purely random generation:',
-      error instanceof Error ? error.message : String(error)
-    )
-    // statsData remains null
-  }
+  } // algorithm === 'uniform' -> leave statsData as null to force uniform
 
   const generatedTickets: Ticket[] = []
   // Use a Set to efficiently track unique combinations generated within this batch.
@@ -96,22 +104,18 @@ export async function generateTickets(
         )
       }
 
-      // Generate main numbers. Uses weighted stats if available, otherwise random.
-      // generateNumbers already sorts the output array.
+      // When statsData is null, generateNumbers() uses uniform fallback.
       mainNumbers = generateNumbers(
         mainCount,
         MAIN_NUMBER_MIN,
         MAIN_NUMBER_MAX,
-        statsData?.numbers // Pass main number stats (if available)
+        statsData?.numbers
       )
-
-      // Generate euro numbers. Uses weighted stats if available, otherwise random.
-      // generateNumbers already sorts the output array.
       euroNumbers = generateNumbers(
         euroCount,
         EURO_NUMBER_MIN,
         EURO_NUMBER_MAX,
-        statsData?.additionalNumbers // Pass euro number stats (if available)
+        statsData?.additionalNumbers
       )
 
       // Create a unique string representation for the combination.

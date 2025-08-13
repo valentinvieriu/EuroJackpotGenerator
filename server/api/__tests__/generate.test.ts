@@ -62,4 +62,38 @@ describe('/api/generate', () => {
       statusCode: 400,
     })
   })
+
+  it('accepts algorithm=uniform', async () => {
+    const { default: handler } = await import('../generate')
+    mockBody = {
+      ticketCount: 1,
+      mainCount: 5,
+      euroCount: 2,
+      algorithm: 'uniform',
+    }
+    const result = await handler({} as any)
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(1)
+  })
+
+  it('accepts algorithm=weighted (default remains weighted)', async () => {
+    const { default: handler } = await import('../generate')
+    mockBody = {
+      ticketCount: 1,
+      mainCount: 5,
+      euroCount: 2,
+      algorithm: 'weighted',
+    }
+    const result = await handler({} as any)
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(1)
+  })
+
+  it('defaults to weighted algorithm when algorithm parameter is omitted', async () => {
+    const { default: handler } = await import('../generate')
+    mockBody = { ticketCount: 1, mainCount: 5, euroCount: 2 }
+    const result = await handler({} as any)
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(1)
+  })
 })

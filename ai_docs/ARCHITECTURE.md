@@ -290,7 +290,7 @@ Set this in `nuxt.config` or via env (e.g. `NUXT_PUBLIC_API_BASE=/api`).
 ### Randomness
 
 - **Simulate (server)**: deterministic when `seed` provided via `server/utils/seededRng.ts`; otherwise crypto-backed uniform.
-- **Ticket generation (frontend)**: try **weighted** selection using statistics; on any issue → fallback to uniform.
+- **Ticket generation (frontend)**: user chooses **uniform** or **weighted** via front-end toggle; weighted uses statistics (falls back to uniform on data issues).
 
 ### Number Generation (weighted)
 
@@ -311,7 +311,7 @@ Set this in `nuxt.config` or via env (e.g. `NUXT_PUBLIC_API_BASE=/api`).
 ## 4) API Contracts (short)
 
 - **POST `/api/generate`**
-  `body { ticketCount[1..500], mainCount[5..16], euroCount[2..12] }`
+  `body { ticketCount[1..500], mainCount[5..16], euroCount[2..12], algorithm?['uniform'|'weighted'] }`
   → array of tickets `{ id, mainNumbers[], euroNumbers[], linesCount }`.
 
 - **GET/POST `/api/simulate`**

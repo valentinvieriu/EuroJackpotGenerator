@@ -78,7 +78,32 @@
             </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+          <div class="mt-6">
+            <label
+              class="inline-flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+            >
+              <input
+                v-model="useStatistics"
+                type="checkbox"
+                class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light rounded focus:ring-casino-gold focus:ring-2"
+              />
+              <span class="text-sm text-gray-200">
+                Use previous draw statistics for number selection (
+                <a
+                  href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-casino-gold hover:text-casino-gold-light underline"
+                  @click.stop
+                >
+                  source
+                </a>
+                )
+              </span>
+            </label>
+          </div>
+
+          <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
             <button
               v-if="tickets.length > 0 && showGenerationForm"
               type="button"
@@ -270,6 +295,7 @@ const ticketTypes: ReadonlyArray<TicketType> = [
 const maxTicketsAllowed = 500
 const selectedTicketType: Ref<TicketType> = ref(ticketTypes[0])
 const ticketCount: Ref<number> = ref(1)
+const useStatistics = ref(true)
 const tickets: Ref<Ticket[]> = ref([])
 const loading: Ref<boolean> = ref(false)
 const currentAction: Ref<'generate' | 'simulate' | null> = ref(null)
@@ -352,6 +378,7 @@ const generateTicketsHandler = async (): Promise<void> => {
         ticketCount: ticketCount.value,
         mainCount: selectedTicketType.value.mainCount,
         euroCount: selectedTicketType.value.euroCount,
+        algorithm: useStatistics.value ? 'weighted' : 'uniform',
       },
     })
     tickets.value = generatedTickets

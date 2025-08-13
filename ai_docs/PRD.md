@@ -73,7 +73,7 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
   - Users choose system presets (e.g., 5/2, 5/3… 7/3 or equivalent counts).
   - Generate **1–500** unique tickets per request.
   - Display **total price** immediately (lines × **€2.00**).
-  - Weighted number generation based on **historical frequencies** with validated fallbacks to uniform random.
+  - Users can choose **Uniform** or **Weighted by previous-draw stats** for ticket generation (default weighted; falls back to uniform on data issues).
 
 - **FR-2: Single Draw Simulation**
   - Draw and display **5 main + 2 Euro** numbers.

@@ -4,7 +4,6 @@
     :width="canvasSize"
     :height="canvasSize"
     :class="['ticket-number-3d', 'w-12 h-12', { 'scale-110': isWinner }]"
-    @click="$emit('click')"
   />
 </template>
 
@@ -16,10 +15,6 @@ interface Props {
   isWinner: boolean
   type?: 'main' | 'euro'
 }
-
-defineEmits<{
-  click: []
-}>()
 
 const props = withDefaults(defineProps<Props>(), {
   type: 'main',
@@ -240,11 +235,6 @@ watch([() => props.number, () => props.isWinner, () => props.type], () => {
 
 <style scoped>
 .ticket-number-3d {
-  transition: transform 0.25s ease-in-out;
-  cursor: pointer;
   display: block;
-}
-.ticket-number-3d:hover {
-  transform: scale(1.06);
 }
 </style>
