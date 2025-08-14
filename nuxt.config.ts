@@ -1,4 +1,7 @@
 export default defineNuxtConfig({
+  // Align aliases so ~ and @ point to the app directory, and ~~ and @@ to the project root
+  srcDir: 'app',
+
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
 
   pinia: {
