@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
 import type { Ticket } from '~/schemas'
-import TicketNumber from './TicketNumber3DSimple.vue'
+import TicketNumber from './TicketNumber.vue'
 
 interface Props {
   result: Pick<Ticket, 'mainNumbers' | 'euroNumbers'>
