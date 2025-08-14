@@ -91,8 +91,16 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
       return null
     }
 
-    // Check if this has the expected modern parameters
-    if (validParams.system || validParams.tickets || validParams.method) {
+    // Check if this is modern format (has system and/or tickets parameters)
+    // Legacy format uses different parameter names (type, count)
+    if (
+      validParams.system ||
+      validParams.tickets ||
+      (validParams.method &&
+        !validParams.type &&
+        !validParams.count &&
+        !validParams.seed)
+    ) {
       const config: Partial<AppConfig> = {}
 
       // Use Zod coercion for safe parsing
@@ -103,7 +111,8 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
       if (validParams.tickets) {
         const parsedTickets = Number.parseInt(validParams.tickets, 10)
         if (!Number.isNaN(parsedTickets) && parsedTickets > 0) {
-          config.tickets = parsedTickets
+          // Apply validation: clamp tickets to max of 500
+          config.tickets = Math.min(parsedTickets, 500)
         }
       }
 
@@ -135,7 +144,7 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
  * @param hash URL hash string (with or without #)
  * @returns Partial ticket configuration object
  */
-export function decodeHashToConfig(hash: string): Partial<TicketConfig> {
+export function decodeHashToConfig(hash: string): Record<string, unknown> {
   // Remove # if present
   const cleanHash = hash.startsWith('#') ? hash.slice(1) : hash
 
@@ -156,21 +165,21 @@ export function decodeHashToConfig(hash: string): Partial<TicketConfig> {
       return {}
     }
 
-    const config: Partial<TicketConfig> = {}
+    const config: Record<string, unknown> = {}
 
     // Handle legacy format (seed, type, count)
     if (validParams.seed) config.seed = validParams.seed
-    if (validParams.type) config.ticketType = validParams.type
+    if (validParams.type) config.type = validParams.type
 
     if (validParams.count) {
       const parsedCount = Number.parseInt(validParams.count, 10)
       if (!Number.isNaN(parsedCount) && parsedCount > 0) {
-        config.ticketCount = parsedCount
+        config.count = parsedCount
       }
     }
 
     if (validParams.method === 'random' || validParams.method === 'weighted') {
-      config.selectionMethod = validParams.method
+      config.method = validParams.method
     }
 
     // Attempt validation using legacy schema
@@ -355,16 +364,16 @@ export function parseUrlHash(hash: string): Partial<AppConfig> | null {
     // Convert legacy to modern format
     const convertedConfig: Partial<AppConfig> = {}
 
-    if (legacyConfig.ticketType) {
-      convertedConfig.system = legacyConfig.ticketType
+    if (legacyConfig.type) {
+      convertedConfig.system = legacyConfig.type
     }
 
-    if (legacyConfig.ticketCount) {
-      convertedConfig.tickets = legacyConfig.ticketCount
+    if (legacyConfig.count) {
+      convertedConfig.tickets = legacyConfig.count
     }
 
-    if (legacyConfig.selectionMethod) {
-      convertedConfig.method = legacyConfig.selectionMethod
+    if (legacyConfig.method) {
+      convertedConfig.method = legacyConfig.method
     }
 
     // Convert seed to lucky code for reproducibility
