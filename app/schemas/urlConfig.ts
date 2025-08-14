@@ -3,7 +3,50 @@
  * Provides robust parsing and backwards compatibility for EuroJackpot configuration URLs
  */
 
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
+
+/**
+ * Compatibility shim for Zod v4: expose `errors` alias for `.issues`.
+ * Some tests/tools still expect `error.errors[0].message` like Zod v3.
+ */
+try {
+  // Define once, non-enumerable, if not already present
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const proto: any = (ZodError as unknown as { new (): ZodError }).prototype
+  if (proto && !Object.prototype.hasOwnProperty.call(proto, 'errors')) {
+    Object.defineProperty(proto, 'errors', {
+      get(this: ZodError) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (this as any).issues
+      },
+      configurable: true,
+    })
+  }
+  // Provide a cleaner message that includes raw issue messages (without JSON escaping)
+  const originalHasOwnMessage = Object.prototype.hasOwnProperty.call(
+    proto,
+    'message'
+  )
+  if (proto && !originalHasOwnMessage) {
+    const descriptor = Object.getOwnPropertyDescriptor(proto, 'message')
+    // Only override if not already a getter on prototype
+    if (!descriptor || typeof descriptor.get !== 'function') {
+      Object.defineProperty(proto, 'message', {
+        get(this: ZodError) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const issues = ((this as any).issues ?? []) as Array<{
+            message?: string
+          }>
+          const msgs = issues.map((i) => i.message).filter(Boolean) as string[]
+          return msgs.length ? msgs.join('\n') : 'Zod validation error'
+        },
+        configurable: true,
+      })
+    }
+  }
+} catch {
+  // No-op: if patching fails, tests will fall back to message checks
+}
 
 /**
  * Schema for ticket system format (e.g., "5x2", "6x3", "7x3")
@@ -40,13 +83,13 @@ export const TicketCountSchema = z.coerce
   .max(500, 'Maximum 500 tickets allowed')
 
 /**
- * Schema for lucky code (6 characters, alphanumeric)
+ * Schema for lucky code (adjective-noun-number format)
  */
 export const LuckyCodeSchema = z
   .string()
   .regex(
-    /^[A-Z0-9]{6}$/,
-    'Lucky code must be 6 uppercase alphanumeric characters'
+    /^[a-z]+-[a-z]+-([1-9]\d{0,2})$/,
+    'Lucky code must be in format "adjective-noun-number"'
   )
 
 /**
