@@ -236,19 +236,44 @@ export const useSimulationStore = defineStore('simulation', () => {
                 return
               }
             } else if (raw && typeof raw === 'object' && 'type' in raw) {
-              if (raw.type === 'progress') {
-                const norm = normalizeProgressSummary(raw)
-                updateProgress(norm.progress, norm.summary)
-              } else if (raw.type === 'result' && raw.result) {
-                setResults(raw.result)
+              // Minimal resilience fallback: accept progress/result/error shapes
+              const ro = raw as Record<string, unknown>
+              if (ro.type === 'progress' && ro.progress && typeof ro.progress === 'object') {
+                const rp = ro.progress as Record<string, unknown>
+                const currentSimulation = Number(rp.currentSimulation ?? 0)
+                const totalSimulations = Number(
+                  rp.totalSimulations ?? state.value.config?.simulationCount ?? 0
+                )
+                const pct =
+                  totalSimulations > 0
+                    ? (currentSimulation / totalSimulations) * 100
+                    : 0
+                const progress = {
+                  currentSimulation,
+                  totalSimulations,
+                  progressPercentage: Number(rp.progressPercentage ?? pct),
+                  estimatedTimeRemaining: null as string | null,
+                  canCancel: true,
+                }
+                const summary = {
+                  winDistribution: {
+                    winsByClass: {},
+                    totalWins: 0,
+                    winPercentage: 0,
+                  },
+                  roiPercentage: 0,
+                  netProfit: 0,
+                  maxWin: 0,
+                }
+                updateProgress(progress, summary)
+              } else if (ro.type === 'result' && ro.result) {
+                setResults(ro.result as BatchSimulationResult)
                 state.value.phase = 'results'
                 buffer = ''
                 return
-              } else if (raw.type === 'error') {
+              } else if (ro.type === 'error') {
                 state.value.phase = 'error'
-                state.value.error = String(
-                  raw.error || 'Simulation stream error'
-                )
+                state.value.error = String(ro.error || 'Simulation stream error')
                 buffer = ''
                 return
               }
@@ -274,12 +299,13 @@ export const useSimulationStore = defineStore('simulation', () => {
               state.value.error = parsed.error || 'Simulation stream error'
             }
           } else if (raw && typeof raw === 'object' && 'type' in raw) {
-            if (raw.type === 'result' && raw.result) {
-              setResults(raw.result)
+            const ro = raw as Record<string, unknown>
+            if (ro.type === 'result' && ro.result) {
+              setResults(ro.result as BatchSimulationResult)
               state.value.phase = 'results'
-            } else if (raw.type === 'error') {
+            } else if (ro.type === 'error') {
               state.value.phase = 'error'
-              state.value.error = String(raw.error || 'Simulation stream error')
+              state.value.error = String(ro.error || 'Simulation stream error')
             }
           }
         } catch {
@@ -291,73 +317,8 @@ export const useSimulationStore = defineStore('simulation', () => {
     }
   }
 
-  const normalizeProgressSummary = (raw: unknown) => {
-    const getProp = (obj: unknown, path: string[]): unknown => {
-      let cur: unknown = obj
-      for (const key of path) {
-        if (
-          cur &&
-          typeof cur === 'object' &&
-          Object.prototype.hasOwnProperty.call(cur, key)
-        ) {
-          cur = (cur as Record<string, unknown>)[key]
-        } else {
-          return undefined
-        }
-      }
-      return cur
-    }
-
-    const currentSimulation = Number(
-      getProp(raw, ['progress', 'currentSimulation']) ?? 0
-    )
-    const totalSimulations = Number(
-      getProp(raw, ['progress', 'totalSimulations']) ??
-        state.value.config?.simulationCount ??
-        0
-    )
-    const derivedPct =
-      totalSimulations > 0 ? (currentSimulation / totalSimulations) * 100 : 0
-    const progressPercentage = Number(
-      getProp(raw, ['progress', 'progressPercentage']) ?? derivedPct
-    )
-    const estimatedTimeRemaining = (getProp(raw, [
-      'progress',
-      'estimatedTimeRemaining',
-    ]) ?? null) as string | null
-    const canCancel = Boolean(getProp(raw, ['progress', 'canCancel']) ?? true)
-
-    const winsByClassRaw = (getProp(raw, [
-      'summary',
-      'winDistribution',
-      'winsByClass',
-    ]) ?? {}) as Record<string, number>
-    const winsByClass = Object.fromEntries(
-      Object.entries(winsByClassRaw).map(([k, v]) => [Number(k), v])
-    )
-    const summary = {
-      winDistribution: {
-        winsByClass,
-        totalWins: Number(
-          getProp(raw, ['summary', 'winDistribution', 'totalWins']) ?? 0
-        ),
-        winPercentage: Number(
-          getProp(raw, ['summary', 'winDistribution', 'winPercentage']) ?? 0
-        ),
-      },
-      roiPercentage: Number(getProp(raw, ['summary', 'roiPercentage']) ?? 0),
-      netProfit: Number(getProp(raw, ['summary', 'netProfit']) ?? 0),
-      maxWin: Number(getProp(raw, ['summary', 'maxWin']) ?? 0),
-    }
-    const progress = {
-      currentSimulation,
-      totalSimulations,
-      progressPercentage,
-      estimatedTimeRemaining,
-      canCancel,
-    }
-    return { progress, summary }
-  }
+  // Removed broad normalization: server now guarantees zod-validated NDJSON.
+  // Retained minimal fallback in processNDJSONStream for progress/result/error.
 
   const updateProgress = (
     progress: {
