@@ -1,11 +1,12 @@
-import { generateNumbers } from './numberGenerator'
+import { fetchStatistics } from './statistics'
+import { generateNumbers } from '~/utils/numberGenerator'
 import type { Ticket, StatisticsData } from '~/schemas'
 import {
   MAIN_NUMBER_MIN,
   MAIN_NUMBER_MAX,
   EURO_NUMBER_MIN,
   EURO_NUMBER_MAX,
-} from './constants'
+} from '~/utils/constants'
 
 // IDs are assigned per-batch deterministically (1..N) to avoid cross-request leakage.
 
@@ -13,21 +14,18 @@ type Algorithm = 'uniform' | 'weighted'
 interface Options {
   algorithm?: Algorithm
   seed?: string
-  statsData?: StatisticsData | null
 }
 
 /**
- * CLIENT-SAFE: Generates a specified number of unique EuroJackpot tickets.
- * Numbers can be generated based on provided statistics data or purely randomly.
+ * SERVER-ONLY: Generates a specified number of unique EuroJackpot tickets.
+ * Numbers can be generated based on historical statistics (if available and fetched successfully) or purely randomly.
  * Ensures that no two tickets generated in the *same batch* have the identical combination of main and euro numbers.
  *
- * NOTE: This function does NOT fetch statistics - statistics must be provided via options.statsData
- * to avoid runtime boundary violations. Server code should use server/utils/ticketGenerator.ts instead.
+ * This function uses server-only statistics fetching and MUST NOT be imported by client code.
  *
  * @param ticketCount The number of tickets to generate. Must be a positive integer.
  * @param mainCount The number of main numbers required per ticket (e.g., 5 for standard, more for system).
  * @param euroCount The number of euro numbers required per ticket (e.g., 2 for standard, more for system).
- * @param options Generation options including algorithm, seed, and pre-fetched statistics data
  * @returns A promise that resolves to an array of generated Ticket objects, each with a unique ID and sorted numbers.
  * @throws Error if `ticketCount` is invalid, or if max retries are exceeded while generating a unique ticket combination (indicating potential issues).
  */
@@ -61,14 +59,25 @@ export async function generateTickets(
   }
 
   const algorithm: Algorithm = options.algorithm ?? 'weighted'
-  const { seed, statsData = null } = options
+  const { seed } = options
 
-  // If weighted algorithm requested but no stats provided, warn and fallback
-  if (algorithm === 'weighted' && !seed && !statsData) {
-    console.warn(
-      'Weighted generation requested but no statistics provided; falling back to uniform generation.'
-    )
-  }
+  // Decide whether to fetch stats (only if not using seeded generation)
+  let statsData: StatisticsData | null = null
+  if (algorithm === 'weighted' && !seed) {
+    try {
+      statsData = await fetchStatistics()
+      if (!statsData) {
+        console.warn(
+          'Statistics unavailable; falling back to uniform generation.'
+        )
+      }
+    } catch (error) {
+      console.error(
+        'Failed to fetch statistics, using uniform generation:',
+        error instanceof Error ? error.message : String(error)
+      )
+    }
+  } // algorithm === 'uniform' or seed provided -> leave statsData as null to force uniform
 
   const generatedTickets: Ticket[] = []
   // Use a Set to efficiently track unique combinations generated within this batch.
@@ -97,10 +106,20 @@ export async function generateTickets(
       }
 
       if (seed) {
-        // Client-side seeded generation not supported - this would require server import
-        // In practice, seeded generation should be handled server-side
-        throw new Error(
-          'Seeded generation not supported in client-side ticket generator. Use server API instead.'
+        // Use seeded generation for reproducible results
+        const { generateSeededRandomNumbers } = await import('./seededRng')
+
+        mainNumbers = generateSeededRandomNumbers(
+          mainCount,
+          MAIN_NUMBER_MIN,
+          MAIN_NUMBER_MAX,
+          `${seed}_main_${i}` // Include ticket index to ensure uniqueness
+        )
+        euroNumbers = generateSeededRandomNumbers(
+          euroCount,
+          EURO_NUMBER_MIN,
+          EURO_NUMBER_MAX,
+          `${seed}_euro_${i}`
         )
       } else {
         // When statsData is null, generateNumbers() uses uniform fallback.

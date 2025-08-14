@@ -1,4 +1,4 @@
-import { generateTickets } from '~/utils/ticketGenerator'
+import { generateTickets } from '../utils/ticketGenerator'
 import { combinationCount } from '~/utils/combinatorics'
 import type { H3Event } from 'h3'
 import { readBody, defineEventHandler } from 'h3'

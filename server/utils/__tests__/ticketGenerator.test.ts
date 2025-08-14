@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('../statistics', () => ({
+  fetchStatistics: vi.fn().mockResolvedValue(null),
+}))
+
 let seq = 0
-vi.mock('../numberGenerator', () => ({
+vi.mock('~/utils/numberGenerator', () => ({
   generateNumbers: vi.fn((count: number, min: number) => {
     const start = min + seq * count * 2
     seq += 1
@@ -15,7 +19,7 @@ beforeEach(() => {
   vi.resetModules()
 })
 
-describe('generateTickets', () => {
+describe('server generateTickets', () => {
   it('validates input ranges', async () => {
     const { generateTickets } = await import('../ticketGenerator')
     await expect(generateTickets(0, 5, 2)).rejects.toThrow('ticketCount')
@@ -34,5 +38,20 @@ describe('generateTickets', () => {
       (t) => `${t.mainNumbers.join(',')}|${t.euroNumbers.join(',')}`
     )
     expect(new Set(combos).size).toBe(2)
+  })
+
+  it('fetches statistics for weighted generation', async () => {
+    const mockStats = {
+      numbers: [{ number: 1, value: 10 }],
+      additionalNumbers: [{ number: 1, value: 5 }],
+    }
+
+    const { fetchStatistics } = await import('../statistics')
+    vi.mocked(fetchStatistics).mockResolvedValue(mockStats)
+
+    const { generateTickets } = await import('../ticketGenerator')
+    await generateTickets(1, 5, 2, { algorithm: 'weighted' })
+
+    expect(fetchStatistics).toHaveBeenCalledOnce()
   })
 })

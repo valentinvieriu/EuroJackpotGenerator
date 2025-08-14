@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-describe('statisticsManager', () => {
+describe('server statistics', () => {
   beforeEach(() => {
     vi.resetModules()
   })
@@ -21,7 +21,7 @@ describe('statisticsManager', () => {
           new Response(JSON.stringify(validStats), { status: 200 })
         )
       )
-    const { fetchStatistics } = await import('../statisticsManager')
+    const { fetchStatistics } = await import('../statistics')
 
     // First call hits network
     const a = await fetchStatistics()
@@ -44,7 +44,7 @@ describe('statisticsManager', () => {
     vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(
       new Response(JSON.stringify({ not: 'valid' }), { status: 200 })
     )
-    const { fetchStatistics } = await import('../statisticsManager')
+    const { fetchStatistics } = await import('../statistics')
     const res = await fetchStatistics()
     expect(res).toBeNull()
   })

@@ -1,6 +1,6 @@
 import type { StatisticsData } from '~/schemas'
 
-// --- Caching Mechanism ---
+// --- Server-Only Caching Mechanism ---
 let cachedStats: StatisticsData | null = null
 let lastFetchTime: number = 0 // Store timestamp of the last successful fetch
 const CACHE_DURATION_MS: number = 10 * 60 * 1000 // Cache duration: 10 minutes in milliseconds
@@ -26,8 +26,11 @@ const isValidStatisticsData = (data: unknown): data is StatisticsData => {
 }
 
 /**
- * Fetches EuroJackpot number frequency statistics from the Lotto Bayern API.
+ * SERVER-ONLY: Fetches EuroJackpot number frequency statistics from the Lotto Bayern API.
  * Implements a simple in-memory cache to avoid redundant requests.
+ *
+ * This function performs external HTTP fetches and MUST NOT be imported by client code.
+ * It lives in server/utils/ to enforce server runtime boundaries.
  *
  * @returns A promise that resolves to the StatisticsData object if fetch is successful
  *          and data is valid, or null if fetching fails, data is invalid, or cache is used but empty.
