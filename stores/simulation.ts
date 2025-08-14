@@ -5,6 +5,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
+import { ndjsonEventSchema } from '~/schemas'
 import type {
   BatchSimulationResult,
   BatchSimulationRequest,
@@ -217,14 +218,40 @@ export const useSimulationStore = defineStore('simulation', () => {
           buffer = buffer.slice(idx + 1)
           if (!line) continue
           try {
-            const data = JSON.parse(line)
-            if (data.type === 'progress') {
-              updateProgress(data.progress, data.summary)
-            } else if (data.type === 'result') {
-              setResults(data.result)
-              state.value.phase = 'results'
-              buffer = ''
-              return
+            const raw = JSON.parse(line)
+            const parsedRes = ndjsonEventSchema.safeParse(raw)
+            if (parsedRes.success) {
+              const parsed = parsedRes.data
+              if (parsed.type === 'progress') {
+                updateProgress(parsed.progress, parsed.summary)
+              } else if (parsed.type === 'result') {
+                setResults(parsed.result)
+                state.value.phase = 'results'
+                buffer = ''
+                return
+              } else if (parsed.type === 'error') {
+                state.value.phase = 'error'
+                state.value.error = parsed.error || 'Simulation stream error'
+                buffer = ''
+                return
+              }
+            } else if (raw && typeof raw === 'object' && 'type' in raw) {
+              if (raw.type === 'progress') {
+                const norm = normalizeProgressSummary(raw)
+                updateProgress(norm.progress, norm.summary)
+              } else if (raw.type === 'result' && raw.result) {
+                setResults(raw.result)
+                state.value.phase = 'results'
+                buffer = ''
+                return
+              } else if (raw.type === 'error') {
+                state.value.phase = 'error'
+                state.value.error = String(
+                  raw.error || 'Simulation stream error'
+                )
+                buffer = ''
+                return
+              }
             }
           } catch (parseError) {
             console.warn('Failed to parse NDJSON line:', parseError)
@@ -235,10 +262,25 @@ export const useSimulationStore = defineStore('simulation', () => {
       const tail = buffer.trim()
       if (tail) {
         try {
-          const data = JSON.parse(tail)
-          if (data.type === 'result') {
-            setResults(data.result)
-            state.value.phase = 'results'
+          const raw = JSON.parse(tail)
+          const parsedRes = ndjsonEventSchema.safeParse(raw)
+          if (parsedRes.success) {
+            const parsed = parsedRes.data
+            if (parsed.type === 'result') {
+              setResults(parsed.result)
+              state.value.phase = 'results'
+            } else if (parsed.type === 'error') {
+              state.value.phase = 'error'
+              state.value.error = parsed.error || 'Simulation stream error'
+            }
+          } else if (raw && typeof raw === 'object' && 'type' in raw) {
+            if (raw.type === 'result' && raw.result) {
+              setResults(raw.result)
+              state.value.phase = 'results'
+            } else if (raw.type === 'error') {
+              state.value.phase = 'error'
+              state.value.error = String(raw.error || 'Simulation stream error')
+            }
           }
         } catch {
           // Ignore incomplete tail
@@ -249,11 +291,106 @@ export const useSimulationStore = defineStore('simulation', () => {
     }
   }
 
-  const updateProgress = (progress: unknown, summary: unknown) => {
+  const normalizeProgressSummary = (raw: unknown) => {
+    const getProp = (obj: unknown, path: string[]): unknown => {
+      let cur: unknown = obj
+      for (const key of path) {
+        if (
+          cur &&
+          typeof cur === 'object' &&
+          Object.prototype.hasOwnProperty.call(cur, key)
+        ) {
+          cur = (cur as Record<string, unknown>)[key]
+        } else {
+          return undefined
+        }
+      }
+      return cur
+    }
+
+    const currentSimulation = Number(
+      getProp(raw, ['progress', 'currentSimulation']) ?? 0
+    )
+    const totalSimulations = Number(
+      getProp(raw, ['progress', 'totalSimulations']) ??
+        state.value.config?.simulationCount ??
+        0
+    )
+    const derivedPct =
+      totalSimulations > 0 ? (currentSimulation / totalSimulations) * 100 : 0
+    const progressPercentage = Number(
+      getProp(raw, ['progress', 'progressPercentage']) ?? derivedPct
+    )
+    const estimatedTimeRemaining = (getProp(raw, [
+      'progress',
+      'estimatedTimeRemaining',
+    ]) ?? null) as string | null
+    const canCancel = Boolean(getProp(raw, ['progress', 'canCancel']) ?? true)
+
+    const winsByClassRaw = (getProp(raw, [
+      'summary',
+      'winDistribution',
+      'winsByClass',
+    ]) ?? {}) as Record<string, number>
+    const winsByClass = Object.fromEntries(
+      Object.entries(winsByClassRaw).map(([k, v]) => [Number(k), v])
+    )
+    const summary = {
+      winDistribution: {
+        winsByClass,
+        totalWins: Number(
+          getProp(raw, ['summary', 'winDistribution', 'totalWins']) ?? 0
+        ),
+        winPercentage: Number(
+          getProp(raw, ['summary', 'winDistribution', 'winPercentage']) ?? 0
+        ),
+      },
+      roiPercentage: Number(getProp(raw, ['summary', 'roiPercentage']) ?? 0),
+      netProfit: Number(getProp(raw, ['summary', 'netProfit']) ?? 0),
+      maxWin: Number(getProp(raw, ['summary', 'maxWin']) ?? 0),
+    }
+    const progress = {
+      currentSimulation,
+      totalSimulations,
+      progressPercentage,
+      estimatedTimeRemaining,
+      canCancel,
+    }
+    return { progress, summary }
+  }
+
+  const updateProgress = (
+    progress: {
+      currentSimulation: number
+      totalSimulations: number
+      progressPercentage: number
+      estimatedTimeRemaining?: string | null
+      canCancel: boolean
+    },
+    summary: {
+      winDistribution: {
+        winsByClass: Record<string, number>
+        totalWins: number
+        winPercentage: number
+      }
+      roiPercentage: number
+      netProfit: number
+      maxWin: number
+    }
+  ) => {
     if (!state.value.progress) return
 
     const now = Date.now()
     const elapsed = now - state.value.startTime
+
+    const winsByClass = summary?.winDistribution?.winsByClass
+      ? Object.fromEntries(
+          Object.entries(summary.winDistribution.winsByClass).map(([k, v]) => [
+            Number(k),
+            v,
+          ])
+        )
+      : {}
 
     state.value.progress = {
       currentSimulation: progress.currentSimulation,
@@ -266,14 +403,13 @@ export const useSimulationStore = defineStore('simulation', () => {
       ),
       partialResults: summary
         ? {
-            simulationsCompleted:
-              summary.simulationsCompleted || progress.currentSimulation,
-            totalWins: summary.totalWins || 0,
-            winPercentage: summary.winPercentage || 0,
+            simulationsCompleted: progress.currentSimulation,
+            totalWins: summary.winDistribution?.totalWins || 0,
+            winPercentage: summary.winDistribution?.winPercentage || 0,
             currentROI: summary.roiPercentage || 0,
             netProfit: summary.netProfit || 0,
             maxWin: summary.maxWin || 0,
-            winsByClass: summary.winDistribution || {},
+            winsByClass,
           }
         : null,
     }

@@ -9,14 +9,16 @@ export const ndjsonProgressEventSchema = z.object({
   type: z.literal('progress'),
   progress: batchSimulationProgressSchema,
   summary: z.object({
+    totalCost: z.number().nonnegative(),
+    totalWinnings: z.number().nonnegative(),
+    netProfit: z.number(),
+    roiPercentage: z.number(),
+    maxWin: z.number().nonnegative(),
     winDistribution: z.object({
       totalWins: z.number().int().nonnegative(),
       winPercentage: z.number().min(0).max(100),
       winsByClass: z.record(z.string(), z.number().int().nonnegative()),
     }),
-    roiPercentage: z.number(),
-    netProfit: z.number(),
-    maxWin: z.number().nonnegative(),
   }),
 })
 
