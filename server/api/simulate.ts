@@ -73,11 +73,9 @@ export default defineEventHandler(async (event): Promise<SimulateResponse> => {
     // 2. Generate numbers based on whether seed is provided
     let mainNumbers: number[]
     let euroNumbers: number[]
-    let algorithm: 'uniform' | 'weighted'
 
     if (seed) {
       // Use seeded generation for reproducible results
-      algorithm = 'uniform' // Seeded generation uses uniform distribution
       mainNumbers = generateSeededRandomNumbers(
         MAIN_NUMBERS_COUNT,
         MAIN_NUMBER_MIN,
@@ -92,7 +90,6 @@ export default defineEventHandler(async (event): Promise<SimulateResponse> => {
       )
     } else {
       // Use cryptographically secure random generation
-      algorithm = 'uniform'
       mainNumbers = generateRandomNumbers(
         MAIN_NUMBERS_COUNT,
         MAIN_NUMBER_MIN,
@@ -112,7 +109,8 @@ export default defineEventHandler(async (event): Promise<SimulateResponse> => {
         euroNumbers,
       },
       meta: {
-        algorithm,
+        // Simulate endpoint uses uniform generation only
+        algorithm: 'uniform',
         seed,
         generatedAt,
       },

@@ -37,7 +37,8 @@ export const simulateResponseSchema = z.object({
       ),
   }),
   meta: z.object({
-    algorithm: z.enum(['uniform', 'weighted']),
+    // Simulate endpoint currently uses only uniform generation
+    algorithm: z.literal('uniform'),
     seed: z.string().optional(),
     generatedAt: z.string().datetime(),
   }),

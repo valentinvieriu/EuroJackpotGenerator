@@ -289,8 +289,8 @@ describe('/api/simulate', () => {
       expect(typeof result.meta.algorithm).toBe('string')
       expect(typeof result.meta.seed).toBe('string')
       expect(typeof result.meta.generatedAt).toBe('string')
-
-      expect(['uniform', 'weighted']).toContain(result.meta.algorithm)
+      // Simulate endpoint currently only supports 'uniform'
+      expect(result.meta.algorithm).toBe('uniform')
     })
 
     it('should generate valid ISO 8601 timestamps', async () => {
