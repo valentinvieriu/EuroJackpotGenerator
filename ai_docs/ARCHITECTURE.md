@@ -75,7 +75,10 @@ sequenceDiagram
   - `payout.ts`: Builds class→amount map from odds payload.
   - `odds.ts`: Normalizes Lotto Bayern classes **101–112 → 1–12**.
   - `statisticsManager.ts`: Fetches frequency statistics with **10-minute cache**; returns `null` on invalid/failed fetch (triggers uniform fallback).
-  - `batchStatistics.ts`: Aggregates batch results (ROI, EV, percentiles, win distribution) and simulates a single draw over system tickets.
+  - `batchStatistics.ts`: Aggregates batch results (ROI, EV, percentiles, win distribution), simulates a single draw over system tickets, and provides **theoretical EV calculation** for accurate break-even analysis.
+  - `ticketHighlighting.ts`: **Centralized logic** for ticket highlight computation, eliminating duplication between Single Draw and Monte Carlo components.
+  - `winClassColors.ts`: **Centralized color mapping** for win classes, ensuring consistent styling across components.
+  - `constants.ts`: **Single source of truth** for all numeric bounds and validation limits used throughout the application.
   - `time.ts`: Friendly durations for progress UI.
   - `audioUtils.ts`: Short win tones based on profit ratio.
 
@@ -85,7 +88,7 @@ sequenceDiagram
 ### API (server/api/)
 
 - **`/api/generate` (POST)**
-  Validates input with **zod**, and generates unique tickets server-side. Uses weighted stats when available (10-minute cache) and falls back to uniform. Adds `linesCount = C(m,5)×C(e,2)`. Ticket generation is server-only; seeds are accepted here for reproducibility and are not used on the client.
+  **Consolidated endpoint** that validates input with **zod** and generates unique tickets server-side. Uses weighted stats when available (10-minute cache) and falls back to uniform. Adds `linesCount = C(m,5)×C(e,2)`. All ticket generation logic is unified in this single endpoint for maintainability. Seeds are accepted here for reproducibility and are not used on the client.
 - **`/api/simulate` (GET/POST)**
   Draw generator:
   - If `seed` provided → deterministic via `server/utils/seededRng.ts` (sorted, unique).
@@ -109,6 +112,24 @@ sequenceDiagram
 
 - **`seededRng.ts`**
   Fast deterministic PRNG + unique sorted sampler.
+
+### Code Quality & Maintainability
+
+- **Centralized Constants (`app/utils/constants.ts`)**
+  - Single source of truth for all numeric bounds: lottery ranges (1-50, 1-12), system limits (5-16, 2-12), ticket counts (1-500), simulation limits (100-10,000)
+  - All Zod schemas import from constants instead of hardcoding values
+  - Ensures consistency and easier maintenance of validation rules
+
+- **Consolidated Validation Patterns**
+  - Single validation boundary at API routes using Zod schemas
+  - Statistics validation uses shared `statisticsDataSchema` instead of custom type guards
+  - Minimal internal assertions, comprehensive boundary validation
+
+- **DRY Principle Implementation**
+  - Shared ticket highlighting logic in `buildTicketHighlightUpdate()`
+  - Centralized win class color mapping in `getWinClassColor()`
+  - Unified ticket generation endpoint eliminating code duplication
+  - **EV-based break-even calculation** replacing hardcoded averages with `calculateTheoreticalExpectedValue()`
 
 ---
 
@@ -153,6 +174,7 @@ sequenceDiagram
 - **System ticket lines**: `C(m,5) * C(e,2)`; **€2.00/line** (see `pricing.ts`).
 - **Win classes**: 1–12 per `(matched main, matched euro)` (mapping in `winningClasses.ts`).
 - **Batch simulation**: for each ticket, compute **count of winning lines by class** via combinatorics; payout = Σ(count × class amount).
+- **Break-even calculation**: Uses **theoretical Expected Value** via `calculateTheoreticalExpectedValue()` with current odds and ticket system parameters, replacing hardcoded averages for mathematical accuracy.
 - **Odds normalization**: Some external responses encode classes as `101–112`; app normalizes to `1–12`.
 
 ---
