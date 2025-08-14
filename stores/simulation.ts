@@ -5,12 +5,12 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
-import { ndjsonEventSchema } from '~/schemas'
-import type {
-  BatchSimulationResult,
-  BatchSimulationRequest,
-} from '~/types/batchSimulation'
-import type { Ticket } from '~/types/ticket'
+import {
+  ndjsonEventSchema,
+  type BatchSimulationResult,
+  type BatchSimulationRequest,
+  type Ticket,
+} from '~/schemas'
 
 export type SimulationPhase =
   | 'config'

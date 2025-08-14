@@ -5,7 +5,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
-import type { EurojackpotHistoricOdds } from '~/types/winning'
+import type { EurojackpotHistoricOdds } from '~/schemas'
 import { buildOddsMap } from '~/utils/payout'
 
 interface OddsCache {

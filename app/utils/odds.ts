@@ -1,4 +1,4 @@
-import type { WinningClass } from '~/types/winning'
+import type { WinningClass } from '~/schemas'
 
 /**
  * Normalize a single winning class entry: some Lotto Bayern endpoints

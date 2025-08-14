@@ -72,8 +72,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Ticket } from '~/types/ticket'
-import type { EurojackpotHistoricOdds } from '~/types/winning'
+import type { Ticket, EurojackpotHistoricOdds } from '~/schemas'
 import TicketNumber from './TicketNumber3DSimple.vue'
 import { buildOddsMap } from '~/utils/payout'
 

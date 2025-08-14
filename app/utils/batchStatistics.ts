@@ -3,9 +3,9 @@ import type {
   WinDistribution,
   SimulationStatistics,
   IndividualSimulationResult,
-} from '~/types/batchSimulation'
-import type { Ticket } from '~/types/ticket'
-import type { EurojackpotHistoricOdds } from '~/types/winning'
+  Ticket,
+  EurojackpotHistoricOdds,
+} from '~/schemas'
 import {
   calculateWinningLineCounts,
   combinationCount,

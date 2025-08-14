@@ -1,7 +1,6 @@
 import { fetchStatistics } from './statisticsManager'
 import { generateNumbers } from './numberGenerator'
-import type { Ticket } from '~/types/ticket'
-import type { StatisticsData } from '~/types/statistics'
+import type { Ticket, StatisticsData } from '~/schemas'
 import {
   MAIN_NUMBER_MIN,
   MAIN_NUMBER_MAX,

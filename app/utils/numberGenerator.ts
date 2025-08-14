@@ -1,4 +1,4 @@
-import type { StatisticsData } from '../types/statistics'
+import type { StatisticsData } from '~/schemas/statistics'
 import { randomFloat, randomInt } from './rng'
 
 /**

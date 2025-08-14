@@ -1,4 +1,4 @@
-import type { EurojackpotHistoricOdds } from '~/types/winning'
+import type { EurojackpotHistoricOdds } from '~/schemas'
 
 /**
  * Build a Map<winningClass, amount> from odds data.

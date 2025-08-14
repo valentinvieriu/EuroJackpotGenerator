@@ -42,14 +42,14 @@
 import { ref, onUnmounted, watch, computed, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
 import { formatDurationCompact } from '~/utils/time'
-import type { Ticket } from '~/types/ticket'
-import type { EurojackpotHistoricOdds } from '~/types/winning'
 import type {
+  Ticket,
+  EurojackpotHistoricOdds,
   BatchSimulationRequest,
   BatchSimulationResult,
   IndividualSimulationResult,
   TicketHighlightingData,
-} from '~/types/batchSimulation'
+} from '~/schemas'
 import { calculateWinningLineCounts } from '~/utils/combinatorics'
 import BatchSimulationConfig from './BatchSimulationConfig.vue'
 import BatchSimulationProgress from './BatchSimulationProgress.vue'

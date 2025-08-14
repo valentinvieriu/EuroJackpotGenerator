@@ -327,7 +327,7 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from 'vue'
-import type { BatchSimulationResult } from '~/types/batchSimulation'
+import type { BatchSimulationResult } from '~/schemas'
 import { combinationCount } from '~/utils/combinatorics'
 import { getWinClassProbability } from '~/utils/winProbabilities'
 
@@ -350,7 +350,7 @@ function calculateExpectedWinRate(linesPerSimulation: number): number {
 const props = defineProps({
   results: { type: Object as PropType<BatchSimulationResult>, required: true },
   tickets: {
-    type: Array as PropType<import('~/types/ticket').Ticket[]>,
+    type: Array as PropType<import('~/schemas').Ticket[]>,
     required: true,
   },
 })

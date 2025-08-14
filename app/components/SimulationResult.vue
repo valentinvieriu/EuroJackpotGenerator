@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Ticket } from '~/types/ticket'
+import type { Ticket } from '~/schemas'
 import TicketNumber from './TicketNumber.vue'
 
 interface Props {

@@ -275,7 +275,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import type { BatchSimulationRequest } from '~/types/batchSimulation'
+import type { BatchSimulationRequest } from '~/schemas'
 
 const props = defineProps({
   ticketCount: { type: Number, default: 0 },

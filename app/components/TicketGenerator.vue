@@ -407,8 +407,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app'
-import type { Ticket } from '~/types/ticket'
-import type { EurojackpotHistoricOdds } from '~/types/winning'
+import type { Ticket, EurojackpotHistoricOdds } from '~/schemas'
 import { systemPrice } from '~/utils/pricing'
 import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'

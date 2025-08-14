@@ -19,8 +19,8 @@ import type {
   BatchSimulationResult,
   IndividualSimulationResult,
   TicketHighlightingData,
-} from '~/types/batchSimulation'
-import type { EurojackpotHistoricOdds } from '~/types/winning'
+} from '~/schemas/batchSimulation'
+import type { EurojackpotHistoricOdds } from '~/schemas/winning'
 import {
   batchSimulationRequestSchema,
   eurojackpotHistoricOddsSchema,
@@ -36,7 +36,7 @@ import {
   combinationCount,
   calculateWinningLineCounts,
 } from '~/utils/combinatorics'
-import type { Ticket } from '~/types/ticket'
+import type { Ticket } from '~/schemas/ticket'
 import { buildOddsMap } from '~/utils/payout'
 import { PRICE_PER_LINE } from '~/utils/pricing'
 

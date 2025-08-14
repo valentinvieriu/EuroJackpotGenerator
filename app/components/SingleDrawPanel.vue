@@ -59,9 +59,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
-import type { Ticket } from '~/types/ticket'
-import type { EurojackpotHistoricOdds } from '~/types/winning'
-import type { SimulateResponse } from '~/schemas'
+import type {
+  Ticket,
+  EurojackpotHistoricOdds,
+  SimulateResponse,
+} from '~/schemas'
 import SimulatedExtraction from './SimulatedExtraction.vue'
 import { buildOddsMap } from '~/utils/payout'
 import { calculateWinningLineCounts } from '~/utils/combinatorics'

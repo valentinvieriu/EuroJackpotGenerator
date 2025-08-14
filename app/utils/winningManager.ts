@@ -1,5 +1,4 @@
-import type { EurojackpotHistoricOdds } from '~/types/winning'
-import type { Ticket } from '~/types/ticket'
+import type { EurojackpotHistoricOdds, Ticket } from '~/schemas'
 import { buildOddsMap } from '~/utils/payout'
 // determineWinClass is used in the component to assign winClass to tickets, not directly here.
 
