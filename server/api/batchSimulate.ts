@@ -30,10 +30,8 @@ import {
   calculateBatchStatistics,
   simulateSingleDraw,
 } from '~/utils/batchStatistics'
-import {
-  combinationCount,
-  calculateWinningLineCounts,
-} from '~/utils/combinatorics'
+import { combinationCount } from '~/utils/combinatorics'
+import { buildTicketHighlightUpdate } from '~/utils/ticketHighlighting'
 import type { Ticket } from '~/schemas/ticket'
 import { buildOddsMap } from '~/utils/payout'
 import { PRICE_PER_LINE } from '~/utils/pricing'
@@ -343,41 +341,37 @@ function collectHighlightingDataFromResult(
   _result: IndividualSimulationResult,
   highlightingData: TicketHighlightingData
 ): void {
-  const mainSet = new Set(winningMainNumbers)
-  const euroSet = new Set(winningEuroNumbers)
-
   tickets.forEach((ticket) => {
     const ticketStats = highlightingData.ticketStats[ticket.id]
 
-    // Calculate wins for THIS specific ticket in THIS simulation
-    const matchingMain = ticket.mainNumbers.filter((n) => mainSet.has(n))
-    const matchingEuro = ticket.euroNumbers.filter((n) => euroSet.has(n))
+    // Use shared helper to calculate highlight data for this ticket
+    const highlightUpdate = buildTicketHighlightUpdate(
+      ticket,
+      winningMainNumbers,
+      winningEuroNumbers
+    )
 
-    const k = matchingMain.length
-    const h = matchingEuro.length
-    const m = ticket.mainNumbers.length
-    const e = ticket.euroNumbers.length
-
-    const ticketWinCounts = calculateWinningLineCounts(m, e, k, h)
-    const hasWin = Object.values(ticketWinCounts).some((count) => count > 0)
+    const hasWin = Object.values(highlightUpdate.winClassCounts).some(
+      (count) => count > 0
+    )
 
     if (hasWin) {
       ticketStats.totalWins++
 
       // Track winning number frequencies for this ticket
-      matchingMain.forEach((num) => {
+      highlightUpdate.winningMainNumbers.forEach((num) => {
         ticketStats.mainNumberFrequency[num] =
           (ticketStats.mainNumberFrequency[num] || 0) + 1
       })
 
-      matchingEuro.forEach((num) => {
+      highlightUpdate.winningEuroNumbers.forEach((num) => {
         ticketStats.euroNumberFrequency[num] =
           (ticketStats.euroNumberFrequency[num] || 0) + 1
       })
     }
 
     // Accumulate win class counts for THIS specific ticket
-    Object.entries(ticketWinCounts).forEach(([cls, count]) => {
+    Object.entries(highlightUpdate.winClassCounts).forEach(([cls, count]) => {
       const classNum = Number(cls)
       if (count > 0) {
         ticketStats.winClassCounts[classNum] =

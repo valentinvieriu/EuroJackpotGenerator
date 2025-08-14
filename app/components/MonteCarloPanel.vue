@@ -50,7 +50,7 @@ import type {
   IndividualSimulationResult,
   TicketHighlightingData,
 } from '~/schemas'
-import { calculateWinningLineCounts } from '~/utils/combinatorics'
+import { buildTicketHighlightUpdate } from '~/utils/ticketHighlighting'
 import BatchSimulationConfig from './BatchSimulationConfig.vue'
 import BatchSimulationProgress from './BatchSimulationProgress.vue'
 import BatchSimulationResults from './BatchSimulationResults.vue'
@@ -219,39 +219,32 @@ const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
 
     const simMain = simResult.winningNumbers.mainNumbers
     const simEuro = simResult.winningNumbers.euroNumbers
-    const mainSet = new Set(simMain)
-    const euroSet = new Set(simEuro)
 
     props.tickets.forEach((ticket) => {
       const ticketStats = ticketWinFrequency.get(ticket.id)!
 
-      // Count matches for this simulation
-      const matchingMain = ticket.mainNumbers.filter((n: number) =>
-        mainSet.has(n)
-      )
-      const matchingEuro = ticket.euroNumbers.filter((n: number) =>
-        euroSet.has(n)
+      // Use shared helper to calculate highlight data for this ticket
+      const highlightUpdate = buildTicketHighlightUpdate(
+        ticket,
+        simMain,
+        simEuro
       )
 
-      const k = matchingMain.length
-      const h = matchingEuro.length
-      const m = ticket.mainNumbers.length
-      const e = ticket.euroNumbers.length
-
-      const winClassCounts = calculateWinningLineCounts(m, e, k, h)
-      const hasWin = Object.values(winClassCounts).some((count) => count > 0)
+      const hasWin = Object.values(highlightUpdate.winClassCounts).some(
+        (count) => count > 0
+      )
 
       if (hasWin) {
         ticketStats.totalWins++
 
         // Track frequency of winning numbers for this ticket
-        matchingMain.forEach((num: number) => {
+        highlightUpdate.winningMainNumbers.forEach((num: number) => {
           ticketStats.mainNumbers.set(
             num,
             (ticketStats.mainNumbers.get(num) || 0) + 1
           )
         })
-        matchingEuro.forEach((num: number) => {
+        highlightUpdate.winningEuroNumbers.forEach((num: number) => {
           ticketStats.euroNumbers.set(
             num,
             (ticketStats.euroNumbers.get(num) || 0) + 1
@@ -259,7 +252,7 @@ const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
         })
 
         // Accumulate win class counts
-        Object.entries(winClassCounts).forEach(
+        Object.entries(highlightUpdate.winClassCounts).forEach(
           ([cls, count]: [string, number]) => {
             const classNum = Number(cls)
             if ((count as number) > 0) {

@@ -66,7 +66,7 @@ import type {
 } from '~/schemas'
 import SimulatedExtraction from './SimulatedExtraction.vue'
 import { buildOddsMap } from '~/utils/payout'
-import { calculateWinningLineCounts } from '~/utils/combinatorics'
+import { buildTicketHighlightUpdates } from '~/utils/ticketHighlighting'
 import { playWinSound } from '~/utils/audioUtils'
 
 const props = defineProps({
@@ -137,32 +137,7 @@ const simulateExtractionHandler = async (): Promise<void> => {
     const simMain = simulationResult.value.mainNumbers
     const simEuro = simulationResult.value.euroNumbers
 
-    const updates = props.tickets.map((ticket) => {
-      const winningMainNumbers = ticket.mainNumbers.filter((n: number) =>
-        simMain.includes(n)
-      )
-      const winningEuroNumbers = ticket.euroNumbers.filter((n: number) =>
-        simEuro.includes(n)
-      )
-
-      const k = winningMainNumbers.length
-      const h = winningEuroNumbers.length
-      const m = ticket.mainNumbers.length
-      const e = ticket.euroNumbers.length
-
-      const winClassCounts = calculateWinningLineCounts(m, e, k, h)
-      const winClass = Object.keys(winClassCounts)
-        .map(Number)
-        .sort((a, b) => a - b)[0]
-
-      return {
-        id: ticket.id,
-        winningMainNumbers,
-        winningEuroNumbers,
-        winClassCounts,
-        winClass,
-      }
-    })
+    const updates = buildTicketHighlightUpdates(props.tickets, simMain, simEuro)
 
     emit('apply-highlights', updates)
 
