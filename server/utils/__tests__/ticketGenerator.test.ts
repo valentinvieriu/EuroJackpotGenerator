@@ -20,11 +20,11 @@ beforeEach(() => {
 })
 
 describe('server generateTickets', () => {
-  it('validates input ranges', async () => {
+  it('validates minimal input assertions', async () => {
     const { generateTickets } = await import('../ticketGenerator')
+    // Only minimal assertions remain - full validation happens at API route level
     await expect(generateTickets(0, 5, 2)).rejects.toThrow('ticketCount')
-    await expect(generateTickets(1, 0, 2)).rejects.toThrow('mainCount')
-    await expect(generateTickets(1, 5, 0)).rejects.toThrow('euroCount')
+    // Note: mainCount and euroCount range validation moved to API route level
   })
 
   it('creates unique tickets with incrementing ids', async () => {

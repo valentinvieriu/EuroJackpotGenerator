@@ -59,15 +59,9 @@ export async function generateTickets(
   } // algorithm === 'uniform' or seed provided -> leave statsData as null to force uniform
 
   // Note: Input validation is primarily handled by Zod schema at the API route level.
-  // These are minimal internal assertions for direct function calls (e.g., tests).
+  // These are minimal internal assertions to prevent obvious runtime errors.
   if (!Number.isInteger(ticketCount) || ticketCount <= 0) {
     throw new Error('ticketCount must be a positive integer.')
-  }
-  if (!Number.isInteger(mainCount) || mainCount < 5 || mainCount > 16) {
-    throw new Error('mainCount must be an integer between 5 and 16.')
-  }
-  if (!Number.isInteger(euroCount) || euroCount < 2 || euroCount > 12) {
-    throw new Error('euroCount must be an integer between 2 and 12.')
   }
 
   const generatedTickets: Ticket[] = []
