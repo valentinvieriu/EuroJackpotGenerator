@@ -238,11 +238,17 @@ export const useSimulationStore = defineStore('simulation', () => {
             } else if (raw && typeof raw === 'object' && 'type' in raw) {
               // Minimal resilience fallback: accept progress/result/error shapes
               const ro = raw as Record<string, unknown>
-              if (ro.type === 'progress' && ro.progress && typeof ro.progress === 'object') {
+              if (
+                ro.type === 'progress' &&
+                ro.progress &&
+                typeof ro.progress === 'object'
+              ) {
                 const rp = ro.progress as Record<string, unknown>
                 const currentSimulation = Number(rp.currentSimulation ?? 0)
                 const totalSimulations = Number(
-                  rp.totalSimulations ?? state.value.config?.simulationCount ?? 0
+                  rp.totalSimulations ??
+                    state.value.config?.simulationCount ??
+                    0
                 )
                 const pct =
                   totalSimulations > 0
@@ -273,7 +279,9 @@ export const useSimulationStore = defineStore('simulation', () => {
                 return
               } else if (ro.type === 'error') {
                 state.value.phase = 'error'
-                state.value.error = String(ro.error || 'Simulation stream error')
+                state.value.error = String(
+                  ro.error || 'Simulation stream error'
+                )
                 buffer = ''
                 return
               }
