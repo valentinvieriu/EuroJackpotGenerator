@@ -409,6 +409,7 @@ import { ref, computed, onMounted, watch, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
+import { systemPrice } from '~/utils/pricing'
 import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
@@ -434,51 +435,40 @@ interface TicketType {
   price: number
 }
 
-const ticketTypes: ReadonlyArray<TicketType> = [
-  {
-    label: '5 main + 2 Euro numbers (standard)',
-    mainCount: 5,
-    euroCount: 2,
-    price: 2.0,
-  },
-  { label: '5 main + 3 Euro numbers', mainCount: 5, euroCount: 3, price: 6.0 },
-  { label: '5 main + 4 Euro numbers', mainCount: 5, euroCount: 4, price: 12.0 },
-  { label: '5 main + 5 Euro numbers', mainCount: 5, euroCount: 5, price: 20.0 },
-  { label: '5 main + 6 Euro numbers', mainCount: 5, euroCount: 6, price: 30.0 },
-  { label: '5 main + 7 Euro numbers', mainCount: 5, euroCount: 7, price: 42.0 },
-  { label: '5 main + 8 Euro numbers', mainCount: 5, euroCount: 8, price: 56.0 },
-  { label: '5 main + 9 Euro numbers', mainCount: 5, euroCount: 9, price: 72.0 },
-  {
-    label: '5 main + 10 Euro numbers',
-    mainCount: 5,
-    euroCount: 10,
-    price: 90.0,
-  },
-  {
-    label: '5 main + 11 Euro numbers',
-    mainCount: 5,
-    euroCount: 11,
-    price: 110.0,
-  },
-  {
-    label: '5 main + 12 Euro numbers',
-    mainCount: 5,
-    euroCount: 12,
-    price: 132.0,
-  },
-  { label: '6 main + 2 Euro numbers', mainCount: 6, euroCount: 2, price: 12.0 },
-  { label: '6 main + 3 Euro numbers', mainCount: 6, euroCount: 3, price: 36.0 },
-  { label: '7 main + 2 Euro numbers', mainCount: 7, euroCount: 2, price: 42.0 },
-  {
-    label: '7 main + 3 Euro numbers',
-    mainCount: 7,
-    euroCount: 3,
-    price: 126.0,
-  },
-]
+// System presets - prices computed dynamically using systemPrice utility
+const systemPresets = [
+  [5, 2], // standard
+  [5, 3],
+  [5, 4],
+  [5, 5],
+  [5, 6],
+  [5, 7],
+  [5, 8],
+  [5, 9],
+  [5, 10],
+  [5, 11],
+  [5, 12],
+  [6, 2],
+  [6, 3],
+  [7, 2],
+  [7, 3],
+] as const
+
+const ticketTypes = computed(
+  (): ReadonlyArray<TicketType> =>
+    systemPresets.map(([mainCount, euroCount]) => ({
+      label:
+        mainCount === 5 && euroCount === 2
+          ? `${mainCount} main + ${euroCount} Euro numbers (standard)`
+          : `${mainCount} main + ${euroCount} Euro numbers`,
+      mainCount,
+      euroCount,
+      price: systemPrice(mainCount, euroCount),
+    }))
+)
 
 const maxTicketsAllowed = 500
-const selectedTicketType: Ref<TicketType> = ref(ticketTypes[0])
+const selectedTicketType: Ref<TicketType> = ref(ticketTypes.value[0])
 const ticketCount: Ref<number> = ref(1)
 const selectionMethod = ref<'random' | 'weighted'>('weighted')
 const tickets: Ref<Ticket[]> = ref([])
@@ -497,12 +487,14 @@ const showGenerationForm = ref(false)
 const appState = ref<AppState>('FRESH')
 const currentLucky = ref<string>('')
 
-// Immediate URL persistence - watch for form changes
+// Debounced URL persistence - prevent history spam from rapid form changes
+let urlUpdateTimer: number | undefined
 watch(
   [selectedTicketType, ticketCount, selectionMethod],
   () => {
-    // Always update URL when any form field changes
-    syncUrlWithState()
+    // Debounce URL updates to avoid spamming browser history on rapid changes
+    clearTimeout(urlUpdateTimer)
+    urlUpdateTimer = setTimeout(syncUrlWithState, 250)
   },
   { deep: true }
 )
@@ -799,7 +791,7 @@ const applyUrlConfig = async (config: Partial<AppConfig>): Promise<void> => {
   if (config.system) {
     const parsed = parseTicketType(config.system)
     if (parsed) {
-      const matchingType = ticketTypes.find(
+      const matchingType = ticketTypes.value.find(
         (t) =>
           t.mainCount === parsed.mainCount && t.euroCount === parsed.euroCount
       )
