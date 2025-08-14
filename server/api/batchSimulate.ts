@@ -402,7 +402,12 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
 
     console.log(`Batch simulation fetching winning data from: ${url}`)
 
-    const response = await fetch(url, {
+    // Fetch from external API with timeout (8s to match /api/fetchWinningData)
+    const { fetchWithTimeout, validateExternalResponse } = await import(
+      '../utils/validation'
+    )
+    const response = await fetchWithTimeout(url, {
+      timeout: 8000,
       headers: { Accept: 'application/json' },
     })
 
@@ -414,22 +419,19 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
     }
 
     const rawData = await response.json()
-    const parseResult = eurojackpotHistoricOddsSchema.safeParse(rawData)
-
-    if (!parseResult.success) {
-      console.warn(
-        'Invalid odds data structure from external API, using normalized fallback:',
-        parseResult.error.issues
-      )
-      return normalizeOdds(getFallbackWinningData())
-    }
+    // Validate external response and normalize
+    const validated = validateExternalResponse(
+      eurojackpotHistoricOddsSchema,
+      rawData,
+      'Lotto Bayern API'
+    )
 
     console.log(
       'Batch simulation winning data fetched and validated successfully'
     )
-    // Always normalize validated data to ensure consistent class numbering etc.
-    return normalizeOdds(parseResult.data)
+    return normalizeOdds(validated)
   } catch (error) {
+    // On any error (timeout, validation, network), use normalized fallback
     console.warn(
       'Error fetching winning data, using normalized fallback:',
       error
