@@ -8,30 +8,30 @@
     </div>
 
     <BatchSimulationConfig
-      v-if="tickets.length > 0 && state.phase === 'config'"
+      v-if="tickets.length > 0 && viewState.phase === 'config'"
       :ticket-count="tickets.length"
       :cost-per-simulation="costPerSimulation"
-      :disabled="state.isRunning"
-      :can-cancel="state.canCancel"
-      :show-cancel-button="state.isRunning"
+      :disabled="viewState.isRunning"
+      :can-cancel="viewState.canCancel"
+      :show-cancel-button="viewState.isRunning"
       @start="handleStart"
       @cancel="handleCancel"
     />
 
     <BatchSimulationProgress
-      v-if="state.phase === 'running'"
-      :current-simulation="state.currentSimulation"
-      :total-simulations="state.totalSimulations"
-      :elapsed-time="state.elapsedTime"
-      :estimated-time-remaining="state.estimatedTimeRemaining"
-      :can-cancel="state.canCancel"
-      :partial-results="state.partialResults"
+      v-if="viewState.phase === 'running'"
+      :current-simulation="viewState.currentSimulation"
+      :total-simulations="viewState.totalSimulations"
+      :elapsed-time="viewState.elapsedTime"
+      :estimated-time-remaining="viewState.estimatedTimeRemaining"
+      :can-cancel="viewState.canCancel"
+      :partial-results="viewState.partialResults"
       @cancel="handleCancel"
     />
 
     <BatchSimulationResults
-      v-if="state.phase === 'results' && state.results"
-      :results="state.results"
+      v-if="viewState.phase === 'results' && viewState.results"
+      :results="viewState.results"
       :tickets="tickets"
       @reset="handleReset"
     />
@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted, type PropType } from 'vue'
+import { ref, onUnmounted, watch, computed, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
 import { formatDurationCompact } from '~/utils/time'
 import type { Ticket } from '~/types/ticket'
@@ -55,6 +55,7 @@ import BatchSimulationConfig from './BatchSimulationConfig.vue'
 import BatchSimulationProgress from './BatchSimulationProgress.vue'
 import BatchSimulationResults from './BatchSimulationResults.vue'
 import { playWinSound } from '~/utils/audioUtils'
+import { useSimulationStore } from '~/../stores/simulation'
 
 const props = defineProps({
   tickets: { type: Array as PropType<Ticket[]>, required: true },
@@ -76,36 +77,28 @@ const emit = defineEmits<{
 }>()
 
 const error = ref('')
-const state = ref({
-  phase: 'config' as 'config' | 'running' | 'results',
-  isRunning: false,
-  canCancel: false,
-  currentSimulation: 0,
-  totalSimulations: 0,
-  startTime: 0,
-  elapsedTime: 0,
-  estimatedTimeRemaining: null as string | null | undefined,
-  partialResults: null as
-    | {
-        simulationsCompleted: number
-        totalWins: number
-        winPercentage: number
-        currentROI: number
-        netProfit: number
-        maxWin: number
-        winsByClass: Record<number, number>
-      }
-    | null
-    | undefined,
-  results: null as BatchSimulationResult | null,
-  abortController: null as AbortController | null,
+const simStore = useSimulationStore()
+const viewState = computed(() => {
+  const s = simStore.state
+  const p = s.progress
+  return {
+    phase: s.phase as 'config' | 'running' | 'results',
+    isRunning: simStore.isRunning,
+    canCancel: s.canCancel,
+    currentSimulation: p?.currentSimulation ?? 0,
+    totalSimulations: p?.totalSimulations ?? s.config?.simulationCount ?? 0,
+    startTime: s.startTime,
+    elapsedTime: p?.elapsedTime ?? 0,
+    estimatedTimeRemaining: p?.estimatedTimeRemaining ?? null,
+    partialResults: p?.partialResults ?? null,
+    results: s.results as BatchSimulationResult | null,
+  }
 })
-
-const timer = ref<ReturnType<typeof setInterval> | null>(null)
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase
 
-const formatEstimatedTime = formatDurationCompact
+// Kept for potential UI formatting; not used after store refactor
+const _formatEstimatedTime = formatDurationCompact
 
 /**
  * Applies highlights to tickets based on aggregate Monte Carlo results.
@@ -343,211 +336,56 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
   } catch (winningDataError) {
     console.warn('Failed to fetch winning data for tooltips:', winningDataError)
   }
-  state.value = {
-    phase: 'running',
-    isRunning: true,
-    canCancel: true,
-    currentSimulation: 0,
-    totalSimulations: cfg.simulationCount,
-    startTime: Date.now(),
-    elapsedTime: 0,
-    estimatedTimeRemaining: null,
-    partialResults: {
-      simulationsCompleted: 0,
-      totalWins: 0,
-      winPercentage: 0,
-      currentROI: 0,
-      netProfit: 0,
-      maxWin: 0,
-      winsByClass: {},
-    },
-    results: null,
-    abortController: new AbortController(),
-  }
-
-  timer.value = setInterval(() => {
-    state.value.elapsedTime = Date.now() - state.value.startTime
-    if (state.value.currentSimulation > 0) {
-      const avg = state.value.elapsedTime / state.value.currentSimulation
-      const remaining =
-        state.value.totalSimulations - state.value.currentSimulation
-      state.value.estimatedTimeRemaining = formatEstimatedTime(remaining * avg)
-    }
-  }, 1000)
+  // Set store config and start simulation in store
+  simStore.setConfig({
+    simulationCount: cfg.simulationCount,
+    batchSize: cfg.batchSize ?? 100,
+  })
 
   try {
-    const request: BatchSimulationRequest = { ...cfg, tickets: props.tickets }
-    const resp = await fetch(`${apiBaseUrl}/batchSimulate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/x-ndjson',
-      },
-      body: JSON.stringify(request),
-      signal: state.value.abortController?.signal ?? undefined,
+    await simStore.startSimulation(props.tickets, props.costPerSimulation, {
+      simulationCount: cfg.simulationCount,
+      batchSize: cfg.batchSize ?? 100,
     })
-    const contentType = resp.headers.get('content-type') || ''
-    if (!resp.ok) {
-      const text = await resp.text()
-      throw new Error(text || `HTTP ${resp.status}`)
-    }
-    if (contentType.includes('application/x-ndjson') && resp.body) {
-      const reader = resp.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-      const consume = async (): Promise<void> => {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buffer += decoder.decode(value, { stream: true })
-          let idx: number
-          while ((idx = buffer.indexOf('\n')) >= 0) {
-            const line = buffer.slice(0, idx).trim()
-            buffer = buffer.slice(idx + 1)
-            if (!line) continue
-            let msg: unknown
-            try {
-              msg = JSON.parse(line)
-            } catch {
-              console.warn('Failed to parse NDJSON line', line)
-              continue
-            }
-            const isObj = (v: unknown): v is Record<string, unknown> =>
-              typeof v === 'object' && v !== null
-            if (
-              isObj(msg) &&
-              msg.type === 'progress' &&
-              isObj(msg.progress) &&
-              isObj(msg.summary)
-            ) {
-              const current = Number(msg.progress?.currentSimulation) || 0
-              state.value.currentSimulation = current
-              state.value.partialResults = {
-                simulationsCompleted: current,
-                totalWins:
-                  isObj(msg.summary.winDistribution) &&
-                  typeof msg.summary.winDistribution.totalWins === 'number'
-                    ? msg.summary.winDistribution.totalWins
-                    : 0,
-                winPercentage:
-                  isObj(msg.summary.winDistribution) &&
-                  typeof msg.summary.winDistribution.winPercentage === 'number'
-                    ? msg.summary.winDistribution.winPercentage
-                    : 0,
-                currentROI:
-                  typeof msg.summary.roiPercentage === 'number'
-                    ? msg.summary.roiPercentage
-                    : 0,
-                netProfit:
-                  typeof msg.summary.netProfit === 'number'
-                    ? msg.summary.netProfit
-                    : 0,
-                maxWin:
-                  typeof msg.summary.maxWin === 'number'
-                    ? msg.summary.maxWin
-                    : 0,
-                winsByClass:
-                  isObj(msg.summary.winDistribution) &&
-                  typeof msg.summary.winDistribution.winsByClass === 'object' &&
-                  msg.summary.winDistribution.winsByClass !== null
-                    ? (msg.summary.winDistribution.winsByClass as Record<
-                        number,
-                        number
-                      >)
-                    : {},
-              }
-            } else if (
-              isObj(msg) &&
-              msg.type === 'result' &&
-              isObj(msg.result)
-            ) {
-              state.value.results =
-                msg.result as unknown as BatchSimulationResult
-              state.value.phase = 'results'
-              // Apply highlights based on the first individual result
-              if (state.value.results) {
-                await applyHighlightsFromResults(state.value.results)
-              }
-            } else if (
-              isObj(msg) &&
-              msg.type === 'error' &&
-              typeof msg.error === 'string'
-            ) {
-              throw new Error(String(msg.error))
-            }
-          }
-        }
-      }
-      await consume()
-    } else {
-      state.value.results = (await resp.json()) as BatchSimulationResult
-      state.value.phase = 'results'
-      // Apply highlights based on the first individual result
-      if (state.value.results) {
-        await applyHighlightsFromResults(state.value.results)
-      }
-    }
-    if (state.value.results && state.value.results.roiPercentage > 0) {
-      const r = state.value.results
-      playWinSound(r.totalWinnings, r.totalCost)
-    }
   } catch (err: unknown) {
     console.error('Batch simulation error:', err)
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      error.value = 'Batch simulation was cancelled.'
-    } else if (typeof err === 'object' && err !== null) {
-      const anyErr = err as Record<string, unknown>
-      const msg =
-        (anyErr.data as Record<string, unknown> | undefined)?.message ||
-        (anyErr.message as string | undefined) ||
-        'An error occurred during batch simulation.'
-      error.value = String(msg)
-    } else {
-      error.value = 'An error occurred during batch simulation.'
-    }
-    state.value.phase = 'config'
+    // Error will also be reflected in store; show human-friendly UI message
+    const anyErr = err as Record<string, unknown>
+    const msg =
+      (anyErr?.data as Record<string, unknown> | undefined)?.message ||
+      (anyErr?.message as string | undefined) ||
+      'An error occurred during batch simulation.'
+    error.value = String(msg)
   } finally {
-    state.value.isRunning = false
-    state.value.canCancel = false
-    if (timer.value) {
-      clearInterval(timer.value)
-      timer.value = null
-    }
+    // Store manages running/cancel flags
   }
 }
 
 const handleCancel = (): void => {
-  if (state.value.abortController) state.value.abortController.abort()
-  state.value.canCancel = false
-  if (timer.value) {
-    clearInterval(timer.value)
-    timer.value = null
-  }
+  simStore.cancelSimulation()
 }
 
 const handleReset = (): void => {
-  state.value = {
-    phase: 'config',
-    isRunning: false,
-    canCancel: false,
-    currentSimulation: 0,
-    totalSimulations: 0,
-    startTime: 0,
-    elapsedTime: 0,
-    estimatedTimeRemaining: null,
-    partialResults: null,
-    results: null,
-    abortController: null,
-  }
+  simStore.resetSimulation()
 }
 
 onUnmounted(() => {
-  if (state.value.abortController) state.value.abortController.abort()
-  if (timer.value) {
-    clearInterval(timer.value)
-    timer.value = null
-  }
+  simStore.cancelSimulation()
 })
+
+// When results are ready in the store, apply highlights and play sound
+watch(
+  () => simStore.state.phase,
+  async (phase) => {
+    if (phase === 'results' && simStore.state.results) {
+      await applyHighlightsFromResults(simStore.state.results)
+      if (simStore.state.results.roiPercentage > 0) {
+        const r = simStore.state.results
+        playWinSound(r.totalWinnings, r.totalCost)
+      }
+    }
+  }
+)
 </script>
 
 <style scoped></style>

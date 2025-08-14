@@ -132,21 +132,29 @@ export const useSimulationStore = defineStore('simulation', () => {
         includeIndividualResults: config.simulationCount <= 1000,
       }
 
-      const response = await $fetch<ReadableStream>(
-        `${apiBaseUrl}/batchSimulate`,
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/x-ndjson',
-            'Content-Type': 'application/json',
-          },
-          body: request,
-          signal: state.value.abortController.signal,
-          responseType: 'stream',
-        }
-      )
+      const resp = await fetch(`${apiBaseUrl}/batchSimulate`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/x-ndjson',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+        signal: state.value.abortController.signal,
+      })
 
-      await processNDJSONStream(response)
+      if (!resp.ok) {
+        const text = await resp.text()
+        throw new Error(text || `HTTP ${resp.status}`)
+      }
+
+      const contentType = resp.headers.get('content-type') || ''
+      if (contentType.includes('application/x-ndjson') && resp.body) {
+        await processNDJSONStream(resp.body)
+      } else {
+        const json = (await resp.json()) as BatchSimulationResult
+        setResults(json)
+        state.value.phase = 'results'
+      }
     } catch (error: unknown) {
       if (error.name === 'AbortError') {
         state.value.phase = 'cancelled'
