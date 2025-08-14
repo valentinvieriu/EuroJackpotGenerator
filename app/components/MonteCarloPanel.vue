@@ -55,7 +55,7 @@ import BatchSimulationConfig from './BatchSimulationConfig.vue'
 import BatchSimulationProgress from './BatchSimulationProgress.vue'
 import BatchSimulationResults from './BatchSimulationResults.vue'
 import { playWinSound } from '~/utils/audioUtils'
-import { useSimulationStore } from '../../stores/simulation'
+// useSimulationStore is auto-imported via @pinia/nuxt configuration
 
 const props = defineProps({
   tickets: { type: Array as PropType<Ticket[]>, required: true },

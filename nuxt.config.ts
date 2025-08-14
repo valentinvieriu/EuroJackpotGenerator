@@ -1,6 +1,10 @@
 export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
 
+  pinia: {
+    storesDirs: ['./stores/**'], // Auto-import stores from root stores directory
+  },
+
   app: {
     head: {
       title: 'EuroJackpot Generator',

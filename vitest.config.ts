@@ -12,6 +12,14 @@ export default defineConfig({
         find: '@',
         replacement: fileURLToPath(new URL('./app', import.meta.url)),
       },
+      {
+        find: '~~',
+        replacement: fileURLToPath(new URL('.', import.meta.url)),
+      },
+      {
+        find: '@@',
+        replacement: fileURLToPath(new URL('.', import.meta.url)),
+      },
     ],
   },
 })
