@@ -20,15 +20,12 @@ import type {
   IndividualSimulationResult,
   TicketHighlightingData,
 } from '~/schemas/batchSimulation'
-import type { EurojackpotHistoricOdds } from '~/schemas/winning'
 import {
   batchSimulationRequestSchema,
-  eurojackpotHistoricOddsSchema,
   type BatchSimulationRequest,
 } from '~/schemas'
 import { validateInput, handleEndpointError } from '../utils/validation'
-import { normalizeOdds } from '~/utils/odds'
-import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
+import { fetchWinningData } from '../utils/winningData'
 import {
   calculateBatchStatistics,
   simulateSingleDraw,
@@ -388,57 +385,6 @@ function collectHighlightingDataFromResult(
       }
     })
   })
-}
-
-/**
- * Fetches current winning odds data (reusing logic from existing endpoint).
- */
-async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
-  try {
-    // Use the same working URL pattern as single draw
-    const { generateEurojackpotUrl, EurojackpotDrawType } = await import(
-      '~/utils/dateUtils'
-    )
-    const url = generateEurojackpotUrl(EurojackpotDrawType.PREVIOUS)
-
-    console.log(`Batch simulation fetching winning data from: ${url}`)
-
-    // Fetch from external API with timeout (8s to match /api/fetchWinningData)
-    const { fetchWithTimeout, validateExternalResponse } = await import(
-      '../utils/validation'
-    )
-    const response = await fetchWithTimeout(url, {
-      timeout: 8000,
-      headers: { Accept: 'application/json' },
-    })
-
-    if (!response.ok) {
-      console.warn(
-        'Failed to fetch current odds, using normalized fallback data'
-      )
-      return normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
-    }
-
-    const rawData = await response.json()
-    // Validate external response and normalize
-    const validated = validateExternalResponse(
-      eurojackpotHistoricOddsSchema,
-      rawData,
-      'Lotto Bayern API'
-    )
-
-    console.log(
-      'Batch simulation winning data fetched and validated successfully'
-    )
-    return normalizeOdds(validated)
-  } catch (error) {
-    // On any error (timeout, validation, network), use normalized fallback
-    console.warn(
-      'Error fetching winning data, using normalized fallback:',
-      error
-    )
-    return normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
-  }
 }
 
 /**
