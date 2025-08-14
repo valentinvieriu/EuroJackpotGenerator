@@ -51,8 +51,20 @@ describe('Odds Store', () => {
           variantNo: 0,
         },
         eurojackpotOdds: [
-          { amount: 50000000, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
-          { amount: 500000, numberOfWins: 1, winningClass: 2, sequence: 2, jackpot: false },
+          {
+            amount: 50000000,
+            numberOfWins: 0,
+            winningClass: 1,
+            sequence: 1,
+            jackpot: true,
+          },
+          {
+            amount: 500000,
+            numberOfWins: 1,
+            winningClass: 2,
+            sequence: 2,
+            jackpot: false,
+          },
         ],
         eurojackpotTurnover: [{ amount: 100000000, jurisdiction: 0 }],
       }
@@ -85,7 +97,13 @@ describe('Odds Store', () => {
           variantNo: 0,
         },
         eurojackpotOdds: [
-          { amount: 50000000, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
+          {
+            amount: 50000000,
+            numberOfWins: 0,
+            winningClass: 1,
+            sequence: 1,
+            jackpot: true,
+          },
         ],
         eurojackpotTurnover: [{ amount: 100000000, jurisdiction: 0 }],
       }
@@ -114,7 +132,13 @@ describe('Odds Store', () => {
           variantNo: 0,
         },
         eurojackpotOdds: [
-          { amount: 50000000, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
+          {
+            amount: 50000000,
+            numberOfWins: 0,
+            winningClass: 1,
+            sequence: 1,
+            jackpot: true,
+          },
         ],
         eurojackpotTurnover: [{ amount: 100000000, jurisdiction: 0 }],
       }
@@ -130,7 +154,13 @@ describe('Odds Store', () => {
           variantNo: 0,
         },
         eurojackpotOdds: [
-          { amount: 45000000, numberOfWins: 1, winningClass: 1, sequence: 1, jackpot: true },
+          {
+            amount: 45000000,
+            numberOfWins: 1,
+            winningClass: 1,
+            sequence: 1,
+            jackpot: true,
+          },
         ],
         eurojackpotTurnover: [{ amount: 90000000, jurisdiction: 0 }],
       }
@@ -158,31 +188,29 @@ describe('Odds Store', () => {
     })
 
     it('should prevent concurrent requests', async () => {
-      global.$fetch = vi
-        .fn()
-        .mockImplementation(
-          () =>
-            new Promise((resolve) =>
-              setTimeout(
-                () =>
-                  resolve({
-                    eurojackpotGameCycle: {
-                      cycleNo: 1,
-                      cycleYear: 2025,
-                      eventDate: 1735689600000,
-                      eventWeekday: 5,
-                      gametableValidFrom: null,
-                      gametableValidTo: null,
-                      key: '2025-01-5',
-                      variantNo: 0,
-                    },
-                    eurojackpotOdds: [],
-                    eurojackpotTurnover: [],
-                  }),
-                100
-              )
+      global.$fetch = vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  eurojackpotGameCycle: {
+                    cycleNo: 1,
+                    cycleYear: 2025,
+                    eventDate: 1735689600000,
+                    eventWeekday: 5,
+                    gametableValidFrom: null,
+                    gametableValidTo: null,
+                    key: '2025-01-5',
+                    variantNo: 0,
+                  },
+                  eurojackpotOdds: [],
+                  eurojackpotTurnover: [],
+                }),
+              100
             )
-        )
+          )
+      )
 
       const store = useOddsStore()
 
@@ -222,7 +250,13 @@ describe('Odds Store', () => {
           variantNo: 0,
         },
         eurojackpotOdds: [
-          { amount: 50000000, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
+          {
+            amount: 50000000,
+            numberOfWins: 0,
+            winningClass: 1,
+            sequence: 1,
+            jackpot: true,
+          },
         ],
         eurojackpotTurnover: [{ amount: 100000000, jurisdiction: 0 }],
       }
@@ -261,7 +295,7 @@ describe('Odds Store', () => {
       expect(payoutMap).toBeTruthy()
       expect(payoutMap[1]).toBeGreaterThan(0) // Jackpot class
       expect(payoutMap[12]).toBeGreaterThan(0) // Lowest class
-  })
+    })
 
     it('should provide cache statistics', () => {
       const store = useOddsStore()
