@@ -6,7 +6,6 @@ import {
   validateOutput,
   fetchWithTimeout,
 } from './validation'
-import { normalizeOdds } from '~/utils/odds'
 import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
 
 /**
@@ -50,10 +49,8 @@ export async function fetchWinningData(
     })
 
     if (!response.ok) {
-      console.warn(
-        'Failed to fetch current odds, using normalized fallback data'
-      )
-      return normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
+      console.warn('Failed to fetch current odds, using fallback data')
+      return FALLBACK_EUROJACKPOT_ODDS
     }
 
     // 3. Parse and validate external response
@@ -64,21 +61,18 @@ export async function fetchWinningData(
       'Lotto Bayern API'
     )
 
-    // 4. Normalize odds data (handles both 1-12 and 101-112 win class formats)
-    const normalizedData = normalizeOdds(validatedData)
-
     console.log('Winning data fetched and validated successfully')
 
-    // 5. Optional output validation for edge cases
+    // 4. Optional output validation for edge cases
     if (shouldValidateOutput) {
       return validateOutput(
         eurojackpotHistoricOddsSchema,
-        normalizedData,
+        validatedData,
         'winning data response'
       )
     }
 
-    return normalizedData
+    return validatedData
   } catch (error: unknown) {
     // If external validation fails, fall back to local data
     if (
@@ -88,14 +82,11 @@ export async function fetchWinningData(
       error.statusCode === 502
     ) {
       console.warn('Using fallback winning data due to external API error')
-      return normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
+      return FALLBACK_EUROJACKPOT_ODDS
     }
 
-    // On any other error (timeout, validation, network), use normalized fallback
-    console.warn(
-      'Error fetching winning data, using normalized fallback:',
-      error
-    )
-    return normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
+    // On any other error (timeout, validation, network), use fallback
+    console.warn('Error fetching winning data, using fallback:', error)
+    return FALLBACK_EUROJACKPOT_ODDS
   }
 }
