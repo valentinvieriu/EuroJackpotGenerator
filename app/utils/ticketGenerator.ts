@@ -9,9 +9,7 @@ import {
   EURO_NUMBER_MAX,
 } from './constants'
 
-// Global counter for assigning unique IDs to tickets across multiple generation requests within the same session.
-// Note: This resets if the server restarts. For persistent IDs, a different approach would be needed.
-let ticketIdCounter = 1
+// IDs are assigned per-batch deterministically (1..N) to avoid cross-request leakage.
 
 type Algorithm = 'uniform' | 'weighted'
 interface Options {
@@ -152,9 +150,9 @@ export async function generateTickets(
     // Add the unique key to the set.
     uniqueTicketKeys.add(ticketKey)
 
-    // Create the ticket object.
+    // Create the ticket object with per-batch deterministic ID
     generatedTickets.push({
-      id: ticketIdCounter++, // Assign and increment the session-unique ID
+      id: i + 1,
       mainNumbers, // Numbers are already sorted by generateNumbers
       euroNumbers, // Numbers are already sorted by generateNumbers
       // winClass, winningMainNumbers, winningEuroNumbers are added later during simulation check.
