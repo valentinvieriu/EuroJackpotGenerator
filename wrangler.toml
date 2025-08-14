@@ -1,6 +1,6 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "eurojackpot"
-compatibility_date = "2024-10-01"
+compatibility_date = "2025-08-01"
 main = "./dist/worker/index.js"
 assets = { directory = "./dist/public", binding = "ASSETS" }
 
