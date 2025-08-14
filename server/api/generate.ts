@@ -22,11 +22,12 @@ export default defineEventHandler(
     try {
       // 1. Validate input at the edge
       const rawBody = await readBody(event)
-      const { ticketCount, mainCount, euroCount, algorithm } = validateInput(
-        generateRequestSchema,
-        rawBody,
-        'ticket generation request'
-      )
+      const { ticketCount, mainCount, euroCount, algorithm, seed } =
+        validateInput(
+          generateRequestSchema,
+          rawBody,
+          'ticket generation request'
+        )
 
       // 2. Execute business logic
       console.log(
@@ -34,6 +35,7 @@ export default defineEventHandler(
       )
       const tickets = await generateTickets(ticketCount, mainCount, euroCount, {
         algorithm,
+        seed,
       })
 
       // 3. Set linesCount for each ticket

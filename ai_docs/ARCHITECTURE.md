@@ -202,7 +202,29 @@ sequenceDiagram
 
 ---
 
-## 10) Open Items / Future
+## 10) State Management & URL Persistence
+
+### Configuration Persistence
+
+- **Immediate URL Sync**: All form configuration automatically persisted to URL
+- **Zero State Loss**: Page refresh never loses user configuration work
+- **Unified Format**: Single URL structure handles both state persistence and sharing
+- **Optional Reproducibility**: Shareable links include seed for exact reproduction
+
+### URL Structure
+
+- **State Persistence**: Parameters reflect current form configuration
+- **Shared Reproduction**: Additional seed parameter enables exact ticket reproduction
+- **Clean Entry Points**: Fresh visitors see clean URLs for SEO optimization
+- **Backwards Compatibility**: Legacy URL formats automatically upgraded
+
+### Randomness Quality
+
+- **Default Unseeded**: Most generations use true randomness for better distribution
+- **Seeded When Shared**: Reproducible generation only when explicitly sharing
+- **Optimal Distribution**: Eliminates forced seeding with potentially clustered values
+
+## 11) Open Items / Future
 
 - Optional toggle: **uniform vs weighted** generation in UI.
 - Basic telemetry/analytics (not in code yet).

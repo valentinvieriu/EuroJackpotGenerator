@@ -74,6 +74,7 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
   - Generate **1–500** unique tickets per request.
   - Display **total price** immediately (lines × **€2.00**).
   - Users can choose **Uniform** or **Weighted by previous-draw stats** for ticket generation (default weighted; falls back to uniform on data issues).
+  - Configuration immediately persisted to URL for zero state loss on page refresh.
 
 - **FR-2: Single Draw Simulation**
   - Draw and display **5 main + 2 Euro** numbers.
@@ -87,7 +88,13 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
   - **Cancel** stops after current batch.
   - **Export** detailed per-simulation results as JSON when enabled (disabled over 1,000 sims at the UI for memory).
 
-- **FR-4: Pricing & Transparency**
+- **FR-4: Configuration Sharing & Persistence**
+  - **Immediate persistence**: Form configuration automatically saved to URL with zero state loss.
+  - **Unified sharing format**: Single URL structure for both state persistence and exact reproduction.
+  - **Optional reproducibility**: Shareable links include seed for deterministic ticket generation.
+  - **Quality randomness**: Default unseeded generation for better distribution, seeded only when sharing.
+
+- **FR-5: Pricing & Transparency**
   - **€2.00 per line** consistently applied; lines = C(m,5) × C(e,2).
 
 - **NFR-1: Performance**

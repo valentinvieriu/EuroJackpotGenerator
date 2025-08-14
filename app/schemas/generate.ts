@@ -5,6 +5,7 @@ export const generateRequestSchema = z.object({
   mainCount: z.number().int().min(5).max(16),
   euroCount: z.number().int().min(2).max(12),
   algorithm: z.enum(['uniform', 'weighted']).optional().default('weighted'),
+  seed: z.string().optional(),
 })
 
 export type GenerateRequest = z.infer<typeof generateRequestSchema>

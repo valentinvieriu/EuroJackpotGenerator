@@ -3,10 +3,37 @@
     :class="[
       'transition-all duration-500 ease-in-out',
       tickets.length > 0
-        ? 'space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-6'
+        ? 'space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-6 lg:items-stretch'
         : 'block',
     ]"
   >
+    <!-- Welcome message for shared Lucky Numbers -->
+    <div
+      v-if="showWelcomeMessage"
+      class="col-span-full bg-gradient-to-r from-casino-gold/20 to-casino-gold-light/20 border border-casino-gold/50 rounded-lg p-4 mb-6 relative"
+    >
+      <div class="flex items-start gap-3">
+        <div class="text-2xl">🎯</div>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-casino-gold-light mb-1">
+            Welcome to Lucky Numbers "{{ welcomeLuckyCode }}"!
+          </h3>
+          <p class="text-sm text-gray-300">
+            Someone shared their ticket configuration with you. The settings
+            below have been loaded automatically. Click "Generate Numbers" to
+            create the exact same tickets they had!
+          </p>
+        </div>
+        <button
+          class="text-gray-400 hover:text-gray-200 transition duration-150 p-1"
+          title="Dismiss"
+          @click="dismissWelcomeMessage"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+
     <div
       :class="[
         'space-y-6 transition-all duration-500',
@@ -180,7 +207,64 @@
           </div>
         </form>
       </div>
+      <!-- Lucky Numbers Sharing Dialog -->
+      <div
+        v-if="showSharingDialog"
+        class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-gold/50"
+      >
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-casino-gold-light mb-1">
+              🎉 Lucky Numbers Created!
+            </h3>
+            <p class="text-sm text-gray-400">
+              Your configuration has been saved as "{{ currentLuckyCode }}"
+            </p>
+          </div>
+          <button
+            class="text-gray-400 hover:text-gray-200 transition duration-150"
+            title="Close"
+            @click="closeSharingDialog"
+          >
+            ✕
+          </button>
+        </div>
 
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-2">
+              Shareable link:
+            </label>
+            <div class="flex gap-2">
+              <input
+                :value="shareableUrl"
+                readonly
+                class="flex-1 px-3 py-2 bg-casino-blue border border-casino-blue-light/50 rounded-md text-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-casino-gold"
+              />
+              <button
+                :class="[
+                  'px-4 py-2 text-sm font-medium rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold',
+                  copySuccess
+                    ? 'bg-green-600 text-white'
+                    : 'bg-casino-gold text-casino-blue-dark hover:bg-casino-gold-light',
+                ]"
+                @click="copyToClipboard"
+              >
+                {{ copySuccess ? '✓ Copied!' : 'Copy Link' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="text-xs text-gray-500 bg-casino-blue/40 p-3 rounded-md">
+            <strong>💡 How it works:</strong> Anyone with this link can recreate
+            your exact ticket configuration and numbers. The lucky code "{{
+              currentLuckyCode
+            }}" ensures the same results every time.
+          </div>
+        </div>
+      </div>
+
+      <!-- Generated Tickets Section (moved to left column) -->
       <div v-if="tickets.length && !loading && !showGenerationForm">
         <div
           class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
@@ -190,6 +274,13 @@
               Generated Tickets ({{ tickets.length }})
             </h2>
             <div class="flex gap-2">
+              <button
+                class="px-2 py-1 text-sm text-casino-gold hover:text-casino-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold rounded"
+                title="Create shareable link for these numbers"
+                @click="shareLuckyNumbers"
+              >
+                Share
+              </button>
               <button
                 class="px-3 py-1 text-sm bg-navy-muted hover:bg-[#3B4B60] text-ivory rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold"
                 @click="showGenerationForm = true"
@@ -314,7 +405,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type Ref } from 'vue'
+import { ref, computed, onMounted, watch, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app'
 import type { Ticket } from '~/types/ticket'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
@@ -322,6 +413,19 @@ import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
 import StepperInput from './StepperInput.vue'
+import {
+  generateLuckyCode,
+  formatTicketType,
+  copyConfigUrl,
+  decodeHashToConfig,
+  decodeUrlHash,
+  parseTicketType,
+  seedToLuckyCode,
+  updateBrowserUrl,
+  getAppConfigUrl,
+  type AppConfig,
+  type AppState,
+} from '~/utils/urlHash'
 
 interface TicketType {
   label: string
@@ -389,6 +493,20 @@ const singlePanelKey = ref(0)
 const montePanelKey = ref(0)
 const showGenerationForm = ref(false)
 
+// App state management
+const appState = ref<AppState>('FRESH')
+const currentLucky = ref<string>('')
+
+// Immediate URL persistence - watch for form changes
+watch(
+  [selectedTicketType, ticketCount, selectionMethod],
+  () => {
+    // Always update URL when any form field changes
+    syncUrlWithState()
+  },
+  { deep: true }
+)
+
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase
 
@@ -396,6 +514,46 @@ const totalPrice = computed<number>(() => {
   const count = Math.max(1, ticketCount.value || 1)
   return (selectedTicketType.value?.price ?? 0) * count
 })
+
+// Sharing functionality
+const showSharingDialog = ref(false)
+const currentLuckyCode = ref('')
+const shareableUrl = ref('')
+const copySuccess = ref(false)
+const showWelcomeMessage = ref(false)
+const welcomeLuckyCode = ref('')
+
+// Configuration management helpers
+const getCurrentConfig = (): AppConfig => {
+  const system = formatTicketType(
+    selectedTicketType.value.mainCount,
+    selectedTicketType.value.euroCount
+  )
+  const config: AppConfig = {
+    system,
+    tickets: ticketCount.value,
+    method: selectionMethod.value,
+  }
+
+  // Add lucky seed if we have one
+  if (currentLucky.value) {
+    config.lucky = currentLucky.value
+  }
+
+  return config
+}
+
+const syncUrlWithState = (): void => {
+  const config = getCurrentConfig()
+  updateBrowserUrl(config)
+}
+
+const transitionToFresh = (): void => {
+  appState.value = 'FRESH'
+  currentLucky.value = ''
+  showWelcomeMessage.value = false
+  updateBrowserUrl(null) // Clear URL completely for fresh state
+}
 
 const resetAllState = (clearTickets = false): void => {
   if (clearTickets) tickets.value = []
@@ -417,6 +575,7 @@ const clearTickets = (): void => {
 const resetTickets = (): void => {
   clearTickets()
   showGenerationForm.value = false
+  transitionToFresh()
 }
 
 const extractErrorMessage = (err: unknown): string => {
@@ -454,20 +613,36 @@ const generateTicketsHandler = async (): Promise<void> => {
   resetAllState(true)
 
   try {
+    const requestBody: {
+      ticketCount: number
+      mainCount: number
+      euroCount: number
+      algorithm: 'uniform' | 'weighted'
+      seed?: string
+    } = {
+      ticketCount: ticketCount.value,
+      mainCount: selectedTicketType.value.mainCount,
+      euroCount: selectedTicketType.value.euroCount,
+      algorithm: selectionMethod.value === 'weighted' ? 'weighted' : 'uniform',
+    }
+
+    // Add seed if we have one (for reproducible generation)
+    if (currentLucky.value) {
+      requestBody.seed = currentLucky.value
+    }
+
     const generatedTickets = await $fetch<Ticket[]>(`${apiBaseUrl}/generate`, {
       method: 'POST',
-      body: {
-        ticketCount: ticketCount.value,
-        mainCount: selectedTicketType.value.mainCount,
-        euroCount: selectedTicketType.value.euroCount,
-        algorithm:
-          selectionMethod.value === 'weighted' ? 'weighted' : 'uniform',
-      },
+      body: requestBody,
     })
+
     tickets.value = generatedTickets
     singlePanelKey.value++
     montePanelKey.value++
     showGenerationForm.value = false
+
+    // Update URL after successful generation (immediate persistence)
+    syncUrlWithState()
   } catch (err: unknown) {
     console.error('Error generating tickets:', err)
     const errorResponseMessage = extractErrorMessage(err)
@@ -511,6 +686,205 @@ const applyHighlightsOnTickets = (
       return A === B ? a.id - b.id : A - B
     })
 }
+
+// Lucky Numbers sharing functions
+const shareLuckyNumbers = async (): Promise<void> => {
+  try {
+    let luckyCode: string
+
+    if (appState.value === 'SHARED' && currentLucky.value) {
+      // Re-share the original shared configuration
+      luckyCode = currentLucky.value
+    } else {
+      // Create new lucky code for current configuration
+      luckyCode = generateLuckyCode()
+    }
+
+    currentLuckyCode.value = luckyCode
+
+    // Create the app configuration with lucky seed
+    const config: AppConfig = {
+      system: formatTicketType(
+        selectedTicketType.value.mainCount,
+        selectedTicketType.value.euroCount
+      ),
+      tickets: ticketCount.value,
+      method: selectionMethod.value,
+      lucky: luckyCode,
+    }
+
+    // Generate the shareable URL
+    shareableUrl.value = getAppConfigUrl(config)
+
+    // Show the sharing dialog
+    showSharingDialog.value = true
+  } catch (error) {
+    console.error('Failed to create shareable configuration:', error)
+    error.value = 'Failed to create shareable link'
+  }
+}
+
+const copyToClipboard = async (): Promise<void> => {
+  try {
+    const config: AppConfig = {
+      system: formatTicketType(
+        selectedTicketType.value.mainCount,
+        selectedTicketType.value.euroCount
+      ),
+      tickets: ticketCount.value,
+      method: selectionMethod.value,
+      lucky: currentLuckyCode.value,
+    }
+
+    await copyConfigUrl(config)
+    copySuccess.value = true
+
+    // Hide success message after 2 seconds
+    setTimeout(() => {
+      copySuccess.value = false
+    }, 2000)
+  } catch (error) {
+    console.error('Failed to copy URL:', error)
+  }
+}
+
+const closeSharingDialog = (): void => {
+  showSharingDialog.value = false
+  copySuccess.value = false
+}
+
+// URL handling for configuration restoration
+const handleUrlConfiguration = async (): Promise<void> => {
+  if (typeof window === 'undefined') return
+
+  const hash = window.location.hash
+  if (!hash) {
+    // No hash = fresh state
+    appState.value = 'FRESH'
+    return
+  }
+
+  // Try to decode as new unified format
+  const config = decodeUrlHash(hash)
+  if (config) {
+    await applyUrlConfig(config)
+    return
+  }
+
+  // Try to decode as legacy format for backwards compatibility
+  const legacyConfig = decodeHashToConfig(hash)
+  if (legacyConfig && (legacyConfig.seed || legacyConfig.ticketType)) {
+    // Convert legacy format to new format
+    const luckyCode = legacyConfig.seed
+      ? seedToLuckyCode(legacyConfig.seed)
+      : generateLuckyCode()
+
+    const newConfig: Partial<AppConfig> = {
+      system: legacyConfig.ticketType,
+      tickets: legacyConfig.ticketCount,
+      method: legacyConfig.selectionMethod,
+      lucky: luckyCode,
+    }
+
+    await applyUrlConfig(newConfig)
+    return
+  }
+
+  // Couldn't decode hash - treat as fresh
+  appState.value = 'FRESH'
+}
+
+const applyUrlConfig = async (config: Partial<AppConfig>): Promise<void> => {
+  // Apply configuration to form
+  if (config.system) {
+    const parsed = parseTicketType(config.system)
+    if (parsed) {
+      const matchingType = ticketTypes.find(
+        (t) =>
+          t.mainCount === parsed.mainCount && t.euroCount === parsed.euroCount
+      )
+      if (matchingType) {
+        selectedTicketType.value = matchingType
+      }
+    }
+  }
+
+  if (
+    config.tickets &&
+    config.tickets >= 1 &&
+    config.tickets <= maxTicketsAllowed
+  ) {
+    ticketCount.value = config.tickets
+  }
+
+  if (config.method) {
+    selectionMethod.value = config.method
+  }
+
+  // Handle lucky seed if present (shared configuration)
+  if (config.lucky) {
+    appState.value = 'SHARED'
+    currentLucky.value = config.lucky
+    welcomeLuckyCode.value = config.lucky
+    showWelcomeMessage.value = true
+
+    // Auto-dismiss welcome message after 12 seconds
+    setTimeout(() => {
+      showWelcomeMessage.value = false
+    }, 12000)
+
+    // Automatically generate the tickets using the lucky code as seed
+    try {
+      loading.value = true
+      currentAction.value = 'generate'
+      error.value = ''
+
+      const generatedTickets = await $fetch<Ticket[]>(
+        `${apiBaseUrl}/generate`,
+        {
+          method: 'POST',
+          body: {
+            ticketCount: ticketCount.value,
+            mainCount: selectedTicketType.value.mainCount,
+            euroCount: selectedTicketType.value.euroCount,
+            algorithm: 'uniform', // Use uniform for seeded generation
+            seed: config.lucky, // Use the lucky code as the seed
+          },
+        }
+      )
+
+      tickets.value = generatedTickets
+      singlePanelKey.value++
+      montePanelKey.value++
+      showGenerationForm.value = false
+    } catch (err: unknown) {
+      console.error('Error generating shared tickets:', err)
+      error.value =
+        'Failed to generate the shared numbers. You can try generating manually.'
+    } finally {
+      loading.value = false
+      currentAction.value = null
+    }
+  } else {
+    // No lucky seed - just restore form state
+    appState.value = 'FRESH'
+    currentLucky.value = ''
+  }
+}
+
+const dismissWelcomeMessage = (): void => {
+  showWelcomeMessage.value = false
+  // If user dismisses welcome from shared state, remove the lucky seed
+  if (appState.value === 'SHARED') {
+    currentLucky.value = ''
+    syncUrlWithState()
+  }
+}
+
+// Load configuration from URL on mount
+onMounted(() => {
+  handleUrlConfiguration()
+})
 </script>
 
 <style scoped>

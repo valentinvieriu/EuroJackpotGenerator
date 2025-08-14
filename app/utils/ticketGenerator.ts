@@ -16,6 +16,7 @@ let ticketIdCounter = 1
 type Algorithm = 'uniform' | 'weighted'
 interface Options {
   algorithm?: Algorithm
+  seed?: string
 }
 
 /**
@@ -59,10 +60,11 @@ export async function generateTickets(
   }
 
   const algorithm: Algorithm = options.algorithm ?? 'weighted'
+  const { seed } = options
 
-  // Decide whether to fetch stats
+  // Decide whether to fetch stats (only if not using seeded generation)
   let statsData: StatisticsData | null = null
-  if (algorithm === 'weighted') {
+  if (algorithm === 'weighted' && !seed) {
     try {
       statsData = await fetchStatistics()
       if (!statsData) {
@@ -76,7 +78,7 @@ export async function generateTickets(
         error instanceof Error ? error.message : String(error)
       )
     }
-  } // algorithm === 'uniform' -> leave statsData as null to force uniform
+  } // algorithm === 'uniform' or seed provided -> leave statsData as null to force uniform
 
   const generatedTickets: Ticket[] = []
   // Use a Set to efficiently track unique combinations generated within this batch.
@@ -104,19 +106,39 @@ export async function generateTickets(
         )
       }
 
-      // When statsData is null, generateNumbers() uses uniform fallback.
-      mainNumbers = generateNumbers(
-        mainCount,
-        MAIN_NUMBER_MIN,
-        MAIN_NUMBER_MAX,
-        statsData?.numbers
-      )
-      euroNumbers = generateNumbers(
-        euroCount,
-        EURO_NUMBER_MIN,
-        EURO_NUMBER_MAX,
-        statsData?.additionalNumbers
-      )
+      if (seed) {
+        // Use seeded generation for reproducible results
+        const { generateSeededRandomNumbers } = await import(
+          '../../server/utils/seededRng'
+        )
+
+        mainNumbers = generateSeededRandomNumbers(
+          mainCount,
+          MAIN_NUMBER_MIN,
+          MAIN_NUMBER_MAX,
+          `${seed}_main_${i}` // Include ticket index to ensure uniqueness
+        )
+        euroNumbers = generateSeededRandomNumbers(
+          euroCount,
+          EURO_NUMBER_MIN,
+          EURO_NUMBER_MAX,
+          `${seed}_euro_${i}`
+        )
+      } else {
+        // When statsData is null, generateNumbers() uses uniform fallback.
+        mainNumbers = generateNumbers(
+          mainCount,
+          MAIN_NUMBER_MIN,
+          MAIN_NUMBER_MAX,
+          statsData?.numbers
+        )
+        euroNumbers = generateNumbers(
+          euroCount,
+          EURO_NUMBER_MIN,
+          EURO_NUMBER_MAX,
+          statsData?.additionalNumbers
+        )
+      }
 
       // Create a unique string representation for the combination.
       // Sorting is crucial here to ensure "1,5" and "5,1" produce the same key.
