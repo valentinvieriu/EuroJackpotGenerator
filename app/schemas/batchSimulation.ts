@@ -1,11 +1,25 @@
 import { z } from 'zod'
 import { ticketSchema } from './ticket'
+import {
+  MAIN_NUMBER_MIN,
+  MAIN_NUMBER_MAX,
+  EURO_NUMBER_MIN,
+  EURO_NUMBER_MAX,
+  MAIN_NUMBERS_COUNT,
+  EURO_NUMBERS_COUNT,
+  TICKET_COUNT_MIN,
+  TICKET_COUNT_MAX,
+  SIMULATION_COUNT_MIN,
+  SIMULATION_COUNT_MAX,
+  PERCENTAGE_MIN,
+  PERCENTAGE_MAX,
+} from '~/utils/constants'
 
 export const winDistributionSchema = z.object({
   winsByClass: z.record(z.string(), z.number().int().nonnegative()),
   totalWins: z.number().int().nonnegative(),
   totalLosses: z.number().int().nonnegative(),
-  winPercentage: z.number().min(0).max(100),
+  winPercentage: z.number().min(PERCENTAGE_MIN).max(PERCENTAGE_MAX),
 })
 
 export const simulationStatisticsSchema = z.object({
@@ -18,14 +32,18 @@ export const simulationStatisticsSchema = z.object({
   percentile75: z.number().nonnegative(),
   percentile95: z.number().nonnegative(),
   profitableSimulations: z.number().int().nonnegative(),
-  profitablePercentage: z.number().min(0).max(100),
+  profitablePercentage: z.number().min(PERCENTAGE_MIN).max(PERCENTAGE_MAX),
 })
 
 export const individualSimulationResultSchema = z.object({
   simulationIndex: z.number().int().nonnegative(),
   winningNumbers: z.object({
-    mainNumbers: z.array(z.number().int().min(1).max(50)).length(5),
-    euroNumbers: z.array(z.number().int().min(1).max(12)).length(2),
+    mainNumbers: z
+      .array(z.number().int().min(MAIN_NUMBER_MIN).max(MAIN_NUMBER_MAX))
+      .length(MAIN_NUMBERS_COUNT),
+    euroNumbers: z
+      .array(z.number().int().min(EURO_NUMBER_MIN).max(EURO_NUMBER_MAX))
+      .length(EURO_NUMBERS_COUNT),
   }),
   totalWinnings: z.number().nonnegative(),
   netProfit: z.number(),
@@ -58,8 +76,12 @@ export const batchSimulationResultSchema = z.object({
 })
 
 export const batchSimulationRequestSchema = z.object({
-  tickets: z.array(ticketSchema).min(1).max(500),
-  simulationCount: z.number().int().min(100).max(10000),
+  tickets: z.array(ticketSchema).min(TICKET_COUNT_MIN).max(TICKET_COUNT_MAX),
+  simulationCount: z
+    .number()
+    .int()
+    .min(SIMULATION_COUNT_MIN)
+    .max(SIMULATION_COUNT_MAX),
   includeIndividualResults: z.boolean().optional().default(false),
   batchSize: z.number().int().positive().optional().default(100),
 })
@@ -67,7 +89,7 @@ export const batchSimulationRequestSchema = z.object({
 export const batchSimulationProgressSchema = z.object({
   currentSimulation: z.number().int().nonnegative(),
   totalSimulations: z.number().int().positive(),
-  progressPercentage: z.number().min(0).max(100),
+  progressPercentage: z.number().min(PERCENTAGE_MIN).max(PERCENTAGE_MAX),
   estimatedTimeRemaining: z.string().nullable().optional(),
   canCancel: z.boolean(),
 })

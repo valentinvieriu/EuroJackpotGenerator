@@ -2,6 +2,16 @@ import { z } from 'zod'
 import { ticketSchema } from './ticket'
 import { batchSimulationResultSchema } from './batchSimulation'
 import { eurojackpotHistoricOddsSchema } from './winning'
+import {
+  MAIN_NUMBER_MIN,
+  MAIN_NUMBER_MAX,
+  EURO_NUMBER_MIN,
+  EURO_NUMBER_MAX,
+  MAIN_NUMBERS_COUNT,
+  EURO_NUMBERS_COUNT,
+  HTTP_ERROR_MIN,
+  HTTP_ERROR_MAX,
+} from '~/utils/constants'
 
 // API Response validation schemas
 
@@ -10,8 +20,8 @@ export const generateResponseSchema = z.array(ticketSchema)
 export const simulateResponseSchema = z.object({
   draw: z.object({
     mainNumbers: z
-      .array(z.number().int().min(1).max(50))
-      .length(5)
+      .array(z.number().int().min(MAIN_NUMBER_MIN).max(MAIN_NUMBER_MAX))
+      .length(MAIN_NUMBERS_COUNT)
       .refine(
         (nums) =>
           nums
@@ -23,8 +33,8 @@ export const simulateResponseSchema = z.object({
         }
       ),
     euroNumbers: z
-      .array(z.number().int().min(1).max(12))
-      .length(2)
+      .array(z.number().int().min(EURO_NUMBER_MIN).max(EURO_NUMBER_MAX))
+      .length(EURO_NUMBERS_COUNT)
       .refine(
         (nums) =>
           nums
@@ -52,7 +62,7 @@ export const batchSimulateResponseSchema = batchSimulationResultSchema
 export const errorResponseSchema = z.object({
   error: z.boolean(),
   url: z.string(),
-  statusCode: z.number().int().min(400).max(599),
+  statusCode: z.number().int().min(HTTP_ERROR_MIN).max(HTTP_ERROR_MAX),
   statusMessage: z.string(),
   message: z.string(),
   data: z

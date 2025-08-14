@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { WIN_CLASS_MIN, WIN_CLASS_MAX } from '~/utils/constants'
 
 export const winningClassSchema = z.object({
   amount: z.number().nonnegative(),
@@ -9,7 +10,7 @@ export const winningClassSchema = z.object({
       return val - 100 // Normalize 101-112 to 1-12
     }
     return val
-  }, z.number().int().min(1).max(12)),
+  }, z.number().int().min(WIN_CLASS_MIN).max(WIN_CLASS_MAX)),
   sequence: z.number().int().nonnegative(),
   jackpot: z.boolean(),
 })

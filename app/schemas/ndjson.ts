@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PERCENTAGE_MIN, PERCENTAGE_MAX } from '~/utils/constants'
 import {
   batchSimulationResultSchema,
   batchSimulationProgressSchema,
@@ -16,7 +17,7 @@ export const ndjsonProgressEventSchema = z.object({
     maxWin: z.number().nonnegative(),
     winDistribution: z.object({
       totalWins: z.number().int().nonnegative(),
-      winPercentage: z.number().min(0).max(100),
+      winPercentage: z.number().min(PERCENTAGE_MIN).max(PERCENTAGE_MAX),
       winsByClass: z.record(z.string(), z.number().int().nonnegative()),
     }),
   }),

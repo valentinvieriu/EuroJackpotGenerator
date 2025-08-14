@@ -4,6 +4,13 @@
  */
 
 import { z } from 'zod'
+
+import {
+  MAIN_SYSTEM_MIN,
+  MAIN_SYSTEM_MAX,
+  EURO_SYSTEM_MIN,
+  EURO_SYSTEM_MAX,
+} from '~/utils/constants'
 /**
  * Note: Do not patch ZodError globally. Use safeParse().error.issues/format().
  */
@@ -19,7 +26,12 @@ export const TicketSystemSchema = z
       const [mainStr, euroStr] = val.split('x')
       const main = Number.parseInt(mainStr)
       const euro = Number.parseInt(euroStr)
-      return main >= 5 && main <= 16 && euro >= 2 && euro <= 12
+      return (
+        main >= MAIN_SYSTEM_MIN &&
+        main <= MAIN_SYSTEM_MAX &&
+        euro >= EURO_SYSTEM_MIN &&
+        euro <= EURO_SYSTEM_MAX
+      )
     },
     {
       message: 'System must be 5-16 main numbers and 2-12 euro numbers',
@@ -82,8 +94,8 @@ export const UrlParamsSchema = z.object({
  * Parsed ticket system result
  */
 export const ParsedSystemSchema = z.object({
-  mainCount: z.number().int().min(5).max(16),
-  euroCount: z.number().int().min(2).max(12),
+  mainCount: z.number().int().min(MAIN_SYSTEM_MIN).max(MAIN_SYSTEM_MAX),
+  euroCount: z.number().int().min(EURO_SYSTEM_MIN).max(EURO_SYSTEM_MAX),
 })
 
 /**
