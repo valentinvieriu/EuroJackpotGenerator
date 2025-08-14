@@ -5,12 +5,12 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
-import {
-  ndjsonEventSchema,
-  type BatchSimulationResult,
-  type BatchSimulationRequest,
-  type Ticket,
+import type {
+  BatchSimulationResult,
+  BatchSimulationRequest,
+  Ticket,
 } from '~/schemas'
+import { parseNdjsonEvent } from '~/utils/ndjsonParser'
 
 export type SimulationPhase =
   | 'config'
@@ -219,69 +219,18 @@ export const useSimulationStore = defineStore('simulation', () => {
           if (!line) continue
           try {
             const raw = JSON.parse(line)
-            const parsedRes = ndjsonEventSchema.safeParse(raw)
-            if (parsedRes.success) {
-              const parsed = parsedRes.data
-              if (parsed.type === 'progress') {
-                updateProgress(parsed.progress, parsed.summary)
-              } else if (parsed.type === 'result') {
-                setResults(parsed.result)
+            const event = parseNdjsonEvent(raw)
+            if (event) {
+              if (event.type === 'progress') {
+                updateProgress(event.progress, event.summary)
+              } else if (event.type === 'result') {
+                setResults(event.result)
                 state.value.phase = 'results'
                 buffer = ''
                 return
-              } else if (parsed.type === 'error') {
+              } else if (event.type === 'error') {
                 state.value.phase = 'error'
-                state.value.error = parsed.error || 'Simulation stream error'
-                buffer = ''
-                return
-              }
-            } else if (raw && typeof raw === 'object' && 'type' in raw) {
-              // Minimal resilience fallback: accept progress/result/error shapes
-              const ro = raw as Record<string, unknown>
-              if (
-                ro.type === 'progress' &&
-                ro.progress &&
-                typeof ro.progress === 'object'
-              ) {
-                const rp = ro.progress as Record<string, unknown>
-                const currentSimulation = Number(rp.currentSimulation ?? 0)
-                const totalSimulations = Number(
-                  rp.totalSimulations ??
-                    state.value.config?.simulationCount ??
-                    0
-                )
-                const pct =
-                  totalSimulations > 0
-                    ? (currentSimulation / totalSimulations) * 100
-                    : 0
-                const progress = {
-                  currentSimulation,
-                  totalSimulations,
-                  progressPercentage: Number(rp.progressPercentage ?? pct),
-                  estimatedTimeRemaining: null as string | null,
-                  canCancel: true,
-                }
-                const summary = {
-                  winDistribution: {
-                    winsByClass: {},
-                    totalWins: 0,
-                    winPercentage: 0,
-                  },
-                  roiPercentage: 0,
-                  netProfit: 0,
-                  maxWin: 0,
-                }
-                updateProgress(progress, summary)
-              } else if (ro.type === 'result' && ro.result) {
-                setResults(ro.result as BatchSimulationResult)
-                state.value.phase = 'results'
-                buffer = ''
-                return
-              } else if (ro.type === 'error') {
-                state.value.phase = 'error'
-                state.value.error = String(
-                  ro.error || 'Simulation stream error'
-                )
+                state.value.error = event.error || 'Simulation stream error'
                 buffer = ''
                 return
               }
@@ -296,24 +245,14 @@ export const useSimulationStore = defineStore('simulation', () => {
       if (tail) {
         try {
           const raw = JSON.parse(tail)
-          const parsedRes = ndjsonEventSchema.safeParse(raw)
-          if (parsedRes.success) {
-            const parsed = parsedRes.data
-            if (parsed.type === 'result') {
-              setResults(parsed.result)
+          const event = parseNdjsonEvent(raw)
+          if (event) {
+            if (event.type === 'result') {
+              setResults(event.result)
               state.value.phase = 'results'
-            } else if (parsed.type === 'error') {
+            } else if (event.type === 'error') {
               state.value.phase = 'error'
-              state.value.error = parsed.error || 'Simulation stream error'
-            }
-          } else if (raw && typeof raw === 'object' && 'type' in raw) {
-            const ro = raw as Record<string, unknown>
-            if (ro.type === 'result' && ro.result) {
-              setResults(ro.result as BatchSimulationResult)
-              state.value.phase = 'results'
-            } else if (ro.type === 'error') {
-              state.value.phase = 'error'
-              state.value.error = String(ro.error || 'Simulation stream error')
+              state.value.error = event.error || 'Simulation stream error'
             }
           }
         } catch {
