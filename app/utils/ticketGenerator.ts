@@ -107,7 +107,7 @@ export async function generateTickets(
       if (seed) {
         // Use seeded generation for reproducible results
         const { generateSeededRandomNumbers } = await import(
-          '../../server/utils/seededRng'
+          '~~/server/utils/seededRng'
         )
 
         mainNumbers = generateSeededRandomNumbers(
