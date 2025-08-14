@@ -7,6 +7,8 @@ import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import type { EurojackpotHistoricOdds } from '~/schemas'
 import { buildOddsMap } from '~/utils/payout'
+import { normalizeOdds } from '~/utils/odds'
+import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
 
 interface OddsCache {
   data: EurojackpotHistoricOdds | null
@@ -17,110 +19,6 @@ interface OddsCache {
 
 // Cache duration in milliseconds (10 minutes to match server cache)
 const CACHE_DURATION = 10 * 60 * 1000
-
-/**
- * Default fallback odds when external API is unavailable
- * Based on historical EuroJackpot payout data
- */
-const FALLBACK_ODDS: EurojackpotHistoricOdds = {
-  eurojackpotGameCycle: {
-    cycleNo: 0,
-    cycleYear: new Date().getFullYear(),
-    eventDate: Date.now(),
-    eventWeekday: new Date().getDay(),
-    gametableValidFrom: null,
-    gametableValidTo: null,
-    key: 'fallback-odds-client',
-    variantNo: 0,
-  },
-  eurojackpotOdds: [
-    {
-      amount: 10000000.0,
-      numberOfWins: 0,
-      winningClass: 1,
-      sequence: 1,
-      jackpot: true,
-    },
-    {
-      amount: 750000.0,
-      numberOfWins: 0,
-      winningClass: 2,
-      sequence: 2,
-      jackpot: false,
-    },
-    {
-      amount: 100000.0,
-      numberOfWins: 0,
-      winningClass: 3,
-      sequence: 3,
-      jackpot: false,
-    },
-    {
-      amount: 5000.0,
-      numberOfWins: 0,
-      winningClass: 4,
-      sequence: 4,
-      jackpot: false,
-    },
-    {
-      amount: 300.0,
-      numberOfWins: 0,
-      winningClass: 5,
-      sequence: 5,
-      jackpot: false,
-    },
-    {
-      amount: 100.0,
-      numberOfWins: 0,
-      winningClass: 6,
-      sequence: 6,
-      jackpot: false,
-    },
-    {
-      amount: 50.0,
-      numberOfWins: 0,
-      winningClass: 7,
-      sequence: 7,
-      jackpot: false,
-    },
-    {
-      amount: 20.0,
-      numberOfWins: 0,
-      winningClass: 8,
-      sequence: 8,
-      jackpot: false,
-    },
-    {
-      amount: 15.0,
-      numberOfWins: 0,
-      winningClass: 9,
-      sequence: 9,
-      jackpot: false,
-    },
-    {
-      amount: 12.0,
-      numberOfWins: 0,
-      winningClass: 10,
-      sequence: 10,
-      jackpot: false,
-    },
-    {
-      amount: 10.0,
-      numberOfWins: 0,
-      winningClass: 11,
-      sequence: 11,
-      jackpot: false,
-    },
-    {
-      amount: 8.0,
-      numberOfWins: 0,
-      winningClass: 12,
-      sequence: 12,
-      jackpot: false,
-    },
-  ],
-  eurojackpotTurnover: [{ amount: 50000000.0, jurisdiction: 0 }],
-}
 
 /**
  * Odds store for managing cached payout data
@@ -146,7 +44,7 @@ export const useOddsStore = defineStore('odds', () => {
   })
 
   const currentOdds = computed(() => {
-    return cache.value.data || FALLBACK_ODDS
+    return cache.value.data || normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
   })
 
   const isLoading = computed(() => cache.value.isLoading)
@@ -201,7 +99,7 @@ export const useOddsStore = defineStore('odds', () => {
 
       // Return fallback odds on error
       if (!cache.value.data) {
-        cache.value.data = FALLBACK_ODDS
+        cache.value.data = normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
         cache.value.timestamp = Date.now()
       }
 

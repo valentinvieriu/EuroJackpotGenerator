@@ -28,6 +28,7 @@ import {
 } from '~/schemas'
 import { validateInput, handleEndpointError } from '../utils/validation'
 import { normalizeOdds } from '~/utils/odds'
+import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
 import {
   calculateBatchStatistics,
   simulateSingleDraw,
@@ -92,7 +93,7 @@ export default defineEventHandler(
 
       // If we are using fallback odds, cap simulations to a tiny number for safety
       const isFallbackOdds =
-        winningData?.eurojackpotGameCycle?.key === 'fallback-batch-sim'
+        winningData?.eurojackpotGameCycle?.key === 'fallback-odds-canonical'
       const effectiveSimulationCount = isFallbackOdds
         ? Math.min(simulationCount, 3)
         : simulationCount
@@ -415,7 +416,7 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
       console.warn(
         'Failed to fetch current odds, using normalized fallback data'
       )
-      return normalizeOdds(getFallbackWinningData())
+      return normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
     }
 
     const rawData = await response.json()
@@ -436,114 +437,7 @@ async function fetchWinningData(): Promise<EurojackpotHistoricOdds> {
       'Error fetching winning data, using normalized fallback:',
       error
     )
-    return normalizeOdds(getFallbackWinningData())
-  }
-}
-
-/**
- * Provides fallback winning odds data when live data is unavailable.
- */
-function getFallbackWinningData(): EurojackpotHistoricOdds {
-  const now = new Date()
-  const ts = now.getTime()
-  return {
-    eurojackpotGameCycle: {
-      cycleNo: 0,
-      cycleYear: now.getFullYear(),
-      eventDate: ts,
-      eventWeekday: now.getDay(),
-      gametableValidFrom: null,
-      gametableValidTo: null,
-      key: 'fallback-batch-sim',
-      variantNo: 0,
-    },
-    eurojackpotOdds: [
-      {
-        amount: 90000000.0,
-        numberOfWins: 0,
-        winningClass: 1,
-        sequence: 1,
-        jackpot: true,
-      },
-      {
-        amount: 1200000.0,
-        numberOfWins: 0,
-        winningClass: 2,
-        sequence: 2,
-        jackpot: false,
-      },
-      {
-        amount: 180000.0,
-        numberOfWins: 0,
-        winningClass: 3,
-        sequence: 3,
-        jackpot: false,
-      },
-      {
-        amount: 6000.0,
-        numberOfWins: 0,
-        winningClass: 4,
-        sequence: 4,
-        jackpot: false,
-      },
-      {
-        amount: 300.0,
-        numberOfWins: 0,
-        winningClass: 5,
-        sequence: 5,
-        jackpot: false,
-      },
-      {
-        amount: 150.0,
-        numberOfWins: 0,
-        winningClass: 6,
-        sequence: 6,
-        jackpot: false,
-      },
-      {
-        amount: 100.0,
-        numberOfWins: 0,
-        winningClass: 7,
-        sequence: 7,
-        jackpot: false,
-      },
-      {
-        amount: 50.0,
-        numberOfWins: 0,
-        winningClass: 8,
-        sequence: 8,
-        jackpot: false,
-      },
-      {
-        amount: 25.0,
-        numberOfWins: 0,
-        winningClass: 9,
-        sequence: 9,
-        jackpot: false,
-      },
-      {
-        amount: 15.0,
-        numberOfWins: 0,
-        winningClass: 10,
-        sequence: 10,
-        jackpot: false,
-      },
-      {
-        amount: 10.0,
-        numberOfWins: 0,
-        winningClass: 11,
-        sequence: 11,
-        jackpot: false,
-      },
-      {
-        amount: 8.0,
-        numberOfWins: 0,
-        winningClass: 12,
-        sequence: 12,
-        jackpot: false,
-      },
-    ],
-    eurojackpotTurnover: [{ amount: 0, jurisdiction: 0 }],
+    return normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
   }
 }
 

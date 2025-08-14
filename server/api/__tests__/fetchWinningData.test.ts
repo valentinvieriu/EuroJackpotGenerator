@@ -59,7 +59,7 @@ describe('/api/fetchWinningData', () => {
     const { default: handler } = await import('../fetchWinningData')
     const res = await handler({} as any)
 
-    expect(res.eurojackpotGameCycle.key).toBe('fallback-data-key')
+    expect(res.eurojackpotGameCycle.key).toBe('fallback-odds-canonical')
     expect(res.eurojackpotOdds.length).toBe(12)
   })
 })
