@@ -100,7 +100,15 @@
           class="text-center p-2 bg-casino-blue/50 rounded"
         >
           <div class="text-xs text-gray-400">Class {{ classNum }}</div>
-          <div class="text-sm font-medium" :class="getClassColor(classNum)">
+          <div
+            class="text-sm font-medium"
+            :class="
+              getProgressWinClassColor(
+                classNum,
+                partialResults?.winsByClass || {}
+              )
+            "
+          >
             {{ partialResults.winsByClass[classNum] || 0 }}
           </div>
         </div>
@@ -124,6 +132,7 @@
 <script setup lang="ts">
 import { computed, type PropType } from 'vue'
 import { formatDuration as formatTime } from '~/utils/time'
+import { getProgressWinClassColor } from '~/utils/winClassColors'
 
 const props = defineProps({
   currentSimulation: { type: Number, default: 0 },
@@ -174,24 +183,4 @@ const roiColor = computed(() => {
 })
 
 const formatElapsedTime = formatTime
-
-const getClassColor = (classNum: number): string => {
-  if (!props.partialResults?.winsByClass[classNum]) return 'text-gray-500'
-  switch (classNum) {
-    case 1:
-    case 2:
-    case 3:
-      return 'text-yellow-400'
-    case 4:
-    case 5:
-    case 6:
-      return 'text-green-400'
-    case 7:
-    case 8:
-    case 9:
-      return 'text-blue-400'
-    default:
-      return 'text-gray-300'
-  }
-}
 </script>

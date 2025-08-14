@@ -248,7 +248,12 @@
               <div class="flex items-center space-x-2">
                 <span
                   class="text-sm font-medium"
-                  :class="getClassColor(classNum)"
+                  :class="
+                    getResultsWinClassColor(
+                      classNum,
+                      results.winDistribution.winsByClass
+                    )
+                  "
                 >
                   {{ results.winDistribution.winsByClass[classNum] || 0 }}
                 </span>
@@ -330,6 +335,7 @@ import { computed, type PropType } from 'vue'
 import type { BatchSimulationResult } from '~/schemas'
 import { combinationCount } from '~/utils/combinatorics'
 import { getWinClassProbability } from '~/utils/winProbabilities'
+import { getResultsWinClassColor } from '~/utils/winClassColors'
 
 /**
  * Calculates the expected win rate for a given number of lines per simulation
@@ -450,27 +456,6 @@ const getClassDescription = (classNum: number): string => {
   const odds = formatProbabilityAsOdds(probability)
 
   return odds ? `${description} • ${odds}` : description
-}
-
-const getClassColor = (classNum: number): string => {
-  const count = props.results.winDistribution.winsByClass[classNum] || 0
-  if (count === 0) return 'text-gray-500'
-  switch (classNum) {
-    case 1:
-    case 2:
-    case 3:
-      return 'text-yellow-400'
-    case 4:
-    case 5:
-    case 6:
-      return 'text-green-400'
-    case 7:
-    case 8:
-    case 9:
-      return 'text-blue-400'
-    default:
-      return 'text-gray-300'
-  }
 }
 
 const getClassBarColor = (classNum: number): string => {
