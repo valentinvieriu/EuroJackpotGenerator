@@ -7,7 +7,6 @@ import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import type { EurojackpotHistoricOdds } from '~/schemas'
 import { buildOddsMap } from '~/utils/payout'
-import { normalizeOdds } from '~/utils/odds'
 import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
 
 interface OddsCache {
@@ -44,7 +43,9 @@ export const useOddsStore = defineStore('odds', () => {
   })
 
   const currentOdds = computed(() => {
-    return cache.value.data || normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
+    // Server returns schema-validated or normalized data.
+    // Use canonical fallback directly when cache is empty.
+    return cache.value.data || FALLBACK_EUROJACKPOT_ODDS
   })
 
   const isLoading = computed(() => cache.value.isLoading)
@@ -97,9 +98,9 @@ export const useOddsStore = defineStore('odds', () => {
 
       console.warn('Failed to fetch odds data, using fallback:', errorMessage)
 
-      // Return fallback odds on error
+      // Return fallback odds on error; fallback is already schema-validated
       if (!cache.value.data) {
-        cache.value.data = normalizeOdds(FALLBACK_EUROJACKPOT_ODDS)
+        cache.value.data = FALLBACK_EUROJACKPOT_ODDS
         cache.value.timestamp = Date.now()
       }
 
