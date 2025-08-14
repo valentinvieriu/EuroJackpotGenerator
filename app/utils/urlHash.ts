@@ -6,7 +6,6 @@
 
 import {
   validateAppConfig,
-  validateLegacyConfig,
   validateUrlParams,
   parseTicketSystem as parseTicketSystemZod,
   formatTicketSystem as formatTicketSystemZod,
@@ -20,13 +19,7 @@ export type AppState = 'SHARED' | 'FRESH'
 // Re-export types for compatibility
 export type { AppConfig, SelectionMethod }
 
-// Legacy interface for backwards compatibility
-export interface TicketConfig {
-  seed: string
-  ticketType: string
-  ticketCount: number
-  selectionMethod: 'random' | 'weighted'
-}
+// Legacy URL format and interfaces removed.
 
 /**
  * Encodes app configuration into URL hash format with validation
@@ -51,21 +44,7 @@ export function encodeAppConfigToHash(config: AppConfig): string {
   return params.toString()
 }
 
-/**
- * Legacy: Encodes ticket configuration into URL hash format
- * @param config Ticket configuration object
- * @returns URL hash string (without #)
- */
-export function encodeConfigToHash(config: TicketConfig): string {
-  const params = new URLSearchParams()
-
-  if (config.seed) params.set('seed', config.seed)
-  if (config.ticketType) params.set('type', config.ticketType)
-  if (config.ticketCount) params.set('count', config.ticketCount.toString())
-  if (config.selectionMethod) params.set('method', config.selectionMethod)
-
-  return params.toString()
-}
+// Legacy URL encoding removed.
 
 /**
  * Decodes URL hash into app configuration with type-safe validation
@@ -91,15 +70,12 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
       return null
     }
 
-    // Check if this is modern format (has system and/or tickets parameters)
-    // Legacy format uses different parameter names (type, count)
+    // Modern format: any of supported params present
     if (
       validParams.system ||
       validParams.tickets ||
-      (validParams.method &&
-        !validParams.type &&
-        !validParams.count &&
-        !validParams.seed)
+      validParams.method ||
+      validParams.lucky
     ) {
       const config: Partial<AppConfig> = {}
 
@@ -132,64 +108,14 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
       return validatedConfig || config // Return partial config if full validation fails
     }
 
-    return null // No valid configuration parameters
+    return null // No supported configuration parameters
   } catch (error) {
     console.warn('Failed to decode configuration hash:', error)
     return null
   }
 }
 
-/**
- * Legacy: Decodes URL hash into ticket configuration with validation
- * @param hash URL hash string (with or without #)
- * @returns Partial ticket configuration object
- */
-export function decodeHashToConfig(hash: string): Record<string, unknown> {
-  // Remove # if present
-  const cleanHash = hash.startsWith('#') ? hash.slice(1) : hash
-
-  if (!cleanHash) return {}
-
-  try {
-    const params = new URLSearchParams(cleanHash)
-
-    // Convert URLSearchParams to object for validation
-    const paramObj: Record<string, string> = {}
-    params.forEach((value, key) => {
-      paramObj[key] = value
-    })
-
-    // Validate URL parameters structure first
-    const validParams = validateUrlParams(paramObj)
-    if (!validParams) {
-      return {}
-    }
-
-    const config: Record<string, unknown> = {}
-
-    // Handle legacy format (seed, type, count)
-    if (validParams.seed) config.seed = validParams.seed
-    if (validParams.type) config.type = validParams.type
-
-    if (validParams.count) {
-      const parsedCount = Number.parseInt(validParams.count, 10)
-      if (!Number.isNaN(parsedCount) && parsedCount > 0) {
-        config.count = parsedCount
-      }
-    }
-
-    if (validParams.method === 'random' || validParams.method === 'weighted') {
-      config.method = validParams.method
-    }
-
-    // Attempt validation using legacy schema
-    const validatedConfig = validateLegacyConfig(config)
-    return validatedConfig || config // Return partial config if validation fails
-  } catch (error) {
-    console.warn('Failed to decode URL hash:', error)
-    return {}
-  }
-}
+// Legacy URL decoding removed.
 
 /**
  * Parses ticket type string into main and euro counts with Zod validation
@@ -305,32 +231,12 @@ export function generateLuckyCode(): string {
  * @param seed Legacy seed string
  * @returns User-friendly lucky code
  */
-export function seedToLuckyCode(seed: string): string {
-  // Use the seed as input to deterministically generate a lucky code
-  let hash = 0
-  for (let i = 0; i < seed.length; i++) {
-    const char = seed.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash |= 0 // Convert to 32-bit signed integer
-  }
-
-  // Use hash to pick deterministic words
-  const adjIndex = Math.abs(hash) % adjectives.length
-  const nounIndex = Math.abs(hash >> 8) % nouns.length
-  const number = (Math.abs(hash >> 16) % 999) + 1
-
-  return `${adjectives[adjIndex]}-${nouns[nounIndex]}-${number}`
-}
+// Legacy seed-to-lucky-code migration removed.
 
 /**
- * Legacy: Generates a random seed for ticket generation
- * @returns Random seed string
+ * Generates a random seed string (not used for URL format)
  */
-export function generateRandomSeed(): string {
-  const timestamp = Date.now().toString(36)
-  const random = Math.random().toString(36).substring(2, 8)
-  return `${timestamp}-${random}`
-}
+// Legacy random seed helper retained elsewhere if needed; not used here.
 
 /**
  * Gets the current URL with app configuration hash
@@ -344,8 +250,7 @@ export function getAppConfigUrl(config: AppConfig): string {
 }
 
 /**
- * Enhanced URL parsing that handles both modern and legacy formats
- * with automatic migration to the new format
+ * Parse URL hash in the current unified format only.
  * @param hash URL hash string (with or without #)
  * @returns Parsed app configuration or null if invalid
  */
@@ -356,34 +261,6 @@ export function parseUrlHash(hash: string): Partial<AppConfig> | null {
   const modernConfig = decodeUrlHash(hash)
   if (modernConfig && Object.keys(modernConfig).length > 0) {
     return modernConfig
-  }
-
-  // Fall back to legacy format
-  const legacyConfig = decodeHashToConfig(hash)
-  if (legacyConfig && Object.keys(legacyConfig).length > 0) {
-    // Convert legacy to modern format
-    const convertedConfig: Partial<AppConfig> = {}
-
-    if (legacyConfig.type) {
-      convertedConfig.system = legacyConfig.type
-    }
-
-    if (legacyConfig.count) {
-      convertedConfig.tickets = legacyConfig.count
-    }
-
-    if (legacyConfig.method) {
-      convertedConfig.method = legacyConfig.method
-    }
-
-    // Convert seed to lucky code for reproducibility
-    if (legacyConfig.seed) {
-      convertedConfig.lucky = seedToLuckyCode(legacyConfig.seed)
-    }
-
-    // Validate converted configuration
-    const validatedConfig = validateAppConfig(convertedConfig)
-    return validatedConfig || convertedConfig
   }
 
   return null
@@ -406,16 +283,8 @@ export function updateBrowserUrl(config: AppConfig | null): void {
   window.history.replaceState(null, '', `${baseUrl}#${hash}`)
 }
 
-/**
- * Legacy: Gets the current URL with updated hash
- * @param config Ticket configuration to encode
- * @returns Complete URL with hash
- */
-export function getShareableUrl(config: TicketConfig): string {
-  const baseUrl = window.location.origin + window.location.pathname
-  const hash = encodeConfigToHash(config)
-  return `${baseUrl}#${hash}`
-}
+// Legacy share URL builder removed.
+// Legacy shareable URL builder removed.
 
 /**
  * Copies the app configuration URL to clipboard
@@ -446,31 +315,5 @@ export async function copyConfigUrl(config: AppConfig): Promise<void> {
   }
 }
 
-/**
- * Legacy: Copies the shareable URL to clipboard
- * @param config Ticket configuration to share
- * @returns Promise that resolves when copied successfully
- */
-export async function copyShareableUrl(config: TicketConfig): Promise<void> {
-  const url = getShareableUrl(config)
-
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(url)
-  } else {
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea')
-    textArea.value = url
-    textArea.style.position = 'fixed'
-    textArea.style.left = '-999999px'
-    textArea.style.top = '-999999px'
-    document.body.appendChild(textArea)
-    textArea.focus()
-    textArea.select()
-
-    try {
-      document.execCommand('copy')
-    } finally {
-      document.body.removeChild(textArea)
-    }
-  }
-}
+// Legacy clipboard sharing removed.
+// Legacy clipboard sharing removed.

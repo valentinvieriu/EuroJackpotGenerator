@@ -418,10 +418,8 @@ import {
   generateLuckyCode,
   formatTicketType,
   copyConfigUrl,
-  decodeHashToConfig,
   decodeUrlHash,
   parseTicketType,
-  seedToLuckyCode,
   updateBrowserUrl,
   getAppConfigUrl,
   type AppConfig,
@@ -760,25 +758,6 @@ const handleUrlConfiguration = async (): Promise<void> => {
   const config = decodeUrlHash(hash)
   if (config) {
     await applyUrlConfig(config)
-    return
-  }
-
-  // Try to decode as legacy format for backwards compatibility
-  const legacyConfig = decodeHashToConfig(hash)
-  if (legacyConfig && (legacyConfig.seed || legacyConfig.ticketType)) {
-    // Convert legacy format to new format
-    const luckyCode = legacyConfig.seed
-      ? seedToLuckyCode(legacyConfig.seed)
-      : generateLuckyCode()
-
-    const newConfig: Partial<AppConfig> = {
-      system: legacyConfig.ticketType,
-      tickets: legacyConfig.ticketCount,
-      method: legacyConfig.selectionMethod,
-      lucky: luckyCode,
-    }
-
-    await applyUrlConfig(newConfig)
     return
   }
 

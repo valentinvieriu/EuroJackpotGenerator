@@ -111,7 +111,6 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
 
 - **NFR-5: State Management**
   - **Configuration persistence:** Zero state loss on page refresh via immediate URL synchronisation
-  - **Backwards compatibility:** Legacy URL formats automatically upgraded without breaking existing shares
   - **Type safety:** All state transitions validated with Zod schemas at runtime
   - **SSR readiness:** Ephemeral state management compatible with future server-side rendering
   - **Memory efficiency:** Simulation results cached intelligently with configurable expiration (10 minutes for odds)

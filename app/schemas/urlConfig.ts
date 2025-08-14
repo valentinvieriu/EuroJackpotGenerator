@@ -106,12 +106,7 @@ export const AppConfigSchema = z.object({
  * Legacy configuration schema for backwards compatibility
  * Supports the old format with seed, type, count, method
  */
-export const LegacyConfigSchema = z.object({
-  seed: z.string().optional(),
-  type: TicketSystemSchema.optional(), // Was "ticketType" in legacy
-  count: TicketCountSchema.optional(), // Was "ticketCount" in legacy
-  method: SelectionMethodSchema.optional(), // Was "selectionMethod" in legacy
-})
+// Legacy URL format removed — only modern format is supported.
 
 /**
  * URL search params schema for parsing query strings
@@ -121,10 +116,6 @@ export const UrlParamsSchema = z.object({
   tickets: z.string().optional(),
   method: z.string().optional(),
   lucky: z.string().optional(),
-  // Legacy field aliases for backwards compatibility
-  seed: z.string().optional(),
-  type: z.string().optional(),
-  count: z.string().optional(),
 })
 
 /**
@@ -139,7 +130,6 @@ export const ParsedSystemSchema = z.object({
  * Type exports for use throughout the application
  */
 export type AppConfig = z.infer<typeof AppConfigSchema>
-export type LegacyConfig = z.infer<typeof LegacyConfigSchema>
 export type UrlParams = z.infer<typeof UrlParamsSchema>
 export type ParsedSystem = z.infer<typeof ParsedSystemSchema>
 export type SelectionMethod = z.infer<typeof SelectionMethodSchema>
@@ -156,14 +146,7 @@ export const validateAppConfig = (data: unknown): AppConfig | null => {
   }
 }
 
-export const validateLegacyConfig = (data: unknown): LegacyConfig | null => {
-  try {
-    return LegacyConfigSchema.parse(data)
-  } catch (error) {
-    console.warn('Invalid legacy configuration:', error)
-    return null
-  }
-}
+// Legacy validation removed.
 
 export const validateUrlParams = (data: unknown): UrlParams | null => {
   try {

@@ -216,7 +216,7 @@ sequenceDiagram
 - **State Persistence**: Parameters reflect current form configuration
 - **Shared Reproduction**: Additional seed parameter enables exact ticket reproduction
 - **Clean Entry Points**: Fresh visitors see clean URLs for SEO optimization
-- **Backwards Compatibility**: Legacy URL formats automatically upgraded
+- No legacy URL upgrade: only the current unified format is supported
 
 ### Randomness Quality
 
@@ -247,12 +247,11 @@ graph LR
 
 - **Immediate persistence:** Zero state loss on page refresh
 - **Zod validation:** Type-safe URL parsing with schema validation
-- **Backwards compatibility:** Automatic migration from legacy formats
 - **Smart sharing:** Unified format for persistence and reproduction
 
 **Key Functions:**
 
-- `parseUrlHash()`: Enhanced parsing with fallback to legacy formats
+- `parseUrlHash()`: Parses the current unified URL format
 - `validateAppConfig()`: Zod-based configuration validation
 - `updateBrowserUrl()`: Immediate URL synchronisation
 
@@ -374,12 +373,7 @@ sequenceDiagram
 
 ### Migration Strategy
 
-The implementation maintains backwards compatibility:
-
-1. **Legacy URL Support:** Automatic conversion of old URL formats
-2. **Gradual Adoption:** Components can migrate to stores incrementally
-3. **Fallback Handling:** Graceful degradation when stores unavailable
-4. **Zero Breaking Changes:** Existing URL sharing continues to work
+Legacy URL formats are no longer supported. All links must use the unified format documented above.
 
 ## 12) Open Items / Future
 

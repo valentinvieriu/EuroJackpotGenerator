@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import type { EurojackpotHistoricOdds } from '~/types/winning'
+import { buildOddsMap } from '~/utils/payout'
 
 interface OddsCache {
   data: EurojackpotHistoricOdds | null
@@ -22,25 +23,31 @@ const CACHE_DURATION = 10 * 60 * 1000
  * Based on historical EuroJackpot payout data
  */
 const FALLBACK_ODDS: EurojackpotHistoricOdds = {
-  draw: {
-    date: new Date().toISOString().split('T')[0],
-    mainNumbers: [1, 2, 3, 4, 5],
-    euroNumbers: [1, 2],
+  eurojackpotGameCycle: {
+    cycleNo: 0,
+    cycleYear: new Date().getFullYear(),
+    eventDate: Date.now(),
+    eventWeekday: new Date().getDay(),
+    gametableValidFrom: null,
+    gametableValidTo: null,
+    key: 'fallback-odds-client',
+    variantNo: 0,
   },
-  payouts: [
-    { winningClass: 1, winners: 0, prize: 90000000.0 }, // Jackpot
-    { winningClass: 2, winners: 0, prize: 600000.0 },
-    { winningClass: 3, winners: 0, prize: 15000.0 },
-    { winningClass: 4, winners: 0, prize: 3000.0 },
-    { winningClass: 5, winners: 0, prize: 60.0 },
-    { winningClass: 6, winners: 0, prize: 150.0 },
-    { winningClass: 7, winners: 0, prize: 45.0 },
-    { winningClass: 8, winners: 0, prize: 20.0 },
-    { winningClass: 9, winners: 0, prize: 15.0 },
-    { winningClass: 10, winners: 0, prize: 12.0 },
-    { winningClass: 11, winners: 0, prize: 8.0 },
-    { winningClass: 12, winners: 0, prize: 6.0 },
+  eurojackpotOdds: [
+    { amount: 10000000.0, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
+    { amount: 750000.0, numberOfWins: 0, winningClass: 2, sequence: 2, jackpot: false },
+    { amount: 100000.0, numberOfWins: 0, winningClass: 3, sequence: 3, jackpot: false },
+    { amount: 5000.0, numberOfWins: 0, winningClass: 4, sequence: 4, jackpot: false },
+    { amount: 300.0, numberOfWins: 0, winningClass: 5, sequence: 5, jackpot: false },
+    { amount: 100.0, numberOfWins: 0, winningClass: 6, sequence: 6, jackpot: false },
+    { amount: 50.0, numberOfWins: 0, winningClass: 7, sequence: 7, jackpot: false },
+    { amount: 20.0, numberOfWins: 0, winningClass: 8, sequence: 8, jackpot: false },
+    { amount: 15.0, numberOfWins: 0, winningClass: 9, sequence: 9, jackpot: false },
+    { amount: 12.0, numberOfWins: 0, winningClass: 10, sequence: 10, jackpot: false },
+    { amount: 10.0, numberOfWins: 0, winningClass: 11, sequence: 11, jackpot: false },
+    { amount: 8.0, numberOfWins: 0, winningClass: 12, sequence: 12, jackpot: false },
   ],
+  eurojackpotTurnover: [{ amount: 50000000.0, jurisdiction: 0 }],
 }
 
 /**
@@ -179,12 +186,11 @@ export const useOddsStore = defineStore('odds', () => {
    */
   const getPayoutMap = (): Record<number, number> => {
     const odds = currentOdds.value
+    const map = buildOddsMap(odds)
     const payoutMap: Record<number, number> = {}
-
-    for (const payout of odds.payouts) {
-      payoutMap[payout.winningClass] = payout.prize
+    for (const [cls, amt] of map.entries()) {
+      payoutMap[cls] = amt
     }
-
     return payoutMap
   }
 

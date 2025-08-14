@@ -33,22 +33,28 @@ describe('Odds Store', () => {
 
     const odds = store.currentOdds
     expect(odds).toBeTruthy()
-    expect(odds.payouts).toHaveLength(12) // All win classes
-    expect(odds.payouts[0].winningClass).toBe(1) // Jackpot
+    expect(odds.eurojackpotOdds).toHaveLength(12) // All win classes
+    expect(odds.eurojackpotOdds[0].winningClass).toBe(1) // Jackpot
   })
 
   describe('fetchOdds', () => {
     it('should fetch odds from API', async () => {
       const mockOdds = {
-        draw: {
-          date: '2025-01-01',
-          mainNumbers: [1, 2, 3, 4, 5],
-          euroNumbers: [1, 2],
+        eurojackpotGameCycle: {
+          cycleNo: 1,
+          cycleYear: 2025,
+          eventDate: 1735689600000,
+          eventWeekday: 5,
+          gametableValidFrom: null,
+          gametableValidTo: null,
+          key: '2025-01-5',
+          variantNo: 0,
         },
-        payouts: [
-          { winningClass: 1, winners: 0, prize: 50000000 },
-          { winningClass: 2, winners: 1, prize: 500000 },
+        eurojackpotOdds: [
+          { amount: 50000000, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
+          { amount: 500000, numberOfWins: 1, winningClass: 2, sequence: 2, jackpot: false },
         ],
+        eurojackpotTurnover: [{ amount: 100000000, jurisdiction: 0 }],
       }
 
       global.$fetch = vi.fn().mockResolvedValue(mockOdds)
@@ -68,12 +74,20 @@ describe('Odds Store', () => {
     it('should return cached data when valid', async () => {
       const store = useOddsStore()
       const mockOdds = {
-        draw: {
-          date: '2025-01-01',
-          mainNumbers: [1, 2, 3, 4, 5],
-          euroNumbers: [1, 2],
+        eurojackpotGameCycle: {
+          cycleNo: 1,
+          cycleYear: 2025,
+          eventDate: 1735689600000,
+          eventWeekday: 5,
+          gametableValidFrom: null,
+          gametableValidTo: null,
+          key: '2025-01-5',
+          variantNo: 0,
         },
-        payouts: [{ winningClass: 1, winners: 0, prize: 50000000 }],
+        eurojackpotOdds: [
+          { amount: 50000000, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
+        ],
+        eurojackpotTurnover: [{ amount: 100000000, jurisdiction: 0 }],
       }
 
       // Set cache
@@ -89,20 +103,36 @@ describe('Odds Store', () => {
     it('should force refresh when requested', async () => {
       const store = useOddsStore()
       const initialOdds = {
-        draw: {
-          date: '2025-01-01',
-          mainNumbers: [1, 2, 3, 4, 5],
-          euroNumbers: [1, 2],
+        eurojackpotGameCycle: {
+          cycleNo: 1,
+          cycleYear: 2025,
+          eventDate: 1735689600000,
+          eventWeekday: 5,
+          gametableValidFrom: null,
+          gametableValidTo: null,
+          key: '2025-01-5',
+          variantNo: 0,
         },
-        payouts: [{ winningClass: 1, winners: 0, prize: 50000000 }],
+        eurojackpotOdds: [
+          { amount: 50000000, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
+        ],
+        eurojackpotTurnover: [{ amount: 100000000, jurisdiction: 0 }],
       }
       const newOdds = {
-        draw: {
-          date: '2025-01-02',
-          mainNumbers: [6, 7, 8, 9, 10],
-          euroNumbers: [3, 4],
+        eurojackpotGameCycle: {
+          cycleNo: 2,
+          cycleYear: 2025,
+          eventDate: 1735948800000,
+          eventWeekday: 2,
+          gametableValidFrom: null,
+          gametableValidTo: null,
+          key: '2025-02-2',
+          variantNo: 0,
         },
-        payouts: [{ winningClass: 1, winners: 1, prize: 45000000 }],
+        eurojackpotOdds: [
+          { amount: 45000000, numberOfWins: 1, winningClass: 1, sequence: 1, jackpot: true },
+        ],
+        eurojackpotTurnover: [{ amount: 90000000, jurisdiction: 0 }],
       }
 
       store.setOdds(initialOdds)
@@ -124,7 +154,7 @@ describe('Odds Store', () => {
       expect(store.cache.error).toBe('API Error')
       // Should return fallback odds
       expect(result).toBeTruthy()
-      expect(result.payouts).toHaveLength(12)
+      expect(result.eurojackpotOdds).toHaveLength(12)
     })
 
     it('should prevent concurrent requests', async () => {
@@ -133,7 +163,24 @@ describe('Odds Store', () => {
         .mockImplementation(
           () =>
             new Promise((resolve) =>
-              setTimeout(() => resolve({ payouts: [] }), 100)
+              setTimeout(
+                () =>
+                  resolve({
+                    eurojackpotGameCycle: {
+                      cycleNo: 1,
+                      cycleYear: 2025,
+                      eventDate: 1735689600000,
+                      eventWeekday: 5,
+                      gametableValidFrom: null,
+                      gametableValidTo: null,
+                      key: '2025-01-5',
+                      variantNo: 0,
+                    },
+                    eurojackpotOdds: [],
+                    eurojackpotTurnover: [],
+                  }),
+                100
+              )
             )
         )
 
@@ -164,12 +211,20 @@ describe('Odds Store', () => {
     it('should detect valid cache', () => {
       const store = useOddsStore()
       const mockOdds = {
-        draw: {
-          date: '2025-01-01',
-          mainNumbers: [1, 2, 3, 4, 5],
-          euroNumbers: [1, 2],
+        eurojackpotGameCycle: {
+          cycleNo: 1,
+          cycleYear: 2025,
+          eventDate: 1735689600000,
+          eventWeekday: 5,
+          gametableValidFrom: null,
+          gametableValidTo: null,
+          key: '2025-01-5',
+          variantNo: 0,
         },
-        payouts: [{ winningClass: 1, winners: 0, prize: 50000000 }],
+        eurojackpotOdds: [
+          { amount: 50000000, numberOfWins: 0, winningClass: 1, sequence: 1, jackpot: true },
+        ],
+        eurojackpotTurnover: [{ amount: 100000000, jurisdiction: 0 }],
       }
 
       store.setOdds(mockOdds)
@@ -204,9 +259,9 @@ describe('Odds Store', () => {
       const payoutMap = store.getPayoutMap()
 
       expect(payoutMap).toBeTruthy()
-      expect(payoutMap[1]).toBeTruthy() // Jackpot class
-      expect(payoutMap[12]).toBeTruthy() // Lowest class
-    })
+      expect(payoutMap[1]).toBeGreaterThan(0) // Jackpot class
+      expect(payoutMap[12]).toBeGreaterThan(0) // Lowest class
+  })
 
     it('should provide cache statistics', () => {
       const store = useOddsStore()
