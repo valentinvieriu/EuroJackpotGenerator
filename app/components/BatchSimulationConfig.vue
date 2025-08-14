@@ -275,7 +275,9 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import type { BatchSimulationRequest } from '~/schemas'
+import type { BatchSimulationRequest, Ticket } from '~/schemas'
+import { calculateTheoreticalExpectedValue } from '~/utils/batchStatistics'
+// useOddsStore is auto-imported via @pinia/nuxt configuration
 
 const props = defineProps({
   ticketCount: { type: Number, default: 0 },
@@ -283,6 +285,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   canCancel: { type: Boolean, default: false },
   showCancelButton: { type: Boolean, default: false },
+  tickets: { type: Array as () => Ticket[], default: () => [] },
 })
 
 const emit = defineEmits<{
@@ -295,6 +298,8 @@ const config = reactive({
   batchSize: 100,
   includeIndividualResults: false,
 })
+
+const oddsStore = useOddsStore()
 
 const simulationOptions = [
   { value: 100, label: '100 (Quick Test)' },
@@ -311,9 +316,28 @@ const totalSimulationCost = computed(
 )
 
 const breakEvenPercentage = computed(() => {
-  if (props.costPerSimulation <= 0) return 0
-  const averageWinAmount = 12.5
-  return (props.costPerSimulation / averageWinAmount) * 100
+  if (props.costPerSimulation <= 0 || props.tickets.length === 0) return 0
+
+  // Get the first ticket to determine system parameters
+  const firstTicket = props.tickets[0]
+  if (!firstTicket) return 0
+
+  const systemMain = firstTicket.mainNumbers.length
+  const systemEuro = firstTicket.euroNumbers.length
+
+  // Calculate theoretical expected value using current odds
+  const expectedValue = calculateTheoreticalExpectedValue(
+    props.ticketCount,
+    systemMain,
+    systemEuro,
+    oddsStore.currentOdds
+  )
+
+  if (expectedValue <= 0) return 100 // If no expected value, need 100% win rate to break even
+
+  // Break-even percentage = cost per simulation / expected value per simulation * 100
+  const expectedValuePerSimulation = expectedValue / props.ticketCount
+  return (props.costPerSimulation / expectedValuePerSimulation) * 100
 })
 
 const handleStartSimulation = () => {

@@ -11,6 +11,7 @@
       v-if="tickets.length > 0 && viewState.phase === 'config'"
       :ticket-count="tickets.length"
       :cost-per-simulation="costPerSimulation"
+      :tickets="tickets"
       :disabled="viewState.isRunning"
       :can-cancel="viewState.canCancel"
       :show-cancel-button="viewState.isRunning"
