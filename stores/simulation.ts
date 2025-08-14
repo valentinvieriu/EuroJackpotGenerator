@@ -132,31 +132,29 @@ export const useSimulationStore = defineStore('simulation', () => {
         includeIndividualResults: config.simulationCount <= 1000,
       }
 
-      const resp = await fetch(`${apiBaseUrl}/batchSimulate`, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/x-ndjson',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-        signal: state.value.abortController.signal,
-      })
+      // Use Nuxt $fetch to request NDJSON streaming from the API
+      const stream = await $fetch<ReadableStream>(
+        `${apiBaseUrl}/batchSimulate`,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/x-ndjson',
+            'Content-Type': 'application/json',
+          },
+          body: request,
+          // Request a ReadableStream back for progressive updates
+          responseType: 'stream',
+          signal: state.value.abortController!.signal,
+        }
+      )
 
-      if (!resp.ok) {
-        const text = await resp.text()
-        throw new Error(text || `HTTP ${resp.status}`)
-      }
-
-      const contentType = resp.headers.get('content-type') || ''
-      if (contentType.includes('application/x-ndjson') && resp.body) {
-        await processNDJSONStream(resp.body)
-      } else {
-        const json = (await resp.json()) as BatchSimulationResult
-        setResults(json)
-        state.value.phase = 'results'
-      }
+      // Process the NDJSON stream for progress and final result
+      await processNDJSONStream(stream)
     } catch (error: unknown) {
-      if (error.name === 'AbortError') {
+      if (
+        typeof (error as { name?: string }).name === 'string' &&
+        (error as { name?: string }).name === 'AbortError'
+      ) {
         state.value.phase = 'cancelled'
       } else {
         state.value.phase = 'error'
@@ -205,29 +203,45 @@ export const useSimulationStore = defineStore('simulation', () => {
   const processNDJSONStream = async (stream: ReadableStream): Promise<void> => {
     const reader = stream.getReader()
     const decoder = new TextDecoder()
+    let buffer = ''
 
     try {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n').filter((line) => line.trim())
-
-        for (const line of lines) {
+        buffer += decoder.decode(value, { stream: true })
+        let idx: number
+        while ((idx = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, idx).trim()
+          buffer = buffer.slice(idx + 1)
+          if (!line) continue
           try {
             const data = JSON.parse(line)
-
             if (data.type === 'progress') {
               updateProgress(data.progress, data.summary)
             } else if (data.type === 'result') {
               setResults(data.result)
               state.value.phase = 'results'
-              return // Stream complete
+              buffer = ''
+              return
             }
           } catch (parseError) {
             console.warn('Failed to parse NDJSON line:', parseError)
           }
+        }
+      }
+      // Flush any trailing line (optional)
+      const tail = buffer.trim()
+      if (tail) {
+        try {
+          const data = JSON.parse(tail)
+          if (data.type === 'result') {
+            setResults(data.result)
+            state.value.phase = 'results'
+          }
+        } catch {
+          // Ignore incomplete tail
         }
       }
     } finally {

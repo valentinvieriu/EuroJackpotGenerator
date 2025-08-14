@@ -89,19 +89,27 @@ export default defineEventHandler(
       // Fetch current winning odds data for payout calculations
       const winningData = await fetchWinningData()
       const oddsMap = buildOddsMap(winningData)
+
+      // If we are using fallback odds, cap simulations to a tiny number for safety
+      const isFallbackOdds =
+        winningData?.eurojackpotGameCycle?.key === 'fallback-batch-sim'
+      const effectiveSimulationCount = isFallbackOdds
+        ? Math.min(simulationCount, 3)
+        : simulationCount
+
       // Calculate cost per simulation (assuming all tickets have same system price)
       const costPerSimulation = calculateTotalCost(tickets)
-      const totalCost = costPerSimulation * simulationCount
+      const totalCost = costPerSimulation * effectiveSimulationCount
 
       console.log(
-        `Starting batch simulation: ${simulationCount} simulations with ${tickets.length} tickets`
+        `Starting batch simulation: ${effectiveSimulationCount} simulations with ${tickets.length} tickets`
       )
 
       // NDJSON detection already done above during validation
 
       // Run batch simulation in chunks to manage memory
       const individualResults: IndividualSimulationResult[] = []
-      const chunks = Math.ceil(simulationCount / batchSize)
+      const chunks = Math.ceil(effectiveSimulationCount / batchSize)
 
       // Initialize lightweight highlighting data collection
       const highlightingData: TicketHighlightingData = {
@@ -133,7 +141,10 @@ export default defineEventHandler(
           try {
             for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
               const startIndex = chunkIndex * batchSize
-              const endIndex = Math.min(startIndex + batchSize, simulationCount)
+              const endIndex = Math.min(
+                startIndex + batchSize,
+                effectiveSimulationCount
+              )
               const chunkSize = endIndex - startIndex
 
               const chunkResults = await processSimulationChunk(
@@ -162,8 +173,9 @@ export default defineEventHandler(
                 type: 'progress',
                 progress: {
                   currentSimulation: endIndex,
-                  totalSimulations: simulationCount,
-                  progressPercentage: (endIndex / simulationCount) * 100,
+                  totalSimulations: effectiveSimulationCount,
+                  progressPercentage:
+                    (endIndex / effectiveSimulationCount) * 100,
                   estimatedTimeRemaining: null,
                   canCancel: true,
                 },
@@ -213,7 +225,10 @@ export default defineEventHandler(
       // Non-streaming fallback: process synchronously and return JSON at the end
       for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
         const startIndex = chunkIndex * batchSize
-        const endIndex = Math.min(startIndex + batchSize, simulationCount)
+        const endIndex = Math.min(
+          startIndex + batchSize,
+          effectiveSimulationCount
+        )
         const chunkSize = endIndex - startIndex
 
         console.log(

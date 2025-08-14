@@ -59,7 +59,7 @@ export const batchSimulationResultSchema = z.object({
 
 export const batchSimulationRequestSchema = z.object({
   tickets: z.array(ticketSchema).min(1).max(500),
-  simulationCount: z.number().int().min(1).max(100000),
+  simulationCount: z.number().int().min(100).max(10000),
   includeIndividualResults: z.boolean().optional().default(false),
   batchSize: z.number().int().positive().optional().default(100),
 })

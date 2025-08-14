@@ -63,15 +63,15 @@ describe('/api/batchSimulate (JSON response)', () => {
         { id: 1, mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
         { id: 2, mainNumbers: [6, 7, 8, 9, 10], euroNumbers: [3, 4] },
       ],
-      simulationCount: 10,
-      batchSize: 5,
+      simulationCount: 100,
+      batchSize: 20,
       // includeIndividualResults omitted -> defaults to false
     }
 
     const res = await handler({} as any)
     expect(fetchSpy).toHaveBeenCalled()
     expect(res).toBeTruthy()
-    expect(res?.totalSimulations).toBe(10)
+    expect(res?.totalSimulations).toBe(100)
     expect(res?.winDistribution).toBeTruthy()
     expect(res?.statistics).toBeTruthy()
     expect(res?.individualResults).toBeUndefined()
@@ -79,7 +79,7 @@ describe('/api/batchSimulate (JSON response)', () => {
 
     // totalCost = costPerSimulation * simulationCount
     // costPerSimulation = sum of lines for both tickets (each 1 line) * €2.0 = 2 * 2 = €4
-    expect(res?.totalCost).toBe(4 * 10)
+    expect(res?.totalCost).toBe(4 * 100)
   })
 
   it('respects includeIndividualResults=true', async () => {
@@ -90,15 +90,15 @@ describe('/api/batchSimulate (JSON response)', () => {
 
     mockBody = {
       tickets: [{ id: 1, mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] }],
-      simulationCount: 6,
-      batchSize: 3,
+      simulationCount: 100,
+      batchSize: 25,
       includeIndividualResults: true,
     }
 
     const res = await handler({} as any)
     expect(res?.individualResults).toBeTruthy()
     expect(Array.isArray(res?.individualResults)).toBe(true)
-    expect(res?.individualResults?.length).toBe(6)
+    expect(res?.individualResults?.length).toBe(100)
   })
 
   it('uses fallback odds when external fetch fails', async () => {
@@ -109,8 +109,8 @@ describe('/api/batchSimulate (JSON response)', () => {
 
     mockBody = {
       tickets: [{ id: 1, mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] }],
-      simulationCount: 3,
-      batchSize: 2,
+      simulationCount: 100,
+      batchSize: 50,
     }
 
     const res = await handler({} as any)
@@ -129,7 +129,7 @@ describe('/api/batchSimulate (JSON response)', () => {
     mockHeaders = { accept: 'text/html' }
     mockBody = {
       tickets: [{ id: 1, mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] }],
-      simulationCount: 1,
+      simulationCount: 100,
     }
     await expect(handler({} as any)).rejects.toMatchObject({
       statusCode: 406,

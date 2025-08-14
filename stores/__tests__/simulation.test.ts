@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useSimulationStore } from '../simulation'
 
 // Mock dependencies
-global.$fetch = vi.fn()
+global.fetch = vi.fn() as any
 
 describe('Simulation Store', () => {
   beforeEach(() => {
