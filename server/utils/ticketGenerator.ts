@@ -7,10 +7,12 @@ import {
   EURO_NUMBER_MIN,
   EURO_NUMBER_MAX,
 } from '~/utils/constants'
+import { generateSeededRandomNumbers } from './seededRng'
 
 // IDs are assigned per-batch deterministically (1..N) to avoid cross-request leakage.
 
 type Algorithm = 'uniform' | 'weighted'
+
 interface Options {
   algorithm?: Algorithm
   seed?: string
@@ -35,6 +37,27 @@ export async function generateTickets(
   euroCount: number,
   options: Options = {}
 ): Promise<Ticket[]> {
+  const algorithm: Algorithm = options.algorithm ?? 'weighted'
+  const { seed } = options
+
+  // Decide whether to fetch stats (only if not using seeded generation)
+  let statsData: StatisticsData | null = null
+  if (algorithm === 'weighted' && !seed) {
+    try {
+      statsData = await fetchStatistics()
+      if (!statsData) {
+        console.warn(
+          'Statistics unavailable; falling back to uniform generation.'
+        )
+      }
+    } catch (error) {
+      console.error(
+        'Failed to fetch statistics, using uniform generation:',
+        error instanceof Error ? error.message : String(error)
+      )
+    }
+  } // algorithm === 'uniform' or seed provided -> leave statsData as null to force uniform
+
   // Basic validation for inputs
   if (!Number.isInteger(ticketCount) || ticketCount <= 0) {
     throw new Error('ticketCount must be a positive integer.')
@@ -58,36 +81,9 @@ export async function generateTickets(
     )
   }
 
-  const algorithm: Algorithm = options.algorithm ?? 'weighted'
-  const { seed } = options
-
-  // Decide whether to fetch stats (only if not using seeded generation)
-  let statsData: StatisticsData | null = null
-  if (algorithm === 'weighted' && !seed) {
-    try {
-      statsData = await fetchStatistics()
-      if (!statsData) {
-        console.warn(
-          'Statistics unavailable; falling back to uniform generation.'
-        )
-      }
-    } catch (error) {
-      console.error(
-        'Failed to fetch statistics, using uniform generation:',
-        error instanceof Error ? error.message : String(error)
-      )
-    }
-  } // algorithm === 'uniform' or seed provided -> leave statsData as null to force uniform
-
   const generatedTickets: Ticket[] = []
-  // Use a Set to efficiently track unique combinations generated within this batch.
-  // The key combines sorted main numbers and sorted euro numbers.
   const uniqueTicketKeys = new Set<string>()
-
-  // Set a limit for attempts to generate a unique ticket combination.
-  // This prevents potential infinite loops if uniqueness is unexpectedly hard to achieve
-  // (e.g., requesting many tickets from a very small number pool, although unlikely for EuroJackpot).
-  const MAX_RETRIES_PER_TICKET = 20 // Increased slightly for larger system tickets
+  const MAX_RETRIES_PER_TICKET = 20
 
   for (let i = 0; i < ticketCount; i++) {
     let mainNumbers: number[]
@@ -95,25 +91,21 @@ export async function generateTickets(
     let ticketKey: string
     let attempts = 0
 
-    // Loop to ensure the generated ticket combination is unique within this batch.
     do {
       attempts++
       if (attempts > MAX_RETRIES_PER_TICKET) {
-        // If uniqueness cannot be achieved after several tries, something might be wrong.
         throw new Error(
           `Max retries (${MAX_RETRIES_PER_TICKET}) exceeded while generating unique ticket ${i + 1}/${ticketCount}. Possible issues: requesting too many tickets for the chosen system, or error in number generation logic.`
         )
       }
 
       if (seed) {
-        // Use seeded generation for reproducible results
-        const { generateSeededRandomNumbers } = await import('./seededRng')
-
+        // Use seeded generation for reproducible results (uniform selection)
         mainNumbers = generateSeededRandomNumbers(
           mainCount,
           MAIN_NUMBER_MIN,
           MAIN_NUMBER_MAX,
-          `${seed}_main_${i}` // Include ticket index to ensure uniqueness
+          `${seed}_main_${i}`
         )
         euroNumbers = generateSeededRandomNumbers(
           euroCount,
@@ -122,7 +114,7 @@ export async function generateTickets(
           `${seed}_euro_${i}`
         )
       } else {
-        // When statsData is null, generateNumbers() uses uniform fallback.
+        // Use weighted stats when available; generateNumbers falls back to uniform when statsData is null
         mainNumbers = generateNumbers(
           mainCount,
           MAIN_NUMBER_MIN,
@@ -137,27 +129,26 @@ export async function generateTickets(
         )
       }
 
-      // Create a unique string representation for the combination.
-      // Sorting is crucial here to ensure "1,5" and "5,1" produce the same key.
-      // generateNumbers already sorts, but sorting again ensures consistency if the source changes.
       ticketKey =
-        mainNumbers.sort((a, b) => a - b).join(',') +
+        mainNumbers
+          .slice()
+          .sort((a, b) => a - b)
+          .join(',') +
         '|' +
-        euroNumbers.sort((a, b) => a - b).join(',')
-    } while (uniqueTicketKeys.has(ticketKey)) // Repeat if this combination already exists in the current batch
+        euroNumbers
+          .slice()
+          .sort((a, b) => a - b)
+          .join(',')
+    } while (uniqueTicketKeys.has(ticketKey))
 
-    // Add the unique key to the set.
     uniqueTicketKeys.add(ticketKey)
 
-    // Create the ticket object with per-batch deterministic ID
     generatedTickets.push({
       id: i + 1,
-      mainNumbers, // Numbers are already sorted by generateNumbers
-      euroNumbers, // Numbers are already sorted by generateNumbers
-      // winClass, winningMainNumbers, winningEuroNumbers are added later during simulation check.
+      mainNumbers,
+      euroNumbers,
     })
   }
 
-  // Return the array of generated unique tickets.
   return generatedTickets
 }

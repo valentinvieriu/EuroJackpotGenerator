@@ -85,7 +85,7 @@ sequenceDiagram
 ### API (server/api/)
 
 - **`/api/generate` (POST)**
-  Validates input with **zod**, generates unique tickets using weighted stats when available. Adds `linesCount = C(m,5)×C(e,2)`.
+  Validates input with **zod**, and generates unique tickets server-side. Uses weighted stats when available (10-minute cache) and falls back to uniform. Adds `linesCount = C(m,5)×C(e,2)`. Ticket generation is server-only; seeds are accepted here for reproducibility and are not used on the client.
 - **`/api/simulate` (GET/POST)**
   Draw generator:
   - If `seed` provided → deterministic via `server/utils/seededRng.ts` (sorted, unique).

@@ -3,50 +3,10 @@
  * Provides robust parsing and backwards compatibility for EuroJackpot configuration URLs
  */
 
-import { z, ZodError } from 'zod'
-
+import { z } from 'zod'
 /**
- * Compatibility shim for Zod v4: expose `errors` alias for `.issues`.
- * Some tests/tools still expect `error.errors[0].message` like Zod v3.
+ * Note: Do not patch ZodError globally. Use safeParse().error.issues/format().
  */
-try {
-  // Define once, non-enumerable, if not already present
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const proto: any = (ZodError as unknown as { new (): ZodError }).prototype
-  if (proto && !Object.prototype.hasOwnProperty.call(proto, 'errors')) {
-    Object.defineProperty(proto, 'errors', {
-      get(this: ZodError) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (this as any).issues
-      },
-      configurable: true,
-    })
-  }
-  // Provide a cleaner message that includes raw issue messages (without JSON escaping)
-  const originalHasOwnMessage = Object.prototype.hasOwnProperty.call(
-    proto,
-    'message'
-  )
-  if (proto && !originalHasOwnMessage) {
-    const descriptor = Object.getOwnPropertyDescriptor(proto, 'message')
-    // Only override if not already a getter on prototype
-    if (!descriptor || typeof descriptor.get !== 'function') {
-      Object.defineProperty(proto, 'message', {
-        get(this: ZodError) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const issues = ((this as any).issues ?? []) as Array<{
-            message?: string
-          }>
-          const msgs = issues.map((i) => i.message).filter(Boolean) as string[]
-          return msgs.length ? msgs.join('\n') : 'Zod validation error'
-        },
-        configurable: true,
-      })
-    }
-  }
-} catch {
-  // No-op: if patching fails, tests will fall back to message checks
-}
 
 /**
  * Schema for ticket system format (e.g., "5x2", "6x3", "7x3")
@@ -138,42 +98,58 @@ export type SelectionMethod = z.infer<typeof SelectionMethodSchema>
  * Validation helpers with descriptive error messages
  */
 export const validateAppConfig = (data: unknown): AppConfig | null => {
-  try {
-    return AppConfigSchema.parse(data)
-  } catch (error) {
-    console.warn('Invalid app configuration:', error)
-    return null
-  }
+  const result = AppConfigSchema.safeParse(data)
+  if (result.success) return result.data
+  // Prefer concise issues list; fall back to formatted tree
+  console.warn(
+    'Invalid app configuration:',
+    result.error.issues.length ? result.error.issues : result.error.format()
+  )
+  return null
 }
 
 // Legacy validation removed.
 
 export const validateUrlParams = (data: unknown): UrlParams | null => {
-  try {
-    return UrlParamsSchema.parse(data)
-  } catch (error) {
-    console.warn('Invalid URL parameters:', error)
-    return null
-  }
+  const result = UrlParamsSchema.safeParse(data)
+  if (result.success) return result.data
+  console.warn(
+    'Invalid URL parameters:',
+    result.error.issues.length ? result.error.issues : result.error.format()
+  )
+  return null
 }
 
 /**
  * Parse ticket system string into main/euro counts
  */
 export const parseTicketSystem = (system: string): ParsedSystem | null => {
-  try {
-    // First validate the format
-    const validSystem = TicketSystemSchema.parse(system)
-    const [mainStr, euroStr] = validSystem.split('x')
-
-    return ParsedSystemSchema.parse({
-      mainCount: Number.parseInt(mainStr),
-      euroCount: Number.parseInt(euroStr),
-    })
-  } catch (error) {
-    console.warn('Invalid ticket system format:', error)
+  // Validate the system string first
+  const sysResult = TicketSystemSchema.safeParse(system)
+  if (!sysResult.success) {
+    console.warn(
+      'Invalid ticket system format:',
+      sysResult.error.issues.length
+        ? sysResult.error.issues
+        : sysResult.error.format()
+    )
     return null
   }
+
+  const [mainStr, euroStr] = sysResult.data.split('x')
+  const parsed = {
+    mainCount: Number.parseInt(mainStr),
+    euroCount: Number.parseInt(euroStr),
+  }
+  const parseResult = ParsedSystemSchema.safeParse(parsed)
+  if (parseResult.success) return parseResult.data
+  console.warn(
+    'Parsed system out of bounds:',
+    parseResult.error.issues.length
+      ? parseResult.error.issues
+      : parseResult.error.format()
+  )
+  return null
 }
 
 /**
@@ -183,10 +159,9 @@ export const formatTicketSystem = (
   mainCount: number,
   euroCount: number
 ): string => {
-  try {
-    return TicketSystemSchema.parse(`${mainCount}x${euroCount}`)
-  } catch {
-    console.warn('Invalid ticket system counts:', { mainCount, euroCount })
-    return '5x2' // Default fallback
-  }
+  const candidate = `${mainCount}x${euroCount}`
+  const result = TicketSystemSchema.safeParse(candidate)
+  if (result.success) return result.data
+  console.warn('Invalid ticket system counts:', { mainCount, euroCount })
+  return '5x2' // Default fallback
 }
