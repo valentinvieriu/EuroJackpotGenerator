@@ -1,16 +1,24 @@
 /**
  * URL hash utilities for encoding and decoding Lucky Numbers configurations
  * Enables sharing of ticket configurations via user-friendly URL fragments
+ * Enhanced with Zod validation for type safety and robust error handling
  */
 
-export interface AppConfig {
-  system: string // Format: "mainCount x euroCount" (e.g., "5x2", "6x3")
-  tickets: number
-  method: 'random' | 'weighted'
-  lucky?: string // Optional seed for reproducible generation
-}
+import {
+  validateAppConfig,
+  validateLegacyConfig,
+  validateUrlParams,
+  parseTicketSystem as parseTicketSystemZod,
+  formatTicketSystem as formatTicketSystemZod,
+  type AppConfig,
+  type ParsedSystem,
+  type SelectionMethod,
+} from '~/schemas/urlConfig'
 
 export type AppState = 'SHARED' | 'FRESH'
+
+// Re-export types for compatibility
+export type { AppConfig, SelectionMethod }
 
 // Legacy interface for backwards compatibility
 export interface TicketConfig {
@@ -21,17 +29,24 @@ export interface TicketConfig {
 }
 
 /**
- * Encodes app configuration into URL hash format
+ * Encodes app configuration into URL hash format with validation
  * @param config App configuration object
  * @returns URL hash string (without #)
  */
 export function encodeAppConfigToHash(config: AppConfig): string {
+  // Validate configuration before encoding
+  const validConfig = validateAppConfig(config)
+  if (!validConfig) {
+    console.warn('Invalid app configuration provided to encoder:', config)
+    return ''
+  }
+
   const params = new URLSearchParams()
 
-  if (config.system) params.set('system', config.system)
-  if (config.tickets) params.set('tickets', config.tickets.toString())
-  if (config.method) params.set('method', config.method)
-  if (config.lucky) params.set('lucky', config.lucky)
+  if (validConfig.system) params.set('system', validConfig.system)
+  if (validConfig.tickets) params.set('tickets', validConfig.tickets.toString())
+  if (validConfig.method) params.set('method', validConfig.method)
+  if (validConfig.lucky) params.set('lucky', validConfig.lucky)
 
   return params.toString()
 }
@@ -53,7 +68,7 @@ export function encodeConfigToHash(config: TicketConfig): string {
 }
 
 /**
- * Decodes URL hash into app configuration
+ * Decodes URL hash into app configuration with type-safe validation
  * @param hash URL hash string (with or without #)
  * @returns App configuration object or null if invalid
  */
@@ -64,30 +79,48 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
   try {
     const params = new URLSearchParams(cleanHash)
 
-    // Check if this has the expected parameters
-    if (params.has('system') || params.has('tickets') || params.has('method')) {
+    // Convert URLSearchParams to object for validation
+    const paramObj: Record<string, string> = {}
+    params.forEach((value, key) => {
+      paramObj[key] = value
+    })
+
+    // Validate URL parameters structure
+    const validParams = validateUrlParams(paramObj)
+    if (!validParams) {
+      return null
+    }
+
+    // Check if this has the expected modern parameters
+    if (validParams.system || validParams.tickets || validParams.method) {
       const config: Partial<AppConfig> = {}
 
-      const system = params.get('system')
-      if (system) config.system = system
+      // Use Zod coercion for safe parsing
+      if (validParams.system) {
+        config.system = validParams.system
+      }
 
-      const tickets = params.get('tickets')
-      if (tickets) {
-        const parsedTickets = Number.parseInt(tickets, 10)
+      if (validParams.tickets) {
+        const parsedTickets = Number.parseInt(validParams.tickets, 10)
         if (!Number.isNaN(parsedTickets) && parsedTickets > 0) {
           config.tickets = parsedTickets
         }
       }
 
-      const method = params.get('method')
-      if (method === 'random' || method === 'weighted') {
-        config.method = method
+      if (
+        validParams.method === 'random' ||
+        validParams.method === 'weighted'
+      ) {
+        config.method = validParams.method
       }
 
-      const lucky = params.get('lucky')
-      if (lucky) config.lucky = lucky
+      if (validParams.lucky) {
+        config.lucky = validParams.lucky
+      }
 
-      return config
+      // Attempt to validate the complete configuration
+      const validatedConfig = validateAppConfig(config)
+      return validatedConfig || config // Return partial config if full validation fails
     }
 
     return null // No valid configuration parameters
@@ -98,7 +131,7 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
 }
 
 /**
- * Legacy: Decodes URL hash into ticket configuration
+ * Legacy: Decodes URL hash into ticket configuration with validation
  * @param hash URL hash string (with or without #)
  * @returns Partial ticket configuration object
  */
@@ -110,28 +143,39 @@ export function decodeHashToConfig(hash: string): Partial<TicketConfig> {
 
   try {
     const params = new URLSearchParams(cleanHash)
+
+    // Convert URLSearchParams to object for validation
+    const paramObj: Record<string, string> = {}
+    params.forEach((value, key) => {
+      paramObj[key] = value
+    })
+
+    // Validate URL parameters structure first
+    const validParams = validateUrlParams(paramObj)
+    if (!validParams) {
+      return {}
+    }
+
     const config: Partial<TicketConfig> = {}
 
-    const seed = params.get('seed')
-    if (seed) config.seed = seed
+    // Handle legacy format (seed, type, count)
+    if (validParams.seed) config.seed = validParams.seed
+    if (validParams.type) config.ticketType = validParams.type
 
-    const type = params.get('type')
-    if (type) config.ticketType = type
-
-    const count = params.get('count')
-    if (count) {
-      const parsedCount = Number.parseInt(count, 10)
+    if (validParams.count) {
+      const parsedCount = Number.parseInt(validParams.count, 10)
       if (!Number.isNaN(parsedCount) && parsedCount > 0) {
         config.ticketCount = parsedCount
       }
     }
 
-    const method = params.get('method')
-    if (method === 'random' || method === 'weighted') {
-      config.selectionMethod = method
+    if (validParams.method === 'random' || validParams.method === 'weighted') {
+      config.selectionMethod = validParams.method
     }
 
-    return config
+    // Attempt validation using legacy schema
+    const validatedConfig = validateLegacyConfig(config)
+    return validatedConfig || config // Return partial config if validation fails
   } catch (error) {
     console.warn('Failed to decode URL hash:', error)
     return {}
@@ -139,37 +183,22 @@ export function decodeHashToConfig(hash: string): Partial<TicketConfig> {
 }
 
 /**
- * Parses ticket type string into main and euro counts
+ * Parses ticket type string into main and euro counts with Zod validation
  * @param ticketType Format: "mainCount x euroCount" (e.g., "5x2")
  * @returns Object with mainCount and euroCount, or null if invalid
  */
-export function parseTicketType(
-  ticketType: string
-): { mainCount: number; euroCount: number } | null {
-  if (!ticketType) return null
-
-  const match = ticketType.match(/^(\d+)x(\d+)$/)
-  if (!match || !match[1] || !match[2]) return null
-
-  const mainCount = Number.parseInt(match[1], 10)
-  const euroCount = Number.parseInt(match[2], 10)
-
-  // Validate ranges
-  if (mainCount < 5 || mainCount > 16 || euroCount < 2 || euroCount > 12) {
-    return null
-  }
-
-  return { mainCount, euroCount }
+export function parseTicketType(ticketType: string): ParsedSystem | null {
+  return parseTicketSystemZod(ticketType)
 }
 
 /**
- * Formats main and euro counts into ticket type string
+ * Formats main and euro counts into ticket type string with validation
  * @param mainCount Number of main numbers
  * @param euroCount Number of euro numbers
  * @returns Ticket type string (e.g., "5x2")
  */
 export function formatTicketType(mainCount: number, euroCount: number): string {
-  return `${mainCount}x${euroCount}`
+  return formatTicketSystemZod(mainCount, euroCount)
 }
 
 // Word lists for generating user-friendly codes
@@ -303,6 +332,52 @@ export function getAppConfigUrl(config: AppConfig): string {
   const baseUrl = window.location.origin + window.location.pathname
   const hash = encodeAppConfigToHash(config)
   return `${baseUrl}#${hash}`
+}
+
+/**
+ * Enhanced URL parsing that handles both modern and legacy formats
+ * with automatic migration to the new format
+ * @param hash URL hash string (with or without #)
+ * @returns Parsed app configuration or null if invalid
+ */
+export function parseUrlHash(hash: string): Partial<AppConfig> | null {
+  if (!hash) return null
+
+  // Try modern format first
+  const modernConfig = decodeUrlHash(hash)
+  if (modernConfig && Object.keys(modernConfig).length > 0) {
+    return modernConfig
+  }
+
+  // Fall back to legacy format
+  const legacyConfig = decodeHashToConfig(hash)
+  if (legacyConfig && Object.keys(legacyConfig).length > 0) {
+    // Convert legacy to modern format
+    const convertedConfig: Partial<AppConfig> = {}
+
+    if (legacyConfig.ticketType) {
+      convertedConfig.system = legacyConfig.ticketType
+    }
+
+    if (legacyConfig.ticketCount) {
+      convertedConfig.tickets = legacyConfig.ticketCount
+    }
+
+    if (legacyConfig.selectionMethod) {
+      convertedConfig.method = legacyConfig.selectionMethod
+    }
+
+    // Convert seed to lucky code for reproducibility
+    if (legacyConfig.seed) {
+      convertedConfig.lucky = seedToLuckyCode(legacyConfig.seed)
+    }
+
+    // Validate converted configuration
+    const validatedConfig = validateAppConfig(convertedConfig)
+    return validatedConfig || convertedConfig
+  }
+
+  return null
 }
 
 /**

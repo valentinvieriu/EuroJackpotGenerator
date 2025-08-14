@@ -109,6 +109,14 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
 - **NFR-4: Compatibility**
   - Latest versions of major desktop browsers (Chrome, Firefox, Safari, Edge).
 
+- **NFR-5: State Management**
+  - **Configuration persistence:** Zero state loss on page refresh via immediate URL synchronisation
+  - **Backwards compatibility:** Legacy URL formats automatically upgraded without breaking existing shares
+  - **Type safety:** All state transitions validated with Zod schemas at runtime
+  - **SSR readiness:** Ephemeral state management compatible with future server-side rendering
+  - **Memory efficiency:** Simulation results cached intelligently with configurable expiration (10 minutes for odds)
+  - **Error boundaries:** Graceful fallbacks when stores unavailable or external APIs fail
+
 ## 11. Assumptions and Dependencies
 
 - **Rules:** EuroJackpot 5/50 + 2/12; win classes **1–12**.

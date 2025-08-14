@@ -224,7 +224,164 @@ sequenceDiagram
 - **Seeded When Shared**: Reproducible generation only when explicitly sharing
 - **Optimal Distribution**: Eliminates forced seeding with potentially clustered values
 
-## 11) Open Items / Future
+## 11) State Management Architecture
+
+The application implements a **3-layer state management system** combining URL-based persistence, Pinia domain stores, and SSR-safe ephemeral state.
+
+### Layer 1: URL-Based State (Source of Truth)
+
+**Purpose:** Canonical state for shareable configuration
+**Location:** `app/utils/urlHash.ts`, `app/schemas/urlConfig.ts`
+
+```mermaid
+graph LR
+    A[User Action] --> B[Form State]
+    B --> C[URL Update]
+    C --> D[Browser History]
+    D --> E[Page Refresh]
+    E --> F[State Restoration]
+    F --> B
+```
+
+**Features:**
+
+- **Immediate persistence:** Zero state loss on page refresh
+- **Zod validation:** Type-safe URL parsing with schema validation
+- **Backwards compatibility:** Automatic migration from legacy formats
+- **Smart sharing:** Unified format for persistence and reproduction
+
+**Key Functions:**
+
+- `parseUrlHash()`: Enhanced parsing with fallback to legacy formats
+- `validateAppConfig()`: Zod-based configuration validation
+- `updateBrowserUrl()`: Immediate URL synchronisation
+
+### Layer 2: Pinia Domain Stores (Complex State)
+
+**Purpose:** Centralised management for complex, cacheable domain state
+**Location:** `stores/`
+
+#### Simulation Store (`stores/simulation.ts`)
+
+Manages Monte Carlo simulation lifecycle and complex state machine:
+
+```typescript
+type SimulationPhase = 'config' | 'running' | 'results' | 'cancelled' | 'error'
+
+interface SimulationState {
+  phase: SimulationPhase
+  config: SimulationConfig | null
+  progress: SimulationProgress | null
+  results: BatchSimulationResult | null
+  abortController: AbortController | null
+}
+```
+
+**Capabilities:**
+
+- **NDJSON streaming:** Real-time progress updates
+- **Abort handling:** Cancellable long-running operations
+- **Error recovery:** Comprehensive error state management
+- **Result caching:** Persistent simulation results
+
+#### Odds Store (`stores/odds.ts`)
+
+Manages cached payout data with intelligent fallbacks:
+
+```typescript
+interface OddsCache {
+  data: EurojackpotHistoricOdds | null
+  timestamp: number
+  isLoading: boolean
+  error: string | null
+}
+```
+
+**Capabilities:**
+
+- **10-minute cache:** Matches server-side cache duration
+- **Fallback odds:** Graceful degradation when API unavailable
+- **Request deduplication:** Prevents multiple concurrent API calls
+- **Cache statistics:** Monitoring and debugging support
+
+### Layer 3: SSR-Safe Ephemeral State (useState)
+
+**Purpose:** Temporary UI state that must be SSR-compatible
+**Location:** `app/composables/useAppState.ts`
+
+#### Audio State (`useAudioState`)
+
+```typescript
+const audioEnabled = useState('audio-enabled', () => true)
+const winSoundLevel = useState<'none' | 'low' | 'medium' | 'high'>(
+  'win-sound-level',
+  () => 'medium'
+)
+```
+
+#### Transient Errors (`useTransientErrors`)
+
+```typescript
+const errors = useState<string[]>('transient-errors', () => [])
+// Auto-clearing errors with configurable duration
+```
+
+#### UI State (`useUIState`)
+
+```typescript
+const showGenerationForm = useState('show-generation-form', () => false)
+const showWelcomeMessage = useState('show-welcome-message', () => false)
+// Other ephemeral UI toggles
+```
+
+### State Flow Architecture
+
+```mermaid
+sequenceDiagram
+    participant URL as URL State
+    participant UI as Component
+    participant Pinia as Pinia Store
+    participant API as API Layer
+    participant useState as useState
+
+    Note over URL: Configuration loaded from URL
+    URL->>UI: Initial state restoration
+    UI->>useState: Ephemeral UI state
+    UI->>Pinia: Complex operations (simulation)
+    Pinia->>API: Data fetching with caching
+    API-->>Pinia: Cached results
+    Pinia-->>UI: Reactive state updates
+    UI->>URL: Configuration changes (immediate sync)
+```
+
+### State Persistence Strategy
+
+| State Type          | Persistence       | Scope             | Example                          |
+| ------------------- | ----------------- | ----------------- | -------------------------------- |
+| **Configuration**   | URL Hash          | Global, Shareable | Ticket type, count, method       |
+| **Domain Data**     | Pinia (Memory)    | Session           | Simulation results, cached odds  |
+| **Ephemeral UI**    | useState (Memory) | Request/SSR       | Loading states, error messages   |
+| **Component Local** | ref/reactive      | Component         | Form validation, temporary flags |
+
+### Benefits of 3-Layer Architecture
+
+1. **Performance:** Reduced API calls through intelligent caching
+2. **User Experience:** Zero configuration loss on page refresh
+3. **SSR Compatibility:** Future-ready for hybrid rendering
+4. **Type Safety:** Zod validation throughout state layers
+5. **Maintainability:** Clear separation of concerns
+6. **Testability:** Isolated state layers for unit testing
+
+### Migration Strategy
+
+The implementation maintains backwards compatibility:
+
+1. **Legacy URL Support:** Automatic conversion of old URL formats
+2. **Gradual Adoption:** Components can migrate to stores incrementally
+3. **Fallback Handling:** Graceful degradation when stores unavailable
+4. **Zero Breaking Changes:** Existing URL sharing continues to work
+
+## 12) Open Items / Future
 
 - Optional toggle: **uniform vs weighted** generation in UI.
 - Basic telemetry/analytics (not in code yet).
