@@ -100,7 +100,7 @@
                 <StepperInput
                   v-model="ticketCount"
                   :min="1"
-                  :max="maxTicketsAllowed"
+                  :max="TICKET_COUNT_MAX"
                 />
                 <span
                   :class="[
@@ -108,7 +108,7 @@
                     tickets.length > 0 ? 'text-xs' : '', // Smaller text when constrained
                   ]"
                 >
-                  €{{ selectedTicketType.price.toFixed(2) }} per ticket
+                  €{{ ticketsStore.systemCost.toFixed(2) }} per ticket
                 </span>
               </div>
             </div>
@@ -124,7 +124,7 @@
                   >€{{ totalPrice.toFixed(2) }}</span
                 >
                 <span class="text-xs text-gray-400 -mt-1">
-                  €{{ selectedTicketType.price.toFixed(2) }} × {{ ticketCount }}
+                  €{{ ticketsStore.systemCost.toFixed(2) }} × {{ ticketCount }}
                 </span>
               </div>
             </div>
@@ -186,7 +186,7 @@
               v-if="tickets.length > 0 && showGenerationForm"
               type="button"
               class="px-5 py-2 rounded-md font-semibold border border-navy-muted text-ivory bg-transparent hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
-              @click="showGenerationForm = false"
+              @click="toggleGenerationForm()"
             >
               Cancel
             </button>
@@ -283,7 +283,7 @@
               </button>
               <button
                 class="px-3 py-1 text-sm bg-navy-muted hover:bg-[#3B4B60] text-ivory rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold"
-                @click="showGenerationForm = true"
+                @click="toggleGenerationForm()"
               >
                 Modify
               </button>
@@ -302,7 +302,6 @@
               :key="ticket.id"
               :ticket="ticket"
               :ticket-number="ticket.id"
-              :winning-data="latestWinningData"
             />
           </div>
         </div>
@@ -382,17 +381,10 @@
         </div>
 
         <div v-else-if="!loading">
-          <SingleDrawPanel
-            v-if="activeMode === 'single'"
-            :tickets="tickets"
-            @apply-highlights="applyHighlightsOnTickets"
-            @winning-data-updated="updateWinningData"
-          />
+          <SingleDrawPanel v-if="activeMode === 'single'" :tickets="tickets" />
           <MonteCarloPanel
             v-if="activeMode === 'montecarlo'"
             :tickets="tickets"
-            @apply-highlights="applyHighlightsOnTickets"
-            @winning-data-updated="updateWinningData"
           />
         </div>
       </div>
@@ -401,8 +393,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, type Ref } from 'vue'
-import type { EurojackpotHistoricOdds } from '~/schemas'
+import { computed, onMounted } from 'vue'
 import { systemPrice } from '~/utils/pricing'
 import { useSimulationPanelState } from '~/composables/useAppState'
 import SingleDrawPanel from './SingleDrawPanel.vue'
@@ -413,11 +404,10 @@ import { logger } from '~/utils/logger'
 import {
   formatTicketType,
   copyConfigUrl,
-  updateBrowserUrl,
   getAppConfigUrl,
   type AppConfig,
-  type AppState,
 } from '~/utils/urlHash'
+import { TICKET_COUNT_MAX } from '~/utils/constants'
 
 interface TicketType {
   label: string
@@ -458,54 +448,74 @@ const ticketTypes = computed(
     }))
 )
 
-const maxTicketsAllowed = 500
-const selectedTicketType: Ref<TicketType> = ref(ticketTypes.value[0]!)
-const ticketCount: Ref<number> = ref(1)
-const selectionMethod = ref<'random' | 'weighted'>('weighted')
+// Store
+const ticketsStore = useTicketsStore()
+
+// Bind component controls directly to store config
+const selectedTicketType = computed<TicketType>({
+  get: () => {
+    const { mainCount, euroCount } = ticketsStore.state.config
+    const match = ticketTypes.value.find(
+      (t) => t.mainCount === mainCount && t.euroCount === euroCount
+    )
+    // Fallback to computed price for current store config if not in presets
+    return (
+      match ?? {
+        label:
+          mainCount === 5 && euroCount === 2
+            ? `${mainCount} main + ${euroCount} Euro numbers (standard)`
+            : `${mainCount} main + ${euroCount} Euro numbers`,
+        mainCount,
+        euroCount,
+        price: systemPrice(mainCount, euroCount),
+      }
+    )
+  },
+  set: (val) => {
+    ticketsStore.updateConfig({
+      mainCount: val.mainCount,
+      euroCount: val.euroCount,
+    })
+  },
+})
+
+const ticketCount = computed<number>({
+  get: () => ticketsStore.state.config.ticketCount,
+  set: (val) => {
+    const n = Number(val) || 1
+    ticketsStore.updateConfig({
+      ticketCount: Math.max(1, Math.min(TICKET_COUNT_MAX, n)),
+    })
+  },
+})
+
+const selectionMethod = computed<'random' | 'weighted'>({
+  get: () => ticketsStore.state.config.method,
+  set: (val) => ticketsStore.updateConfig({ method: val }),
+})
 
 // Use store-derived decorated tickets (with highlights)
 const tickets = computed(() =>
   ticketsStore.getDecoratedTickets(activeMode.value)
 )
 const loading = computed(() => ticketsStore.isGenerating)
-const latestWinningData: Ref<EurojackpotHistoricOdds | null> = ref(null)
 
 // Error handling using centralized state
 const error = computed(() => ticketsStore.state.error || '')
 
 // UI mode (using shared simulation panel state)
 const { activeMode, setMode } = useSimulationPanelState()
-const showGenerationForm = ref(false)
-
-// App state management
-const appState = ref<AppState>('FRESH')
-const currentLucky = ref<string>('')
-
-// Debounced URL persistence - prevent history spam from rapid form changes
-let urlUpdateTimer: ReturnType<typeof setTimeout> | undefined
-watch(
-  [selectedTicketType, ticketCount, selectionMethod],
-  () => {
-    // Debounce URL updates to avoid spamming browser history on rapid changes
-    clearTimeout(urlUpdateTimer)
-    urlUpdateTimer = setTimeout(syncUrlWithState, 250)
-  },
-  { deep: true }
-)
-
-// Stores for reactive state management
-const ticketsStore = useTicketsStore()
 
 // Store-derived decorated tickets automatically update when simulation results change
 // No manual highlight application needed - tickets computed property handles this reactively
 
-const totalPrice = computed<number>(() => {
-  const count = Math.max(1, ticketCount.value || 1)
-  return (selectedTicketType.value?.price ?? 0) * count
-})
+// Use store-computed total price
+const totalPrice = ticketsStore.totalPrice
 
 // UI state (now using centralized state management)
 const {
+  showGenerationForm,
+  toggleGenerationForm,
   showSharingDialog,
   sharingLuckyCode,
   copySuccess,
@@ -523,48 +533,18 @@ const shareableUrl = computed(() => {
 
   const config: AppConfig = {
     system: formatTicketType(
-      selectedTicketType.value.mainCount,
-      selectedTicketType.value.euroCount
+      ticketsStore.state.config.mainCount,
+      ticketsStore.state.config.euroCount
     ),
-    tickets: ticketCount.value,
-    method: selectionMethod.value,
+    tickets: ticketsStore.state.config.ticketCount,
+    method: ticketsStore.state.config.method,
     lucky: sharingLuckyCode.value,
   }
 
   return getAppConfigUrl(config)
 })
 
-// Configuration management helpers
-const getCurrentConfig = (): AppConfig => {
-  const system = formatTicketType(
-    selectedTicketType.value.mainCount,
-    selectedTicketType.value.euroCount
-  )
-  const config: AppConfig = {
-    system,
-    tickets: ticketCount.value,
-    method: selectionMethod.value,
-  }
-
-  // Add lucky seed if we have one
-  if (currentLucky.value) {
-    config.lucky = currentLucky.value
-  }
-
-  return config
-}
-
-const syncUrlWithState = (): void => {
-  const config = getCurrentConfig()
-  updateBrowserUrl(config)
-}
-
-const transitionToFresh = (): void => {
-  appState.value = 'FRESH'
-  currentLucky.value = ''
-  hideWelcome() // Use action instead of direct modification
-  updateBrowserUrl(null) // Clear URL completely for fresh state
-}
+// Configuration helpers no longer needed; URL sync handled in store
 
 const handleModeChange = (m: 'single' | 'montecarlo'): void => {
   setMode(m)
@@ -581,52 +561,20 @@ const clearTickets = (): void => {
 
 const resetTickets = (): void => {
   clearTickets()
-  showGenerationForm.value = false
-  transitionToFresh()
+  if (showGenerationForm.value) toggleGenerationForm()
+  hideWelcome()
 }
 
 const generateTicketsHandler = async (): Promise<void> => {
   if (ticketsStore.isGenerating) return
-
-  // Update tickets store configuration from component form state
-  ticketsStore.updateConfig({
-    mainCount: selectedTicketType.value.mainCount,
-    euroCount: selectedTicketType.value.euroCount,
-    ticketCount: ticketCount.value,
-    method: selectionMethod.value,
-  })
-
-  // Add seed if we have one (for reproducible generation)
-  if (currentLucky.value) {
-    ticketsStore.setLuckyCode(currentLucky.value, 'SHARED')
-  } else {
-    ticketsStore.setLuckyCode('', 'FRESH')
-  }
 
   // Use semantic action - let the store own the entire generation process
   await ticketsStore.generate()
 
   // Update UI state based on store results
   if (ticketsStore.hasTickets) {
-    showGenerationForm.value = false
+    if (showGenerationForm.value) toggleGenerationForm()
   }
-}
-
-const updateWinningData = (data: EurojackpotHistoricOdds): void => {
-  latestWinningData.value = data
-}
-
-const applyHighlightsOnTickets = (
-  _updates: Array<{
-    id: number
-    winningMainNumbers: number[]
-    winningEuroNumbers: number[]
-    winClassCounts: Record<number, number>
-    winClass?: number
-  }>
-): void => {
-  // Highlights are now automatically handled by store-derived decorated tickets
-  // The computed tickets property reactively updates when simulation results change
 }
 
 // Sharing functions (now simplified using centralized state)
@@ -634,11 +582,11 @@ const copyShareableUrl = async (): Promise<void> => {
   try {
     const config: AppConfig = {
       system: formatTicketType(
-        selectedTicketType.value.mainCount,
-        selectedTicketType.value.euroCount
+        ticketsStore.state.config.mainCount,
+        ticketsStore.state.config.euroCount
       ),
-      tickets: ticketCount.value,
-      method: selectionMethod.value,
+      tickets: ticketsStore.state.config.ticketCount,
+      method: ticketsStore.state.config.method,
       lucky: sharingLuckyCode.value,
     }
 
@@ -652,12 +600,7 @@ const copyShareableUrl = async (): Promise<void> => {
 // URL handling for configuration restoration
 
 const dismissWelcomeMessage = (): void => {
-  hideWelcome() // Use action instead of direct modification
-  // If user dismisses welcome from shared state, remove the lucky seed
-  if (appState.value === 'SHARED') {
-    currentLucky.value = ''
-    syncUrlWithState()
-  }
+  hideWelcome()
 }
 
 // Load configuration from URL on mount

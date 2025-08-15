@@ -58,26 +58,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, type PropType } from 'vue'
-import type { Ticket, EurojackpotHistoricOdds } from '~/schemas'
+import type { Ticket } from '~/schemas'
 import SimulatedExtraction from './SimulatedExtraction.vue'
 
 const props = defineProps({
   tickets: { type: Array as PropType<Ticket[]>, required: true },
 })
 
-const emit = defineEmits<{
-  (
-    e: 'apply-highlights',
-    updates: Array<{
-      id: number
-      winningMainNumbers: number[]
-      winningEuroNumbers: number[]
-      winClassCounts: Record<number, number>
-      winClass?: number
-    }>
-  ): void
-  (e: 'winning-data-updated', data: EurojackpotHistoricOdds): void
-}>()
+// No emits; parent reads odds via store
 
 // Use simulation store for state management
 const simStore = useSimulationStore()
@@ -114,26 +102,7 @@ const simulateExtractionHandler = async (): Promise<void> => {
   // Use store action to run single draw
   await simStore.runSingleDraw(totalPrice.value)
 
-  // Emit winning data and highlights to parent if we have results
-  if (simStore.state.singleDraw.oddsData) {
-    emit(
-      'winning-data-updated',
-      simStore.state.singleDraw.oddsData as EurojackpotHistoricOdds
-    )
-  }
-
-  if (simStore.state.singleDraw.results?.ticketHighlights) {
-    emit(
-      'apply-highlights',
-      simStore.state.singleDraw.results.ticketHighlights as Array<{
-        id: number
-        winningMainNumbers: number[]
-        winningEuroNumbers: number[]
-        winClassCounts: Record<number, number>
-        winClass?: number
-      }>
-    )
-  }
+  // Highlights and odds are derived reactively via stores
 }
 
 // Trigger simulation on Enter key when Single Draw panel is active

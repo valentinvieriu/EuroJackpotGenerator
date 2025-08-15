@@ -43,7 +43,6 @@
 import { onUnmounted, watch, computed, type PropType } from 'vue'
 import type {
   Ticket,
-  EurojackpotHistoricOdds,
   BatchSimulationRequest,
   BatchSimulationResult,
 } from '~/schemas'
@@ -60,19 +59,7 @@ const props = defineProps({
   tickets: { type: Array as PropType<Ticket[]>, required: true },
 })
 
-const emit = defineEmits<{
-  (
-    e: 'apply-highlights',
-    updates: Array<{
-      id: number
-      winningMainNumbers: number[]
-      winningEuroNumbers: number[]
-      winClassCounts: Record<number, number>
-      winClass?: number
-    }>
-  ): void
-  (e: 'winning-data-updated', data: EurojackpotHistoricOdds): void
-}>()
+// No emits; parent reads odds via store
 
 // Use centralized error handling
 const { addError: addTransientError } = useTransientErrors()
@@ -104,28 +91,16 @@ const costPerSimulation = computed(() =>
   }, 0)
 )
 
-/**
- * Apply highlights from completed batch simulation results.
- * Uses centralized store highlighting instead of local computation.
- */
-const applyHighlightsFromResults = async (
-  _results: BatchSimulationResult
-): Promise<void> => {
-  // Since highlighting is now centralized in the simulation store,
-  // we just emit the store-computed highlights for Monte Carlo mode to the parent
-  const highlights = simStore.getCurrentMonteCarloHighlights()
-  emit('apply-highlights', highlights)
-}
+// Highlights are derived reactively via stores; no event emission needed
 
 const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
   if (!props.tickets.length) return
   simStore.clearError()
 
-  // Fetch winning data for prize tooltips using centralized odds store
+  // Warm odds cache for prize tooltips using centralized odds store
   try {
     const oddsStore = useOddsStore()
-    const winningData = await oddsStore.fetchOdds()
-    emit('winning-data-updated', winningData)
+    await oddsStore.fetchOdds()
   } catch (winningDataError) {
     logger.warn('Failed to fetch winning data for tooltips:', winningDataError)
   }
@@ -174,8 +149,7 @@ watch(
   () => simStore.state.phase,
   async (phase) => {
     if (phase === 'results' && simStore.state.results) {
-      const results = simStore.state.results as BatchSimulationResult
-      await applyHighlightsFromResults(results)
+      // Highlights update reactively via Tickets + Simulation stores
       // Double-check results still exist after async operation
       if (simStore.state.results && simStore.state.results.roiPercentage > 0) {
         const r = simStore.state.results

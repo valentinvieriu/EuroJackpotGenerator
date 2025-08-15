@@ -73,14 +73,12 @@
 <script setup lang="ts">
 import { WIN_CLASS_TIER_1_MAX, WIN_CLASS_TIER_2_MAX } from '~/utils/constants'
 import { computed } from 'vue'
-import type { Ticket, EurojackpotHistoricOdds } from '~/schemas'
+import type { Ticket } from '~/schemas'
 import TicketNumber from './TicketNumber.vue'
-import { buildOddsMap } from '~/utils/payout'
 
 interface Props {
   ticket: Ticket
   ticketNumber: number
-  winningData?: EurojackpotHistoricOdds | null
 }
 
 const props = defineProps<Props>()
@@ -95,25 +93,20 @@ const winClassBreakdown = computed(() => {
     .sort((a, b) => a.winClass - b.winClass)
 })
 
-const oddsMap = computed(() => {
-  return props.winningData
-    ? buildOddsMap(props.winningData)
-    : new Map<number, number>()
-})
+// Read payout odds from centralized store (with fallback odds when needed)
+const oddsStore = useOddsStore()
+const payoutMap = computed(() => oddsStore.getPayoutMap())
 
 const calculatePrizeAmount = (winClass: number, count: number) => {
-  const prizeAmount = oddsMap.value.get(winClass) ?? 0
+  const prizeAmount = payoutMap.value[winClass] ?? 0
   return prizeAmount * count
 }
 
 const getPrizeTooltip = (winClass: number, count: number) => {
   const totalPrize = calculatePrizeAmount(winClass, count)
-  const prizeAmount = oddsMap.value.get(winClass) ?? 0
-
-  if (totalPrize > 0) {
-    return `Total Prize: €${totalPrize.toFixed(2)}`
-  }
-  return `${count}×Class ${winClass} winning lines${prizeAmount === 0 && props.winningData ? ' (No prize data available)' : ''}`
+  const prizeAmount = payoutMap.value[winClass] ?? 0
+  if (totalPrize > 0) return `Total Prize: €${totalPrize.toFixed(2)}`
+  return `${count}×Class ${winClass} winning lines${prizeAmount === 0 ? '' : ''}`
 }
 
 const getWinClassTextClass = (winClass: number) => {

@@ -15,8 +15,6 @@ import {
 } from '~/schemas/urlConfig'
 import { logger } from '~/utils/logger'
 
-export type AppState = 'SHARED' | 'FRESH'
-
 // Re-export types for compatibility
 export type { AppConfig, SelectionMethod }
 
