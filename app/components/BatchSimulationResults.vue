@@ -407,9 +407,8 @@ const bestPerformingClass = computed(() => {
   let maxCount = 0
   Object.entries(props.results.winDistribution.winsByClass).forEach(
     ([classStr, count]) => {
-      const numCount = Number(count)
-      if (numCount > maxCount) {
-        maxCount = numCount
+      if (count > maxCount) {
+        maxCount = count
         bestClass = Number(classStr)
       }
     }

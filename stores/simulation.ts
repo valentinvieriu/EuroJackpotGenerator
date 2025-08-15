@@ -18,6 +18,14 @@ import { playWinSound } from '~/utils/audioUtils'
 import { useAudioState } from '~/composables/useAppState'
 import { LARGE_SIMULATION_THRESHOLD } from '~/utils/constants'
 
+// Helper function to normalize winsByClass from string keys to number keys
+const normalizeWinsByClass = (
+  stringKeyed: Record<string, number>
+): Record<number, number> =>
+  Object.fromEntries(
+    Object.entries(stringKeyed).map(([k, v]) => [Number(k), v])
+  )
+
 export type SimulationPhase =
   | 'config'
   | 'running'
@@ -639,12 +647,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     const elapsed = now - state.value.startTime
 
     const winsByClass = summary?.winDistribution?.winsByClass
-      ? Object.fromEntries(
-          Object.entries(summary.winDistribution.winsByClass).map(([k, v]) => [
-            Number(k),
-            v,
-          ])
-        )
+      ? normalizeWinsByClass(summary.winDistribution.winsByClass)
       : {}
 
     state.value.progress = {
@@ -740,7 +743,7 @@ export const useSimulationStore = defineStore('simulation', () => {
       )
 
       // Show ALL win classes that have any wins at all (no filtering)
-      const significantWinClasses = { ...stats.winClassCounts }
+      const significantWinClasses = normalizeWinsByClass(stats.winClassCounts)
 
       const winClass =
         Object.keys(significantWinClasses).length > 0
