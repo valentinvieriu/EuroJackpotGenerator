@@ -11,6 +11,7 @@ import {
   EURO_SYSTEM_MIN,
   EURO_SYSTEM_MAX,
 } from '~/utils/constants'
+import { logger } from '~/utils/logger'
 /**
  * Note: Do not patch ZodError globally. Use safeParse().error.issues/format().
  */
@@ -113,7 +114,7 @@ export const validateAppConfig = (data: unknown): AppConfig | null => {
   const result = AppConfigSchema.safeParse(data)
   if (result.success) return result.data
   // Prefer concise issues list; fall back to formatted tree
-  console.warn(
+  logger.warn(
     'Invalid app configuration:',
     result.error.issues.length ? result.error.issues : result.error.format()
   )
@@ -125,7 +126,7 @@ export const validateAppConfig = (data: unknown): AppConfig | null => {
 export const validateUrlParams = (data: unknown): UrlParams | null => {
   const result = UrlParamsSchema.safeParse(data)
   if (result.success) return result.data
-  console.warn(
+  logger.warn(
     'Invalid URL parameters:',
     result.error.issues.length ? result.error.issues : result.error.format()
   )
@@ -139,7 +140,7 @@ export const parseTicketSystem = (system: string): ParsedSystem | null => {
   // Validate the system string first
   const sysResult = TicketSystemSchema.safeParse(system)
   if (!sysResult.success) {
-    console.warn(
+    logger.warn(
       'Invalid ticket system format:',
       sysResult.error.issues.length
         ? sysResult.error.issues
@@ -155,7 +156,7 @@ export const parseTicketSystem = (system: string): ParsedSystem | null => {
   }
   const parseResult = ParsedSystemSchema.safeParse(parsed)
   if (parseResult.success) return parseResult.data
-  console.warn(
+  logger.warn(
     'Parsed system out of bounds:',
     parseResult.error.issues.length
       ? parseResult.error.issues
@@ -174,6 +175,6 @@ export const formatTicketSystem = (
   const candidate = `${mainCount}x${euroCount}`
   const result = TicketSystemSchema.safeParse(candidate)
   if (result.success) return result.data
-  console.warn('Invalid ticket system counts:', { mainCount, euroCount })
+  logger.warn('Invalid ticket system counts:', { mainCount, euroCount })
   return '5x2' // Default fallback
 }

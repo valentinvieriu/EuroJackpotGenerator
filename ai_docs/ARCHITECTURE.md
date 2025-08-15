@@ -224,7 +224,36 @@ sequenceDiagram
 
 ---
 
-## 10) State Management & URL Persistence
+## 10) Logging & Observability
+
+- Location: `app/utils/logger.ts` (universal, auto-imported utility)
+- Config sources:
+  - Server: `useRuntimeConfig().logLevel` → `process.env.LOG_LEVEL` fallback
+  - Client: `useRuntimeConfig().public.logLevel` → `process.env.NUXT_PUBLIC_LOG_LEVEL` fallback
+  - Defaults: `'info'` in production, `'debug'` otherwise
+- Levels: `'debug' | 'info' | 'warn' | 'error'` with priority in `app/utils/constants.ts`
+- Behavior:
+  - Debug logs are suppressed in production builds for zero-cost traces
+  - Other levels are filtered by configured level (e.g., `LOG_LEVEL=warn` shows warn/error)
+  - Structured prefix `[ISO_TIMESTAMP] [LEVEL]` for easier Workers observability
+- Usage:
+  - Import and use: `import { logger } from '~/utils/logger'`
+  - Replace all `console.*` with `logger.debug|info|warn|error`
+  - For expensive debug formatting, guard with `isLogLevelEnabled('debug')`
+  - Do not log PII; keep payloads compact and structured
+- Environment:
+  - Nuxt runtime configuration set in `nuxt.config.ts`
+  - Cloudflare deployment variables set in `wrangler.toml`:
+    - `[vars]` defaults `LOG_LEVEL="info"`, `NUXT_PUBLIC_LOG_LEVEL="info"`
+    - `[env.preview.vars]` sets both to `"debug"`
+    - `[env.production.vars]` sets both to `"info"`
+- Validation:
+  - Unit tests in `app/utils/__tests__/logger.test.ts` verify level filtering and production debug suppression
+  - Production builds should not contain debug strings; verify by scanning `dist` bundles
+
+---
+
+## 11) State Management & URL Persistence
 
 ### Configuration Persistence
 

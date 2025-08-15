@@ -1,4 +1,5 @@
 // utils/audioUtils.ts
+import { logger } from '~/utils/logger'
 
 /**
  * Plays a dynamic 'win' sound using the Web Audio API.
@@ -31,7 +32,7 @@ export const playWinSound = (
       (window as unknown as { webkitAudioContext: typeof AudioContext })
         .webkitAudioContext
     if (!AudioContextClass) {
-      console.warn(
+      logger.warn(
         'Web Audio API is not supported in this browser. Cannot play sound.'
       )
       return
@@ -144,7 +145,7 @@ export const playWinSound = (
           // console.log("Closing AudioContext");
           audioContext
             .close()
-            .catch((e) => console.error('Error closing audio context:', e))
+            .catch((e) => logger.error('Error closing audio context:', e))
         }
       }, closeDelayMs)
     } else {
@@ -152,11 +153,11 @@ export const playWinSound = (
       if (audioContext && audioContext.state !== 'closed') {
         audioContext
           .close()
-          .catch((e) => console.error('Error closing audio context:', e))
+          .catch((e) => logger.error('Error closing audio context:', e))
       }
     }
   } catch (e: unknown) {
-    console.error(
+    logger.error(
       'Could not initialize or play win sound:',
       e instanceof Error ? e.message : String(e)
     )
@@ -165,7 +166,7 @@ export const playWinSound = (
       audioContext
         .close()
         .catch((err) =>
-          console.error('Error closing audio context after failure:', err)
+          logger.error('Error closing audio context after failure:', err)
         )
     }
   }

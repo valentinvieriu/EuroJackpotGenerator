@@ -8,6 +8,7 @@ import { ref, computed, readonly } from 'vue'
 import type { EurojackpotHistoricOdds } from '~/schemas'
 import { buildOddsMap } from '~/utils/payout'
 import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
+import { logger } from '~/utils/logger'
 
 interface OddsCache {
   data: EurojackpotHistoricOdds | null
@@ -96,7 +97,7 @@ export const useOddsStore = defineStore('odds', () => {
       cache.value.isLoading = false
       cache.value.error = errorMessage
 
-      console.warn('Failed to fetch odds data, using fallback:', errorMessage)
+      logger.warn('Failed to fetch odds data, using fallback:', errorMessage)
 
       // Return fallback odds on error; fallback is already schema-validated
       if (!cache.value.data) {

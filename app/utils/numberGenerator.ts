@@ -1,5 +1,6 @@
 import type { StatisticsData } from '~/schemas/statistics'
 import { randomFloat, randomInt } from './rng'
+import { logger } from '~/utils/logger'
 
 /**
  * Selects numbers based on weighted probabilities derived from statistics.
@@ -23,7 +24,7 @@ export function generateNumbers(
     try {
       return generateNumbersWithStatsInternal(count, min, max, stats)
     } catch (error) {
-      console.warn(
+      logger.warn(
         `Weighted generation failed: ${error instanceof Error ? error.message : String(error)}. Falling back to random generation.`
       )
     }
@@ -81,7 +82,7 @@ function generateNumbersWithStatsInternal(
   // Then pick the top-`count` items by key (larger is better since ln(u) <= 0).
   if (adjustedStats.length < count) {
     // Not enough valid candidates after filtering; fall back to uniform random
-    console.warn(
+    logger.warn(
       `Weighted generation has only ${adjustedStats.length} candidates for ${count} picks. Falling back to uniform random.`
     )
     return generateRandomNumbers(count, min, max)

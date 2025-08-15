@@ -7,6 +7,7 @@ import {
   fetchWithTimeout,
 } from './validation'
 import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
+import { logger } from '~/utils/logger'
 
 /**
  * Options for fetchWinningData function
@@ -40,7 +41,7 @@ export async function fetchWinningData(
   try {
     // 1. Generate URL for external API
     const url = generateEurojackpotUrl(EurojackpotDrawType.PREVIOUS)
-    console.log(`Fetching winning data from: ${url}`)
+    logger.debug(`Fetching winning data from: ${url}`)
 
     // 2. Fetch from external API with timeout
     const response = await fetchWithTimeout(url, {
@@ -49,7 +50,7 @@ export async function fetchWinningData(
     })
 
     if (!response.ok) {
-      console.warn('Failed to fetch current odds, using fallback data')
+      logger.warn('Failed to fetch current odds, using fallback data')
       return FALLBACK_EUROJACKPOT_ODDS
     }
 
@@ -61,7 +62,7 @@ export async function fetchWinningData(
       'Lotto Bayern API'
     )
 
-    console.log('Winning data fetched and validated successfully')
+    logger.info('Winning data fetched and validated successfully')
 
     // 4. Optional output validation for edge cases
     if (shouldValidateOutput) {
@@ -81,12 +82,12 @@ export async function fetchWinningData(
       'statusCode' in error &&
       error.statusCode === 502
     ) {
-      console.warn('Using fallback winning data due to external API error')
+      logger.warn('Using fallback winning data due to external API error')
       return FALLBACK_EUROJACKPOT_ODDS
     }
 
     // On any other error (timeout, validation, network), use fallback
-    console.warn('Error fetching winning data, using fallback:', error)
+    logger.warn('Error fetching winning data, using fallback:', error)
     return FALLBACK_EUROJACKPOT_ODDS
   }
 }

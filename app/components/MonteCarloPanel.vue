@@ -53,6 +53,7 @@ import BatchSimulationConfig from './BatchSimulationConfig.vue'
 import BatchSimulationProgress from './BatchSimulationProgress.vue'
 import BatchSimulationResults from './BatchSimulationResults.vue'
 import { playWinSound } from '~/utils/audioUtils'
+import { logger } from '~/utils/logger'
 // useSimulationStore is auto-imported via @pinia/nuxt configuration
 
 const props = defineProps({
@@ -122,7 +123,7 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
     )
     emit('winning-data-updated', winningData)
   } catch (winningDataError) {
-    console.warn('Failed to fetch winning data for tooltips:', winningDataError)
+    logger.warn('Failed to fetch winning data for tooltips:', winningDataError)
   }
   // Set store config and start simulation in store
   simStore.setConfig({
@@ -136,7 +137,7 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
       batchSize: cfg.batchSize ?? 100,
     })
   } catch (err: unknown) {
-    console.error('Batch simulation error:', err)
+    logger.error('Batch simulation error:', err)
     // Error will also be reflected in store; show human-friendly UI message
     const anyErr = err as Record<string, unknown>
     const msg =

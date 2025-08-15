@@ -1,4 +1,6 @@
 // Define an enum for draw types for better type safety and readability
+import { logger } from '~/utils/logger'
+
 export enum EurojackpotDrawType {
   PREVIOUS = 'previous',
   NEXT = 'next',
@@ -106,7 +108,7 @@ export function generateEurojackpotUrl(type: EurojackpotDrawType): string {
   // Construct the key required by the API.
   const gckey = `${year}-${formattedWeekNumber}-${drawDayOfWeek}` // Format YYYY-WW-D
 
-  console.log(
+  logger.debug(
     `Generated gckey for ${type} draw on ${drawDate.toDateString()}: ${gckey}`
   )
 

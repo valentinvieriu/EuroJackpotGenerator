@@ -13,6 +13,7 @@ import {
   type ParsedSystem,
   type SelectionMethod,
 } from '~/schemas/urlConfig'
+import { logger } from '~/utils/logger'
 
 export type AppState = 'SHARED' | 'FRESH'
 
@@ -30,7 +31,7 @@ export function encodeAppConfigToHash(config: AppConfig): string {
   // Validate configuration before encoding
   const validConfig = validateAppConfig(config)
   if (!validConfig) {
-    console.warn('Invalid app configuration provided to encoder:', config)
+    logger.warn('Invalid app configuration provided to encoder:', config)
     return ''
   }
 
@@ -110,7 +111,7 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
 
     return null // No supported configuration parameters
   } catch (error) {
-    console.warn('Failed to decode configuration hash:', error)
+    logger.warn('Failed to decode configuration hash:', error)
     return null
   }
 }

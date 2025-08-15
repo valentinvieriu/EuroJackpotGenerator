@@ -17,6 +17,7 @@ import {
   EURO_NUMBER_MAX,
 } from '~/utils/constants'
 import { generateSeededRandomNumbers } from '../utils/seededRng'
+import { logger } from '~/utils/logger'
 
 type Algorithm = 'uniform' | 'weighted'
 
@@ -38,12 +39,12 @@ async function generateTickets(
     try {
       statsData = await fetchStatistics()
       if (!statsData) {
-        console.warn(
+        logger.warn(
           'Statistics unavailable; falling back to uniform generation.'
         )
       }
     } catch (error) {
-      console.error(
+      logger.error(
         'Failed to fetch statistics, using uniform generation:',
         error instanceof Error ? error.message : String(error)
       )
@@ -140,7 +141,7 @@ export default defineEventHandler(
         )
 
       // 2. Execute business logic
-      console.log(
+      logger.debug(
         `Generating ${ticketCount} tickets with system ${mainCount}/${euroCount}...`
       )
       const tickets = await generateTickets(
@@ -159,7 +160,7 @@ export default defineEventHandler(
         )
       }
 
-      console.log(`Successfully generated ${tickets.length} tickets.`)
+      logger.info(`Successfully generated ${tickets.length} tickets.`)
 
       // 4. Validate output at the edge
       return validateOutput(

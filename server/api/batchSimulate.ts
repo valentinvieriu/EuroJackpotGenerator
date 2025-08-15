@@ -35,6 +35,7 @@ import { buildTicketHighlightUpdate } from '~/utils/ticketHighlighting'
 import type { Ticket } from '~/schemas/ticket'
 import { buildOddsMap } from '~/utils/payout'
 import { PRICE_PER_LINE } from '~/utils/pricing'
+import { logger } from '~/utils/logger'
 
 /**
  * API endpoint to run batch simulations of EuroJackpot draws.
@@ -97,7 +98,7 @@ export default defineEventHandler(
       const costPerSimulation = calculateTotalCost(tickets)
       const totalCost = costPerSimulation * effectiveSimulationCount
 
-      console.log(
+      logger.info(
         `Starting batch simulation: ${effectiveSimulationCount} simulations with ${tickets.length} tickets`
       )
 
@@ -227,7 +228,7 @@ export default defineEventHandler(
         )
         const chunkSize = endIndex - startIndex
 
-        console.log(
+        logger.debug(
           `Processing chunk ${chunkIndex + 1}/${chunks}: simulations ${startIndex + 1}-${endIndex}`
         )
 
@@ -249,7 +250,7 @@ export default defineEventHandler(
         }
       }
 
-      console.log(
+      logger.info(
         `Batch simulation completed: ${individualResults.length} simulations processed`
       )
 

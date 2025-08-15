@@ -1,4 +1,5 @@
 import { ndjsonEventSchema, type NdjsonEvent } from '~/schemas/ndjson'
+import { logger } from '~/utils/logger'
 
 /**
  * Centralized NDJSON event parser with schema validation
@@ -45,7 +46,7 @@ export function parseNdjsonEvent(raw: unknown): NdjsonEvent | null {
 
   // Log schema validation errors for debugging
   if (!parseResult.success) {
-    console.warn(
+    logger.warn(
       'NDJSON event failed schema validation:',
       parseResult.error.issues,
       'Raw event:',

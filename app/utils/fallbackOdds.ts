@@ -1,5 +1,6 @@
 import type { EurojackpotHistoricOdds } from '../schemas'
 import { eurojackpotHistoricOddsSchema } from '../schemas/winning'
+import { logger } from '~/utils/logger'
 
 /**
  * Creates canonical fallback EuroJackpot odds data when external API is unavailable.
@@ -119,7 +120,7 @@ function createFallbackOdds(): EurojackpotHistoricOdds {
   try {
     return eurojackpotHistoricOddsSchema.parse(rawData)
   } catch (error) {
-    console.error('Fallback odds validation failed:', error)
+    logger.error('Fallback odds validation failed:', error)
     // If validation fails, throw error rather than returning potentially invalid data
     throw new Error('Invalid fallback odds data structure')
   }

@@ -1,5 +1,6 @@
 import { createError } from 'h3'
 import type { ZodSchema } from 'zod'
+import { logger } from '~/utils/logger'
 
 /**
  * Validates input data with proper error handling
@@ -36,7 +37,7 @@ export function validateOutput<T>(
   const result = schema.safeParse(data)
 
   if (!result.success) {
-    console.error(
+    logger.error(
       `Output validation failed for ${context}:`,
       result.error.issues
     )
@@ -63,7 +64,7 @@ export function validateExternalResponse<T>(
   const result = schema.safeParse(data)
 
   if (!result.success) {
-    console.warn(
+    logger.warn(
       `External API validation failed for ${source}:`,
       result.error.issues
     )
@@ -129,7 +130,7 @@ export async function fetchWithTimeout(
  * Error boundary for API endpoints
  */
 export function handleEndpointError(error: unknown, context: string): never {
-  console.error(`Error in ${context}:`, error)
+  logger.error(`Error in ${context}:`, error)
 
   // Re-throw H3 errors as-is
   if (error && typeof error === 'object' && 'statusCode' in error) {

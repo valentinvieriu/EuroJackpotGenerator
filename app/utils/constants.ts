@@ -46,3 +46,21 @@ export const WIN_CLASS_TIER_1_MAX = 3 // Classes 1-3 (highest prizes)
 export const WIN_CLASS_TIER_2_MAX = 7 // Classes 4-7 (medium prizes)
 export const LARGE_SIMULATION_THRESHOLD = 1000 // Export disabled above this
 export const HIGH_SIMULATION_WARNING_THRESHOLD = 5000 // Show warning above this
+
+// Logging configuration
+export const LOG_LEVELS = {
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARN: 'warn',
+  ERROR: 'error',
+} as const
+
+export type LogLevel = (typeof LOG_LEVELS)[keyof typeof LOG_LEVELS]
+
+// Log level hierarchy (lower numbers = higher priority)
+export const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  debug: 3,
+}

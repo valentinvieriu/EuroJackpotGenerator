@@ -1,6 +1,7 @@
 import type { StatisticsData } from '~/schemas'
 import { statisticsDataSchema } from '~/schemas/statistics'
 import { fetchWithTimeout } from './validation'
+import { logger } from '~/utils/logger'
 
 // --- Server-Only Caching Mechanism ---
 let cachedStats: StatisticsData | null = null
@@ -23,13 +24,13 @@ export async function fetchStatistics(): Promise<StatisticsData | null> {
 
   // 1. Check cache validity
   if (cachedStats && now - lastFetchTime < CACHE_DURATION_MS) {
-    // console.log('Returning cached statistics data.');
+    logger.debug('Returning cached statistics data.')
     return cachedStats
   }
 
   // 2. Cache expired or not available, attempt to fetch new data
   try {
-    console.log('Fetching fresh statistics data...')
+    logger.info('Fetching fresh statistics data...')
     const response = await fetchWithTimeout(
       // URL for fetching statistics sorted by number (ascending)
       'https://www.lotto-bayern.de/getEurojackpotStatisticsCounts?sorting=number',
@@ -48,7 +49,7 @@ export async function fetchStatistics(): Promise<StatisticsData | null> {
 
     if (!validatedData.success) {
       // Log the invalid data structure for debugging purposes
-      console.error(
+      logger.error(
         'Fetched statistics data has invalid structure:',
         JSON.stringify(statsData)
       )
@@ -56,13 +57,13 @@ export async function fetchStatistics(): Promise<StatisticsData | null> {
     }
 
     // 4. Update cache and timestamp
-    console.log('Statistics data fetched and validated successfully.')
+    logger.info('Statistics data fetched and validated successfully.')
     cachedStats = validatedData.data // Store the valid data
     lastFetchTime = now // Update the timestamp of the successful fetch
     return cachedStats
   } catch (error: unknown) {
     // Log any errors during the fetch or processing
-    console.error(
+    logger.error(
       'Error fetching or processing statistics:',
       error instanceof Error ? error.message : String(error)
     )

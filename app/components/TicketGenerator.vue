@@ -412,6 +412,7 @@ import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
 import StepperInput from './StepperInput.vue'
+import { logger } from '~/utils/logger'
 import {
   generateLuckyCode,
   formatTicketType,
@@ -504,7 +505,7 @@ watch(
   (newTickets, oldTickets) => {
     // Only sync if tickets actually changed to avoid unnecessary updates
     if (JSON.stringify(newTickets) !== JSON.stringify(oldTickets)) {
-      console.log(
+      logger.debug(
         'TicketGenerator: Syncing tickets to simulation store',
         newTickets.length
       )
@@ -537,7 +538,7 @@ watch(
 // Initial sync on mount
 onMounted(() => {
   if (tickets.value.length > 0) {
-    console.log('TicketGenerator: Initial ticket sync on mount')
+    logger.debug('TicketGenerator: Initial ticket sync on mount')
     simulationStore.syncTickets(tickets.value)
   }
 })
@@ -680,7 +681,7 @@ const generateTicketsHandler = async (): Promise<void> => {
     // Update URL after successful generation (immediate persistence)
     syncUrlWithState()
   } catch (err: unknown) {
-    console.error('Error generating tickets:', err)
+    logger.error('Error generating tickets:', err)
     const errorResponseMessage = extractErrorMessage(err)
     error.value = errorResponseMessage
     tickets.value = []
@@ -774,7 +775,7 @@ const shareLuckyNumbers = async (): Promise<void> => {
     // Show the sharing dialog
     showSharingDialog.value = true
   } catch (error) {
-    console.error('Failed to create shareable configuration:', error)
+    logger.error('Failed to create shareable configuration:', error)
     error.value = 'Failed to create shareable link'
   }
 }
@@ -799,7 +800,7 @@ const copyToClipboard = async (): Promise<void> => {
       copySuccess.value = false
     }, 2000)
   } catch (error) {
-    console.error('Failed to copy URL:', error)
+    logger.error('Failed to copy URL:', error)
   }
 }
 
@@ -894,7 +895,7 @@ const applyUrlConfig = async (config: Partial<AppConfig>): Promise<void> => {
       // Use semantic action for user-initiated ticket generation
       simulationStore.generateTickets(generatedTickets)
     } catch (err: unknown) {
-      console.error('Error generating shared tickets:', err)
+      logger.error('Error generating shared tickets:', err)
       error.value =
         'Failed to generate the shared numbers. You can try generating manually.'
     } finally {

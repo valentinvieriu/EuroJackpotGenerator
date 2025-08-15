@@ -17,6 +17,7 @@ import { buildOddsMap } from '~/utils/payout'
 import { playWinSound } from '~/utils/audioUtils'
 import { useAudioState } from '~/composables/useAppState'
 import { LARGE_SIMULATION_THRESHOLD } from '~/utils/constants'
+import { logger } from '~/utils/logger'
 
 // Helper function to normalize winsByClass from string keys to number keys
 const normalizeWinsByClass = (
@@ -161,42 +162,42 @@ export const useSimulationStore = defineStore('simulation', () => {
   // Semantic actions that encode business logic
 
   const generateTickets = (tickets: Ticket[]) => {
-    console.log('SimulationStore: User generated new tickets')
+    logger.debug('SimulationStore: User generated new tickets')
     state.value.currentTickets = tickets
 
     // Business logic: Reset Monte Carlo when user generates new tickets
     if (shouldResetOnTicketChange()) {
-      console.log(
+      logger.debug(
         'SimulationStore: Resetting Monte Carlo for new user-generated tickets'
       )
       resetToConfig()
     }
 
     // Business logic: PRESERVE Single Draw and re-highlight with new tickets
-    console.log(`Single Draw current phase: ${state.value.singleDraw.phase}`)
+    logger.debug(`Single Draw current phase: ${state.value.singleDraw.phase}`)
     const shouldReset = shouldResetSingleDrawOnTicketChange()
-    console.log(`shouldResetSingleDrawOnTicketChange returned: ${shouldReset}`)
+    logger.debug(`shouldResetSingleDrawOnTicketChange returned: ${shouldReset}`)
 
     if (shouldReset) {
-      console.log(
+      logger.debug(
         'SimulationStore: Resetting Single Draw for new user-generated tickets'
       )
       resetSingleDraw()
     } else if (state.value.singleDraw.phase === 'results') {
       // Re-calculate highlights for new tickets using preserved winning numbers
-      console.log(
+      logger.debug(
         'SimulationStore: Re-highlighting new tickets against preserved Single Draw results'
       )
       reHighlightSingleDrawResults()
     } else {
-      console.log(
+      logger.debug(
         `SimulationStore: Single Draw phase is '${state.value.singleDraw.phase}', no action needed`
       )
     }
   }
 
   const resetTickets = () => {
-    console.log('SimulationStore: User reset tickets')
+    logger.debug('SimulationStore: User reset tickets')
     state.value.currentTickets = []
 
     // Business logic: Always reset both simulations when user explicitly resets
@@ -205,7 +206,7 @@ export const useSimulationStore = defineStore('simulation', () => {
   }
 
   const syncTickets = (tickets: Ticket[]) => {
-    console.log('SimulationStore: Syncing tickets from component lifecycle')
+    logger.debug('SimulationStore: Syncing tickets from component lifecycle')
     // Just update tickets without reset logic - this is for component sync
     state.value.currentTickets = tickets
   }
@@ -219,7 +220,9 @@ export const useSimulationStore = defineStore('simulation', () => {
     // Business rule: PRESERVE Single Draw results when tickets change
     // Only reset on explicit reset action, not on ticket changes
     const shouldReset = false
-    console.log(`shouldResetSingleDrawOnTicketChange: returning ${shouldReset}`)
+    logger.debug(
+      `shouldResetSingleDrawOnTicketChange: returning ${shouldReset}`
+    )
     return shouldReset
   }
 
@@ -227,7 +230,7 @@ export const useSimulationStore = defineStore('simulation', () => {
 
   const runSingleDraw = async (totalPrice: number): Promise<void> => {
     if (state.value.singleDraw.phase === 'running') {
-      console.warn('Single draw already running')
+      logger.warn('Single draw already running')
       return
     }
 
@@ -235,7 +238,7 @@ export const useSimulationStore = defineStore('simulation', () => {
       !state.value.currentTickets ||
       state.value.currentTickets.length === 0
     ) {
-      console.warn('No tickets available for single draw')
+      logger.warn('No tickets available for single draw')
       return
     }
 
@@ -328,7 +331,7 @@ export const useSimulationStore = defineStore('simulation', () => {
         playWinSound(totalWinnings, totalPrice, volumeMultiplier)
       }
     } catch (error: unknown) {
-      console.error('Single draw error:', error)
+      logger.error('Single draw error:', error)
 
       let errorMessage = 'An error occurred during simulation.'
       if (typeof error === 'object' && error !== null) {
@@ -351,7 +354,7 @@ export const useSimulationStore = defineStore('simulation', () => {
   }
 
   const resetSingleDraw = () => {
-    console.log('SimulationStore: Resetting single draw')
+    logger.debug('SimulationStore: Resetting single draw')
     state.value.singleDraw = createDefaultSingleDrawState()
   }
 
@@ -363,7 +366,7 @@ export const useSimulationStore = defineStore('simulation', () => {
       !state.value.singleDraw.winningNumbers ||
       !state.value.singleDraw.oddsData
     ) {
-      console.warn(
+      logger.warn(
         'Cannot re-highlight: missing tickets, winning numbers, or odds data'
       )
       return
@@ -414,7 +417,7 @@ export const useSimulationStore = defineStore('simulation', () => {
       ticketHighlights,
     }
 
-    console.log(
+    logger.debug(
       `Re-highlighted ${state.value.currentTickets.length} tickets against preserved winning numbers`
     )
   }
@@ -445,7 +448,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     config: SimulationConfig
   ): Promise<void> => {
     if (state.value.phase === 'running') {
-      console.warn('Simulation already running')
+      logger.warn('Simulation already running')
       return
     }
 
@@ -591,7 +594,7 @@ export const useSimulationStore = defineStore('simulation', () => {
               }
             }
           } catch (parseError) {
-            console.warn('Failed to parse NDJSON line:', parseError)
+            logger.warn('Failed to parse NDJSON line:', parseError)
           }
         }
       }

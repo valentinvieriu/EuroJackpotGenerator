@@ -26,8 +26,17 @@ export default defineNuxtConfig({
   css: ['~/assets/css/tailwind.css'],
 
   runtimeConfig: {
+    // Server-only configuration
+    logLevel:
+      process.env.LOG_LEVEL ||
+      (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
+      // Client-accessible logging configuration
+      logLevel:
+        process.env.NUXT_PUBLIC_LOG_LEVEL ||
+        (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
     },
   },
   experimental: {
