@@ -187,7 +187,9 @@
             v-model="config.includeIndividualResults"
             type="checkbox"
             class="rounded border-casino-blue-light/50 bg-casino-blue text-casino-gold focus:ring-casino-gold focus:ring-offset-casino-blue-dark"
-            :disabled="disabled || config.simulationCount > 1000"
+            :disabled="
+              disabled || config.simulationCount > LARGE_SIMULATION_THRESHOLD
+            "
           />
           <span class="ml-2 text-sm text-gray-300">
             Export individual results
@@ -195,8 +197,8 @@
         </label>
         <p class="text-xs text-gray-500 sm:ml-2">
           {{
-            config.simulationCount > 1000
-              ? '(Disabled for >1000 simulations)'
+            config.simulationCount > LARGE_SIMULATION_THRESHOLD
+              ? `(Disabled for >${LARGE_SIMULATION_THRESHOLD} simulations)`
               : '(For detailed JSON export)'
           }}
         </p>
@@ -245,7 +247,7 @@
     </div>
 
     <div
-      v-if="config.simulationCount >= 5000"
+      v-if="config.simulationCount >= HIGH_SIMULATION_WARNING_THRESHOLD"
       class="mt-4 p-3 bg-yellow-900/50 border border-yellow-500 rounded-md"
     >
       <div class="flex">
@@ -274,6 +276,10 @@
 </template>
 
 <script setup lang="ts">
+import {
+  LARGE_SIMULATION_THRESHOLD,
+  HIGH_SIMULATION_WARNING_THRESHOLD,
+} from '~/utils/constants'
 import { computed, reactive, watch } from 'vue'
 import type { BatchSimulationRequest, Ticket } from '~/schemas'
 import { calculateTheoreticalExpectedValue } from '~/utils/batchStatistics'
@@ -353,7 +359,7 @@ const handleStartSimulation = () => {
 watch(
   () => config.simulationCount,
   (newValue) => {
-    if (newValue > 1000) {
+    if (newValue > LARGE_SIMULATION_THRESHOLD) {
       config.includeIndividualResults = false
     }
   }

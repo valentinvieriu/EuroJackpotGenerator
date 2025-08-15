@@ -331,6 +331,14 @@
 </template>
 
 <script setup lang="ts">
+import {
+  WIN_RATE_EXCELLENT_THRESHOLD,
+  WIN_RATE_GOOD_THRESHOLD,
+  PROFIT_RATE_EXCELLENT_THRESHOLD,
+  PROFIT_RATE_GOOD_THRESHOLD,
+  WIN_CLASS_MIN,
+  WIN_CLASS_MAX,
+} from '~/utils/constants'
 import { computed, type PropType } from 'vue'
 import type { BatchSimulationResult } from '~/schemas'
 import { combinationCount } from '~/utils/combinatorics'
@@ -344,7 +352,7 @@ import { getResultsWinClassColor } from '~/utils/winClassColors'
 function calculateExpectedWinRate(linesPerSimulation: number): number {
   // Per-line probability of *any* win = sum of mutually exclusive class probabilities
   let pAny = 0
-  for (let winClass = 1; winClass <= 12; winClass++) {
+  for (let winClass = WIN_CLASS_MIN; winClass <= WIN_CLASS_MAX; winClass++) {
     pAny += getWinClassProbability(winClass)
   }
   pAny = Math.min(Math.max(pAny, 0), 1)
@@ -383,14 +391,14 @@ const expectedProfitColor = computed(() =>
 )
 const winRateColor = computed(() => {
   const rate = props.results.winDistribution.winPercentage
-  if (rate > 20) return 'text-green-400'
-  if (rate > 10) return 'text-yellow-400'
+  if (rate > WIN_RATE_EXCELLENT_THRESHOLD) return 'text-green-400'
+  if (rate > WIN_RATE_GOOD_THRESHOLD) return 'text-yellow-400'
   return 'text-red-400'
 })
 const profitRateColor = computed(() => {
   const rate = props.results.statistics.profitablePercentage
-  if (rate > 50) return 'text-green-400'
-  if (rate > 25) return 'text-yellow-400'
+  if (rate > PROFIT_RATE_EXCELLENT_THRESHOLD) return 'text-green-400'
+  if (rate > PROFIT_RATE_GOOD_THRESHOLD) return 'text-yellow-400'
   return 'text-red-400'
 })
 

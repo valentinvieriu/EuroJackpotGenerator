@@ -71,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+import { WIN_CLASS_TIER_1_MAX, WIN_CLASS_TIER_2_MAX } from '~/utils/constants'
 import { computed } from 'vue'
 import type { Ticket, EurojackpotHistoricOdds } from '~/schemas'
 import TicketNumber from './TicketNumber.vue'
@@ -117,9 +118,12 @@ const getPrizeTooltip = (winClass: number, count: number) => {
 
 const getWinClassTextClass = (winClass: number) => {
   // Higher classes (lower numbers) get more prominent gold styling
-  if (winClass >= 1 && winClass <= 3) {
+  if (winClass >= 1 && winClass <= WIN_CLASS_TIER_1_MAX) {
     return 'text-casino-gold animate-pulse'
-  } else if (winClass >= 4 && winClass <= 7) {
+  } else if (
+    winClass >= WIN_CLASS_TIER_1_MAX + 1 &&
+    winClass <= WIN_CLASS_TIER_2_MAX
+  ) {
     return 'text-casino-gold-light'
   } else {
     return 'text-casino-gold-dark'
@@ -129,9 +133,12 @@ const getWinClassTextClass = (winClass: number) => {
 const getWinClassChipClasses = (winClass: number) => {
   const baseClasses = 'px-2 py-1 rounded-full text-xs font-semibold'
 
-  if (winClass >= 1 && winClass <= 3) {
+  if (winClass >= 1 && winClass <= WIN_CLASS_TIER_1_MAX) {
     return `${baseClasses} bg-casino-gold text-casino-blue-dark shadow-lg animate-pulse`
-  } else if (winClass >= 4 && winClass <= 7) {
+  } else if (
+    winClass >= WIN_CLASS_TIER_1_MAX + 1 &&
+    winClass <= WIN_CLASS_TIER_2_MAX
+  ) {
     return `${baseClasses} bg-casino-gold-light text-casino-blue-dark shadow-md`
   } else {
     return `${baseClasses} bg-casino-gold-dark text-ivory shadow-sm`

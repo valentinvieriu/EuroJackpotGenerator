@@ -35,3 +35,14 @@ export const PERCENTAGE_MAX = 100
 // HTTP status code ranges
 export const HTTP_ERROR_MIN = 400
 export const HTTP_ERROR_MAX = 599
+
+// UI Highlight Thresholds
+export const WIN_RATE_EXCELLENT_THRESHOLD = 20 // % - Green colour
+export const WIN_RATE_GOOD_THRESHOLD = 10 // % - Yellow colour
+export const PROFIT_RATE_EXCELLENT_THRESHOLD = 50 // % - Green colour
+export const PROFIT_RATE_GOOD_THRESHOLD = 25 // % - Yellow colour
+export const NUMBER_FREQUENCY_THRESHOLD = 0.1 // 10% - Highlight numbers appearing frequently
+export const WIN_CLASS_TIER_1_MAX = 3 // Classes 1-3 (highest prizes)
+export const WIN_CLASS_TIER_2_MAX = 7 // Classes 4-7 (medium prizes)
+export const LARGE_SIMULATION_THRESHOLD = 1000 // Export disabled above this
+export const HIGH_SIMULATION_WARNING_THRESHOLD = 5000 // Show warning above this

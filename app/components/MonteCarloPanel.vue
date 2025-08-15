@@ -40,6 +40,10 @@
 </template>
 
 <script setup lang="ts">
+import {
+  NUMBER_FREQUENCY_THRESHOLD,
+  LARGE_SIMULATION_THRESHOLD,
+} from '~/utils/constants'
 import { ref, onUnmounted, watch, computed, type PropType } from 'vue'
 import { useRuntimeConfig } from '#app'
 import { formatDurationCompact } from '~/utils/time'
@@ -148,7 +152,7 @@ const applyOptimizedHighlighting = (
 
     // SIMPLE & PRACTICAL highlighting: Show numbers that actually contributed to wins
     // Adaptive highlighting: stricter for large simulations to avoid everything being highlighted
-    const isLargeSimulation = totalSimulations >= 1000
+    const isLargeSimulation = totalSimulations >= LARGE_SIMULATION_THRESHOLD
 
     // For large simulations, use higher threshold to show only standout performers
     // For small simulations (like 100 draws), be much more lenient to show any meaningful wins
@@ -271,8 +275,11 @@ const applyAggregateHighlighting = (results: BatchSimulationResult): void => {
   const updates = props.tickets.map((ticket) => {
     const stats = ticketWinFrequency.get(ticket.id)!
 
-    // Highlight numbers that won frequently (appeared in >10% of winning simulations for this ticket)
-    const minFrequencyThreshold = Math.max(1, Math.floor(stats.totalWins * 0.1))
+    // Highlight numbers that won frequently (appeared in significant percentage of winning simulations for this ticket)
+    const minFrequencyThreshold = Math.max(
+      1,
+      Math.floor(stats.totalWins * NUMBER_FREQUENCY_THRESHOLD)
+    )
 
     const winningMainNumbers = ticket.mainNumbers.filter(
       (n: number) => (stats.mainNumbers.get(n) || 0) >= minFrequencyThreshold

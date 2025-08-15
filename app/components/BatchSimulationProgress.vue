@@ -130,6 +130,10 @@
 </template>
 
 <script setup lang="ts">
+import {
+  WIN_RATE_EXCELLENT_THRESHOLD,
+  WIN_RATE_GOOD_THRESHOLD,
+} from '~/utils/constants'
 import { computed, type PropType } from 'vue'
 import { formatDuration as formatTime } from '~/utils/time'
 import { getProgressWinClassColor } from '~/utils/winClassColors'
@@ -169,8 +173,8 @@ const processingSpeed = computed(() => {
 const winRateColor = computed(() => {
   if (!props.partialResults) return 'text-gray-400'
   const rate = props.partialResults.winPercentage
-  if (rate > 20) return 'text-green-400'
-  if (rate > 10) return 'text-yellow-400'
+  if (rate > WIN_RATE_EXCELLENT_THRESHOLD) return 'text-green-400'
+  if (rate > WIN_RATE_GOOD_THRESHOLD) return 'text-yellow-400'
   return 'text-red-400'
 })
 
