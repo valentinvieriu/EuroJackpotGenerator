@@ -206,11 +206,8 @@ export const useSimulationStore = defineStore('simulation', () => {
     resetSingleDraw() // Reset Single Draw
   }
 
-  const syncTickets = (tickets: Ticket[]) => {
-    logger.debug('SimulationStore: Syncing tickets from component lifecycle')
-    // Just update tickets without reset logic - this is for component sync
-    state.value.currentTickets = tickets
-  }
+  // Note: No component-level sync; tickets are owned by TicketsStore
+  // and provided via semantic actions (generateTickets/resetTickets).
 
   const shouldResetOnTicketChange = (): boolean => {
     // Business rule: Reset simulation when user changes tickets and we have results/errors
@@ -445,12 +442,20 @@ export const useSimulationStore = defineStore('simulation', () => {
   }
 
   const startSimulation = async (
-    tickets: Ticket[],
     costPerSimulation: number,
     config: SimulationConfig
   ): Promise<void> => {
     if (state.value.phase === 'running') {
       logger.warn('Simulation already running')
+      return
+    }
+
+    // Use tickets from our state; TicketsStore updates this via semantic actions
+    const tickets = state.value.currentTickets
+
+    if (!tickets || tickets.length === 0) {
+      state.value.phase = 'error'
+      state.value.error = 'No tickets available for simulation.'
       return
     }
 
@@ -939,29 +944,6 @@ export const useSimulationStore = defineStore('simulation', () => {
     }
   }
 
-  /**
-   * Returns tickets decorated with highlights for the specified mode
-   */
-  const getDecoratedTickets = (mode: 'single' | 'montecarlo') => {
-    if (!state.value.currentTickets) return []
-
-    const highlights = getHighlightsForMode(mode)
-    const highlightMap = new Map(
-      highlights.map((h: { id: number }) => [h.id, h])
-    )
-
-    return state.value.currentTickets.map((ticket) => ({
-      ...ticket,
-      highlights: highlightMap.get(ticket.id) || {
-        id: ticket.id,
-        winningMainNumbers: [],
-        winningEuroNumbers: [],
-        winClassCounts: {},
-        winClass: undefined,
-      },
-    }))
-  }
-
   // Utility functions
   const calculateETA = (
     progressPercentage: number,
@@ -1029,13 +1011,11 @@ export const useSimulationStore = defineStore('simulation', () => {
     getCurrentSingleDrawHighlights,
     getCurrentMonteCarloHighlights,
     getHighlightsForMode,
-    getDecoratedTickets,
 
     // Actions
     setConfig,
     generateTickets,
     resetTickets,
-    syncTickets,
     startSimulation,
     cancelSimulation,
     resetSimulation,

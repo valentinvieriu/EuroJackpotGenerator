@@ -252,19 +252,8 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     await sim.runSingleDraw(2)
     expect(sim.state.singleDraw.phase).toBe('results')
 
-    // Start Monte Carlo to reach results state
-    await sim.startSimulation(
-      [
-        {
-          id: 1,
-          mainNumbers: [1, 2, 3, 4, 5],
-          euroNumbers: [1, 2],
-          linesCount: 1,
-        },
-      ] as any,
-      2,
-      { simulationCount: 10, batchSize: 5 }
-    )
+    // Start Monte Carlo to reach results state (tickets already present)
+    await sim.startSimulation(2, { simulationCount: 10, batchSize: 5 })
     expect(sim.state.phase).toBe('results')
 
     // Generate new tickets → should reset Monte Carlo to config and rehighlight single draw

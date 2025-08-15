@@ -82,8 +82,10 @@ describe('Simulation Store', () => {
 
     global.$fetch = vi.fn().mockResolvedValue(mockStream)
 
+    // Seed tickets into store first
+    store.generateTickets(mockTickets as any)
     // Start simulation
-    const promise = store.startSimulation(mockTickets, 100, config)
+    const promise = store.startSimulation(100, config)
 
     expect(store.state.phase).toBe('running')
     expect(store.isRunning).toBe(true)
@@ -110,7 +112,8 @@ describe('Simulation Store', () => {
 
     global.$fetch = vi.fn().mockRejectedValue(new Error('Network error'))
 
-    await store.startSimulation(mockTickets, 100, config)
+    store.generateTickets(mockTickets as any)
+    await store.startSimulation(100, config)
 
     expect(store.state.phase).toBe('error')
     expect(store.hasError).toBe(true)
@@ -142,7 +145,8 @@ describe('Simulation Store', () => {
     )
 
     // Start simulation
-    const promise = store.startSimulation(mockTickets, 100, config)
+    store.generateTickets(mockTickets as any)
+    const promise = store.startSimulation(100, config)
 
     expect(store.state.phase).toBe('running')
     expect(store.state.canCancel).toBe(true)
@@ -194,12 +198,13 @@ describe('Simulation Store', () => {
       )
 
     // Start first simulation
-    const promise1 = store.startSimulation(mockTickets, 100, config)
+    store.generateTickets(mockTickets as any)
+    const promise1 = store.startSimulation(100, config)
 
     expect(store.isRunning).toBe(true)
 
     // Try to start second simulation
-    const promise2 = store.startSimulation(mockTickets, 100, config)
+    const promise2 = store.startSimulation(100, config)
 
     await Promise.all([promise1, promise2])
 
@@ -260,7 +265,8 @@ describe('Simulation Store', () => {
         }),
       })
 
-      await store.startSimulation(mockTickets, 200, config)
+      store.generateTickets(mockTickets as any)
+      await store.startSimulation(200, config)
 
       expect(global.$fetch).toHaveBeenCalledWith('/api/batchSimulate', {
         method: 'POST',
@@ -303,7 +309,8 @@ describe('Simulation Store', () => {
         }),
       })
 
-      await store.startSimulation(mockTickets, 100, config)
+      store.generateTickets(mockTickets as any)
+      await store.startSimulation(100, config)
 
       const call = global.$fetch.mock.calls[0]
       expect(call[1].body.includeIndividualResults).toBe(false)

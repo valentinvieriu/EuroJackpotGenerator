@@ -385,14 +385,12 @@
           <SingleDrawPanel
             v-if="activeMode === 'single'"
             :tickets="tickets"
-            :total-price="totalPrice"
             @apply-highlights="applyHighlightsOnTickets"
             @winning-data-updated="updateWinningData"
           />
           <MonteCarloPanel
             v-if="activeMode === 'montecarlo'"
             :tickets="tickets"
-            :cost-per-simulation="totalPrice"
             @apply-highlights="applyHighlightsOnTickets"
             @winning-data-updated="updateWinningData"
           />
@@ -404,7 +402,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, type Ref } from 'vue'
-import type { EurojackpotHistoricOdds, Ticket } from '~/schemas'
+import type { EurojackpotHistoricOdds } from '~/schemas'
 import { systemPrice } from '~/utils/pricing'
 import { useSimulationPanelState } from '~/composables/useAppState'
 import SingleDrawPanel from './SingleDrawPanel.vue'
@@ -496,45 +494,10 @@ watch(
 )
 
 // Stores for reactive state management
-const simulationStore = useSimulationStore()
 const ticketsStore = useTicketsStore()
-
-// Watch raw tickets from store and sync to simulation store
-watch(
-  () => ticketsStore.state.tickets,
-  (newTickets, oldTickets) => {
-    // Efficient identity check: length or IDs changed
-    const lengthChanged = newTickets.length !== (oldTickets?.length ?? 0)
-    const idsChanged =
-      !lengthChanged &&
-      newTickets.length > 0 &&
-      oldTickets &&
-      newTickets.some((ticket, index) => ticket.id !== oldTickets[index]?.id)
-
-    if (lengthChanged || idsChanged) {
-      logger.debug(
-        'TicketGenerator: Syncing tickets to simulation store',
-        newTickets.length
-      )
-      // Use semantic action for component lifecycle sync
-      // Convert readonly tickets to mutable for store sync
-      simulationStore.syncTickets([...newTickets] as Ticket[])
-    }
-  },
-  { deep: false } // No need for deep watch with identity checks
-)
 
 // Store-derived decorated tickets automatically update when simulation results change
 // No manual highlight application needed - tickets computed property handles this reactively
-
-// Initial sync on mount
-onMounted(() => {
-  const rawTickets = ticketsStore.state.tickets
-  if (rawTickets.length > 0) {
-    logger.debug('TicketGenerator: Initial ticket sync on mount')
-    simulationStore.syncTickets([...rawTickets] as Ticket[])
-  }
-})
 
 const totalPrice = computed<number>(() => {
   const count = Math.max(1, ticketCount.value || 1)
@@ -612,8 +575,8 @@ const handleModeChange = (m: 'single' | 'montecarlo'): void => {
 
 const clearTickets = (): void => {
   // Use semantic action for user-initiated reset
+  // Tickets store will notify simulation store internally
   ticketsStore.reset()
-  simulationStore.resetTickets()
 }
 
 const resetTickets = (): void => {

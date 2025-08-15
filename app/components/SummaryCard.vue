@@ -40,15 +40,15 @@
     </div>
 
     <button
-      :disabled="disabled"
+      :disabled="props.disabled"
       type="submit"
       class="w-full bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-6 py-3 rounded-md font-bold hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition-all duration-150 text-lg shadow-lg"
     >
-      {{ buttonText }}
+      {{ props.buttonText }}
     </button>
 
     <button
-      v-if="showSimulateAction && !disabled"
+      v-if="props.showSimulateAction && !props.disabled"
       type="button"
       class="w-full mt-3 text-casino-gold hover:text-casino-gold-light underline text-sm font-medium transition-colors duration-150"
       @click="$emit('simulate')"
@@ -78,17 +78,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface Props {
-  pricePerTicket: number
-  ticketCount: number
-  totalPrice: number
   buttonText?: string
   disabled?: boolean
   showSimulateAction?: boolean
   nextDrawDate?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   buttonText: 'Generate Numbers',
   disabled: false,
   showSimulateAction: true,
@@ -98,4 +97,9 @@ withDefaults(defineProps<Props>(), {
 defineEmits<{
   simulate: []
 }>()
+
+const ticketsStore = useTicketsStore()
+const pricePerTicket = computed(() => ticketsStore.systemCost)
+const ticketCount = computed(() => ticketsStore.state.config.ticketCount)
+const totalPrice = computed(() => ticketsStore.totalPrice)
 </script>

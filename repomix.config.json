@@ -4,7 +4,7 @@
     "maxFileSize": 52428800
   },
   "output": {
-    "instructionFilePath": "ai_docs/gid-diff-prompt.md",
+    "instructionFilePath": "ai_docs/repomix-prompt.md",
     "filePath": "ai_docs/repomix-output.md",
     "style": "xml",
     "headerText": "",

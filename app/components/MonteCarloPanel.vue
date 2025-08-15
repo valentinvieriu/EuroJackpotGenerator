@@ -56,7 +56,6 @@ import { logger } from '~/utils/logger'
 
 const props = defineProps({
   tickets: { type: Array as PropType<Ticket[]>, required: true },
-  costPerSimulation: { type: Number, required: true },
 })
 
 const emit = defineEmits<{
@@ -127,7 +126,8 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
   })
 
   try {
-    await simStore.startSimulation(props.tickets, props.costPerSimulation, {
+    const ticketsStore = useTicketsStore()
+    await simStore.startSimulation(ticketsStore.totalPrice, {
       simulationCount: cfg.simulationCount,
       batchSize: cfg.batchSize ?? 100,
     })

@@ -63,7 +63,6 @@ import SimulatedExtraction from './SimulatedExtraction.vue'
 
 const props = defineProps({
   tickets: { type: Array as PropType<Ticket[]>, required: true },
-  totalPrice: { type: Number, required: true },
 })
 
 const emit = defineEmits<{
@@ -82,6 +81,7 @@ const emit = defineEmits<{
 
 // Use simulation store for state management
 const simStore = useSimulationStore()
+const ticketsStore = useTicketsStore()
 
 // Computed getters based on store state
 const loading = computed(() => simStore.isSingleDrawRunning)
@@ -103,7 +103,8 @@ const totalWinnings = computed(
 const winLossRate = computed(
   () => simStore.state.singleDraw.results?.roiPercentage || 0
 )
-const profitLossAmount = computed(() => totalWinnings.value - props.totalPrice)
+const totalPrice = computed(() => ticketsStore.totalPrice)
+const profitLossAmount = computed(() => totalWinnings.value - totalPrice.value)
 
 // The reset function is no longer needed since the store manages state
 
@@ -111,7 +112,7 @@ const simulateExtractionHandler = async (): Promise<void> => {
   if (!props.tickets.length || loading.value) return
 
   // Use store action to run single draw
-  await simStore.runSingleDraw(props.totalPrice)
+  await simStore.runSingleDraw(totalPrice.value)
 
   // Emit winning data and highlights to parent if we have results
   if (simStore.state.singleDraw.oddsData) {
