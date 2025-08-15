@@ -161,7 +161,8 @@ const handleCancel = (): void => {
 }
 
 const handleReset = (): void => {
-  simStore.resetSimulation()
+  // Preserve tickets and config; just return to config phase
+  simStore.resetToConfig()
 }
 
 onUnmounted(() => {
