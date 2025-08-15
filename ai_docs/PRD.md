@@ -157,5 +157,3 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
 
 - [Architecture](./ARCHITECTURE.md)
 - [Common Guide](./COMMON_GUIDE.md)
-- [Prior Architecture Drafts](./gpt_1_ARCHITECTURE.md), [./gemini_1_ARCHITECTURE.md]
-- [Prior PRD Drafts](./gpt_1_PRD.md), [./gemini_1_PRD.md)

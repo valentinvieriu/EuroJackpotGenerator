@@ -314,17 +314,17 @@
       class="flex flex-col sm:flex-row justify-end gap-3 bg-casino-blue-dark rounded-lg shadow-xl p-4 border border-casino-blue-light/30"
     >
       <button
-        class="px-4 py-2 rounded-md font-medium border border-navy-muted text-ivory bg-transparent hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
-        @click="$emit('reset')"
-      >
-        Run New Simulation
-      </button>
-      <button
         v-if="results.individualResults"
-        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-white px-4 py-2 rounded-md font-medium hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+        class="px-2 py-1 text-sm text-casino-gold hover:text-casino-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold rounded"
         @click="exportResults"
       >
         Export Detailed Results
+      </button>
+      <button
+        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-white px-4 py-2 rounded-md font-medium hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+        @click="$emit('reset')"
+      >
+        Run New Simulation
       </button>
     </div>
   </div>
