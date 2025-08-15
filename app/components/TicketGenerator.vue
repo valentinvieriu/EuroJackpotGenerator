@@ -327,22 +327,22 @@
             <button
               :class="[
                 'px-3 py-1 text-sm font-medium transition-colors duration-200 border-b-2 relative',
-                mode === 'single'
+                activeMode === 'single'
                   ? 'text-casino-gold border-casino-gold'
                   : 'text-gray-400 border-transparent hover:text-gray-300',
               ]"
-              @click="setMode('single')"
+              @click="handleModeChange('single')"
             >
               Single Draw
             </button>
             <button
               :class="[
                 'px-3 py-1 text-sm font-medium transition-colors duration-200 border-b-2 relative',
-                mode === 'montecarlo'
+                activeMode === 'montecarlo'
                   ? 'text-casino-gold border-casino-gold'
                   : 'text-gray-400 border-transparent hover:text-gray-300',
               ]"
-              @click="setMode('montecarlo')"
+              @click="handleModeChange('montecarlo')"
             >
               Monte Carlo
             </button>
@@ -383,14 +383,14 @@
 
         <div v-else-if="!loading">
           <SingleDrawPanel
-            v-if="mode === 'single'"
+            v-if="activeMode === 'single'"
             :tickets="tickets"
             :total-price="totalPrice"
             @apply-highlights="applyHighlightsOnTickets"
             @winning-data-updated="updateWinningData"
           />
           <MonteCarloPanel
-            v-if="mode === 'montecarlo'"
+            v-if="activeMode === 'montecarlo'"
             :tickets="tickets"
             :cost-per-simulation="totalPrice"
             @apply-highlights="applyHighlightsOnTickets"
@@ -407,6 +407,7 @@ import { ref, computed, onMounted, watch, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app'
 import type { Ticket, EurojackpotHistoricOdds } from '~/schemas'
 import { systemPrice } from '~/utils/pricing'
+import { useSimulationPanelState } from '~/composables/useAppState'
 import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
@@ -472,8 +473,8 @@ const currentAction: Ref<'generate' | 'simulate' | null> = ref(null)
 const error: Ref<string> = ref('')
 const latestWinningData: Ref<EurojackpotHistoricOdds | null> = ref(null)
 
-// UI mode
-const mode = ref<'single' | 'montecarlo'>('single')
+// UI mode (using shared simulation panel state)
+const { activeMode, setMode } = useSimulationPanelState()
 const showGenerationForm = ref(false)
 
 // App state management
@@ -519,7 +520,7 @@ watch(
   [
     () => simulationStore.state.singleDraw.results,
     () => simulationStore.state.results?.highlightingData,
-    () => mode.value,
+    () => activeMode.value,
   ],
   () => {
     // Apply store highlights when:
@@ -592,8 +593,8 @@ const resetAllState = (clearTickets = false): void => {
   error.value = ''
 }
 
-const setMode = (m: 'single' | 'montecarlo'): void => {
-  mode.value = m
+const handleModeChange = (m: 'single' | 'montecarlo'): void => {
+  setMode(m)
   error.value = ''
 
   // Apply highlights when switching tabs
@@ -709,7 +710,7 @@ const applyHighlightsOnTickets = (
 
 const applyStoreHighlights = (): void => {
   // Apply highlights from the centralized store based on current mode
-  const highlights = simulationStore.getHighlightsForMode(mode.value)
+  const highlights = simulationStore.getHighlightsForMode(activeMode.value)
 
   // Apply the store highlights to tickets
   const byId = new Map(highlights.map((u) => [u.id, u]))
