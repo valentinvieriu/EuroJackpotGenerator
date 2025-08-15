@@ -197,7 +197,7 @@
               class="bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-6 py-3 rounded-md font-bold hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition-all duration-150 text-lg shadow-lg"
             >
               {{
-                loading && currentAction === 'generate'
+                loading && currentOperation === 'generate'
                   ? 'Generating...'
                   : tickets.length > 0
                     ? 'Update Numbers'
@@ -218,13 +218,13 @@
               🎉 Lucky Numbers Created!
             </h3>
             <p class="text-sm text-gray-400">
-              Your configuration has been saved as "{{ currentLuckyCode }}"
+              Your configuration has been saved as "{{ sharingLuckyCode }}"
             </p>
           </div>
           <button
             class="text-gray-400 hover:text-gray-200 transition duration-150"
             title="Close"
-            @click="closeSharingDialog"
+            @click="hideSharing"
           >
             ✕
           </button>
@@ -248,7 +248,7 @@
                     ? 'bg-green-600 text-white'
                     : 'bg-casino-gold text-casino-blue-dark hover:bg-casino-gold-light',
                 ]"
-                @click="copyToClipboard"
+                @click="copyShareableUrl"
               >
                 {{ copySuccess ? '✓ Copied!' : 'Copy Link' }}
               </button>
@@ -258,7 +258,7 @@
           <div class="text-xs text-gray-500 bg-casino-blue/40 p-3 rounded-md">
             <strong>💡 How it works:</strong> Anyone with this link can recreate
             your exact ticket configuration and numbers. The lucky code "{{
-              currentLuckyCode
+              sharingLuckyCode
             }}" ensures the same results every time.
           </div>
         </div>
@@ -277,7 +277,7 @@
               <button
                 class="px-2 py-1 text-sm text-casino-gold hover:text-casino-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold rounded"
                 title="Create shareable link for these numbers"
-                @click="shareLuckyNumbers"
+                @click="ticketsStore.share"
               >
                 Share
               </button>
@@ -370,7 +370,7 @@
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p class="mt-2">Processing {{ currentAction }}...</p>
+          <p class="mt-2">Processing {{ currentOperation }}...</p>
         </div>
 
         <div
@@ -404,8 +404,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, type Ref } from 'vue'
-import { useRuntimeConfig } from '#app'
-import type { Ticket, EurojackpotHistoricOdds } from '~/schemas'
+import type { EurojackpotHistoricOdds, Ticket } from '~/schemas'
 import { systemPrice } from '~/utils/pricing'
 import { useSimulationPanelState } from '~/composables/useAppState'
 import SingleDrawPanel from './SingleDrawPanel.vue'
@@ -414,11 +413,8 @@ import TicketComponent from './TicketItem.vue'
 import StepperInput from './StepperInput.vue'
 import { logger } from '~/utils/logger'
 import {
-  generateLuckyCode,
   formatTicketType,
   copyConfigUrl,
-  decodeUrlHash,
-  parseTicketType,
   updateBrowserUrl,
   getAppConfigUrl,
   type AppConfig,
@@ -465,14 +461,19 @@ const ticketTypes = computed(
 )
 
 const maxTicketsAllowed = 500
-const selectedTicketType: Ref<TicketType> = ref(ticketTypes.value[0])
+const selectedTicketType: Ref<TicketType> = ref(ticketTypes.value[0]!)
 const ticketCount: Ref<number> = ref(1)
 const selectionMethod = ref<'random' | 'weighted'>('weighted')
-const tickets: Ref<Ticket[]> = ref([])
-const loading: Ref<boolean> = ref(false)
-const currentAction: Ref<'generate' | 'simulate' | null> = ref(null)
-const error: Ref<string> = ref('')
+
+// Use store-derived decorated tickets (with highlights)
+const tickets = computed(() =>
+  ticketsStore.getDecoratedTickets(activeMode.value)
+)
+const loading = computed(() => ticketsStore.isGenerating)
 const latestWinningData: Ref<EurojackpotHistoricOdds | null> = ref(null)
+
+// Error handling using centralized state
+const error = computed(() => ticketsStore.state.error || '')
 
 // UI mode (using shared simulation panel state)
 const { activeMode, setMode } = useSimulationPanelState()
@@ -483,7 +484,7 @@ const appState = ref<AppState>('FRESH')
 const currentLucky = ref<string>('')
 
 // Debounced URL persistence - prevent history spam from rapid form changes
-let urlUpdateTimer: number | undefined
+let urlUpdateTimer: ReturnType<typeof setTimeout> | undefined
 watch(
   [selectedTicketType, ticketCount, selectionMethod],
   () => {
@@ -494,68 +495,81 @@ watch(
   { deep: true }
 )
 
-const config = useRuntimeConfig()
-
-// Simulation store for reactive state management
+// Stores for reactive state management
 const simulationStore = useSimulationStore()
+const ticketsStore = useTicketsStore()
 
-// Watch tickets changes and sync to simulation store
+// Watch raw tickets from store and sync to simulation store
 watch(
-  tickets,
+  () => ticketsStore.state.tickets,
   (newTickets, oldTickets) => {
-    // Only sync if tickets actually changed to avoid unnecessary updates
-    if (JSON.stringify(newTickets) !== JSON.stringify(oldTickets)) {
+    // Efficient identity check: length or IDs changed
+    const lengthChanged = newTickets.length !== (oldTickets?.length ?? 0)
+    const idsChanged =
+      !lengthChanged &&
+      newTickets.length > 0 &&
+      oldTickets &&
+      newTickets.some((ticket, index) => ticket.id !== oldTickets[index]?.id)
+
+    if (lengthChanged || idsChanged) {
       logger.debug(
         'TicketGenerator: Syncing tickets to simulation store',
         newTickets.length
       )
       // Use semantic action for component lifecycle sync
-      simulationStore.syncTickets(newTickets)
+      // Convert readonly tickets to mutable for store sync
+      simulationStore.syncTickets([...newTickets] as Ticket[])
     }
   },
-  { deep: true }
+  { deep: false } // No need for deep watch with identity checks
 )
 
-// Watch simulation store state to apply contextual highlights when results change
-watch(
-  [
-    () => simulationStore.state.singleDraw.results,
-    () => simulationStore.state.results?.highlightingData,
-    () => activeMode.value,
-  ],
-  () => {
-    // Apply store highlights when:
-    // - Single Draw results change
-    // - Monte Carlo results/highlighting data changes
-    // - User switches between tabs
-    if (tickets.value.length > 0) {
-      applyStoreHighlights()
-    }
-  },
-  { deep: true }
-)
+// Store-derived decorated tickets automatically update when simulation results change
+// No manual highlight application needed - tickets computed property handles this reactively
 
 // Initial sync on mount
 onMounted(() => {
-  if (tickets.value.length > 0) {
+  const rawTickets = ticketsStore.state.tickets
+  if (rawTickets.length > 0) {
     logger.debug('TicketGenerator: Initial ticket sync on mount')
-    simulationStore.syncTickets(tickets.value)
+    simulationStore.syncTickets([...rawTickets] as Ticket[])
   }
 })
-const apiBaseUrl = config.public.apiBase
 
 const totalPrice = computed<number>(() => {
   const count = Math.max(1, ticketCount.value || 1)
   return (selectedTicketType.value?.price ?? 0) * count
 })
 
-// Sharing functionality
-const showSharingDialog = ref(false)
-const currentLuckyCode = ref('')
-const shareableUrl = ref('')
-const copySuccess = ref(false)
-const showWelcomeMessage = ref(false)
-const welcomeLuckyCode = ref('')
+// UI state (now using centralized state management)
+const {
+  showSharingDialog,
+  sharingLuckyCode,
+  copySuccess,
+  showWelcomeMessage,
+  welcomeLuckyCode,
+  currentOperation,
+  hideWelcome,
+  hideSharing,
+  setCopySuccess,
+} = useUIState()
+
+// Computed shareable URL based on current configuration and sharing lucky code
+const shareableUrl = computed(() => {
+  if (!sharingLuckyCode.value) return ''
+
+  const config: AppConfig = {
+    system: formatTicketType(
+      selectedTicketType.value.mainCount,
+      selectedTicketType.value.euroCount
+    ),
+    tickets: ticketCount.value,
+    method: selectionMethod.value,
+    lucky: sharingLuckyCode.value,
+  }
+
+  return getAppConfigUrl(config)
+})
 
 // Configuration management helpers
 const getCurrentConfig = (): AppConfig => {
@@ -585,27 +599,20 @@ const syncUrlWithState = (): void => {
 const transitionToFresh = (): void => {
   appState.value = 'FRESH'
   currentLucky.value = ''
-  showWelcomeMessage.value = false
+  hideWelcome() // Use action instead of direct modification
   updateBrowserUrl(null) // Clear URL completely for fresh state
-}
-
-const resetAllState = (clearTickets = false): void => {
-  if (clearTickets) tickets.value = []
-  error.value = ''
 }
 
 const handleModeChange = (m: 'single' | 'montecarlo'): void => {
   setMode(m)
-  error.value = ''
+  ticketsStore.clearError()
 
-  // Apply highlights when switching tabs
-  applyStoreHighlights()
+  // Highlights will automatically update via computed tickets property
 }
 
 const clearTickets = (): void => {
-  tickets.value = []
-  error.value = ''
   // Use semantic action for user-initiated reset
+  ticketsStore.reset()
   simulationStore.resetTickets()
 }
 
@@ -615,79 +622,30 @@ const resetTickets = (): void => {
   transitionToFresh()
 }
 
-const extractErrorMessage = (err: unknown): string => {
-  if (typeof err === 'string') return err
-  if (err instanceof Error) return err.message
-  if (err && typeof err === 'object') {
-    const e = err as Record<string, unknown>
-    const data = (e.data as Record<string, unknown> | undefined) ?? undefined
-    const candidates = [
-      data?.message,
-      data?.statusMessage,
-      e.statusText,
-      e.message,
-    ]
-    for (const c of candidates) {
-      if (typeof c === 'string' && c) return c
-    }
-  }
-  return 'Failed to generate tickets.'
-}
-
 const generateTicketsHandler = async (): Promise<void> => {
-  if (loading.value) return
-  if (
-    !Number.isInteger(ticketCount.value) ||
-    ticketCount.value < 1 ||
-    ticketCount.value > maxTicketsAllowed
-  ) {
-    error.value = `Please enter a valid number of tickets (1-${maxTicketsAllowed}).`
-    return
+  if (ticketsStore.isGenerating) return
+
+  // Update tickets store configuration from component form state
+  ticketsStore.updateConfig({
+    mainCount: selectedTicketType.value.mainCount,
+    euroCount: selectedTicketType.value.euroCount,
+    ticketCount: ticketCount.value,
+    method: selectionMethod.value,
+  })
+
+  // Add seed if we have one (for reproducible generation)
+  if (currentLucky.value) {
+    ticketsStore.setLuckyCode(currentLucky.value, 'SHARED')
+  } else {
+    ticketsStore.setLuckyCode('', 'FRESH')
   }
 
-  loading.value = true
-  currentAction.value = 'generate'
-  resetAllState(true)
+  // Use semantic action - let the store own the entire generation process
+  await ticketsStore.generate()
 
-  try {
-    const requestBody: {
-      ticketCount: number
-      mainCount: number
-      euroCount: number
-      algorithm: 'uniform' | 'weighted'
-      seed?: string
-    } = {
-      ticketCount: ticketCount.value,
-      mainCount: selectedTicketType.value.mainCount,
-      euroCount: selectedTicketType.value.euroCount,
-      algorithm: selectionMethod.value === 'weighted' ? 'weighted' : 'uniform',
-    }
-
-    // Add seed if we have one (for reproducible generation)
-    if (currentLucky.value) {
-      requestBody.seed = currentLucky.value
-    }
-
-    const generatedTickets = await $fetch<Ticket[]>(`${apiBaseUrl}/generate`, {
-      method: 'POST',
-      body: requestBody,
-    })
-
-    tickets.value = generatedTickets
+  // Update UI state based on store results
+  if (ticketsStore.hasTickets) {
     showGenerationForm.value = false
-    // Use semantic action for user-initiated ticket generation
-    simulationStore.generateTickets(generatedTickets)
-
-    // Update URL after successful generation (immediate persistence)
-    syncUrlWithState()
-  } catch (err: unknown) {
-    logger.error('Error generating tickets:', err)
-    const errorResponseMessage = extractErrorMessage(err)
-    error.value = errorResponseMessage
-    tickets.value = []
-  } finally {
-    loading.value = false
-    currentAction.value = null
   }
 }
 
@@ -704,83 +662,12 @@ const applyHighlightsOnTickets = (
     winClass?: number
   }>
 ): void => {
-  // This method is called by child components (Single Draw / Monte Carlo)
-  // Since highlighting is now centralized in the store, we just apply store highlights
-  applyStoreHighlights()
+  // Highlights are now automatically handled by store-derived decorated tickets
+  // The computed tickets property reactively updates when simulation results change
 }
 
-const applyStoreHighlights = (): void => {
-  // Apply highlights from the centralized store based on current mode
-  const highlights = simulationStore.getHighlightsForMode(activeMode.value)
-
-  // Apply the store highlights to tickets
-  const byId = new Map(highlights.map((u) => [u.id, u]))
-  tickets.value = tickets.value
-    .map((t) => {
-      const u = byId.get(t.id)
-      if (!u) {
-        // Clear highlights if no data for this ticket
-        return {
-          ...t,
-          winningMainNumbers: [],
-          winningEuroNumbers: [],
-          winClassCounts: {},
-          winClass: undefined,
-        }
-      }
-      return {
-        ...t,
-        winningMainNumbers: u.winningMainNumbers,
-        winningEuroNumbers: u.winningEuroNumbers,
-        winClassCounts: u.winClassCounts,
-        winClass: u.winClass,
-      }
-    })
-    .sort((a, b) => {
-      const A = a.winClass ?? 999
-      const B = b.winClass ?? 999
-      return A === B ? a.id - b.id : A - B
-    })
-}
-
-// Lucky Numbers sharing functions
-const shareLuckyNumbers = async (): Promise<void> => {
-  try {
-    let luckyCode: string
-
-    if (appState.value === 'SHARED' && currentLucky.value) {
-      // Re-share the original shared configuration
-      luckyCode = currentLucky.value
-    } else {
-      // Create new lucky code for current configuration
-      luckyCode = generateLuckyCode()
-    }
-
-    currentLuckyCode.value = luckyCode
-
-    // Create the app configuration with lucky seed
-    const config: AppConfig = {
-      system: formatTicketType(
-        selectedTicketType.value.mainCount,
-        selectedTicketType.value.euroCount
-      ),
-      tickets: ticketCount.value,
-      method: selectionMethod.value,
-      lucky: luckyCode,
-    }
-
-    // Generate the shareable URL
-    shareableUrl.value = getAppConfigUrl(config)
-
-    // Show the sharing dialog
-    showSharingDialog.value = true
-  } catch (error) {
-    logger.error('Failed to create shareable configuration:', error)
-    error.value = 'Failed to create shareable link'
-  }
-}
-
-const copyToClipboard = async (): Promise<void> => {
+// Sharing functions (now simplified using centralized state)
+const copyShareableUrl = async (): Promise<void> => {
   try {
     const config: AppConfig = {
       system: formatTicketType(
@@ -789,128 +676,20 @@ const copyToClipboard = async (): Promise<void> => {
       ),
       tickets: ticketCount.value,
       method: selectionMethod.value,
-      lucky: currentLuckyCode.value,
+      lucky: sharingLuckyCode.value,
     }
 
     await copyConfigUrl(config)
-    copySuccess.value = true
-
-    // Hide success message after 2 seconds
-    setTimeout(() => {
-      copySuccess.value = false
-    }, 2000)
+    setCopySuccess(2000)
   } catch (error) {
     logger.error('Failed to copy URL:', error)
   }
 }
 
-const closeSharingDialog = (): void => {
-  showSharingDialog.value = false
-  copySuccess.value = false
-}
-
 // URL handling for configuration restoration
-const handleUrlConfiguration = async (): Promise<void> => {
-  if (typeof window === 'undefined') return
-
-  const hash = window.location.hash
-  if (!hash) {
-    // No hash = fresh state
-    appState.value = 'FRESH'
-    return
-  }
-
-  // Try to decode as new unified format
-  const config = decodeUrlHash(hash)
-  if (config) {
-    await applyUrlConfig(config)
-    return
-  }
-
-  // Couldn't decode hash - treat as fresh
-  appState.value = 'FRESH'
-}
-
-const applyUrlConfig = async (config: Partial<AppConfig>): Promise<void> => {
-  // Apply configuration to form
-  if (config.system) {
-    const parsed = parseTicketType(config.system)
-    if (parsed) {
-      const matchingType = ticketTypes.value.find(
-        (t) =>
-          t.mainCount === parsed.mainCount && t.euroCount === parsed.euroCount
-      )
-      if (matchingType) {
-        selectedTicketType.value = matchingType
-      }
-    }
-  }
-
-  if (
-    config.tickets &&
-    config.tickets >= 1 &&
-    config.tickets <= maxTicketsAllowed
-  ) {
-    ticketCount.value = config.tickets
-  }
-
-  if (config.method) {
-    selectionMethod.value = config.method
-  }
-
-  // Handle lucky seed if present (shared configuration)
-  if (config.lucky) {
-    appState.value = 'SHARED'
-    currentLucky.value = config.lucky
-    welcomeLuckyCode.value = config.lucky
-    showWelcomeMessage.value = true
-
-    // Auto-dismiss welcome message after 12 seconds
-    setTimeout(() => {
-      showWelcomeMessage.value = false
-    }, 12000)
-
-    // Automatically generate the tickets using the lucky code as seed
-    try {
-      loading.value = true
-      currentAction.value = 'generate'
-      error.value = ''
-
-      const generatedTickets = await $fetch<Ticket[]>(
-        `${apiBaseUrl}/generate`,
-        {
-          method: 'POST',
-          body: {
-            ticketCount: ticketCount.value,
-            mainCount: selectedTicketType.value.mainCount,
-            euroCount: selectedTicketType.value.euroCount,
-            algorithm: 'uniform', // Use uniform for seeded generation
-            seed: config.lucky, // Use the lucky code as the seed
-          },
-        }
-      )
-
-      tickets.value = generatedTickets
-      showGenerationForm.value = false
-      // Use semantic action for user-initiated ticket generation
-      simulationStore.generateTickets(generatedTickets)
-    } catch (err: unknown) {
-      logger.error('Error generating shared tickets:', err)
-      error.value =
-        'Failed to generate the shared numbers. You can try generating manually.'
-    } finally {
-      loading.value = false
-      currentAction.value = null
-    }
-  } else {
-    // No lucky seed - just restore form state
-    appState.value = 'FRESH'
-    currentLucky.value = ''
-  }
-}
 
 const dismissWelcomeMessage = (): void => {
-  showWelcomeMessage.value = false
+  hideWelcome() // Use action instead of direct modification
   // If user dismisses welcome from shared state, remove the lucky seed
   if (appState.value === 'SHARED') {
     currentLucky.value = ''
@@ -920,7 +699,8 @@ const dismissWelcomeMessage = (): void => {
 
 // Load configuration from URL on mount
 onMounted(() => {
-  handleUrlConfiguration()
+  // Use tickets store to handle URL configuration
+  ticketsStore.handleUrlConfiguration()
 })
 </script>
 
@@ -931,6 +711,7 @@ input[type='number']::-webkit-outer-spin-button {
   margin: 0;
 }
 input[type='number'] {
+  appearance: textfield;
   -moz-appearance: textfield;
 }
 .transition-all {

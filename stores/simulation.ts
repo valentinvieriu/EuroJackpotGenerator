@@ -16,6 +16,7 @@ import { buildTicketHighlightUpdates } from '~/utils/ticketHighlighting'
 import { buildOddsMap } from '~/utils/payout'
 import { playWinSound } from '~/utils/audioUtils'
 import { useAudioState } from '~/composables/useAppState'
+import { useOddsStore } from './odds'
 import { LARGE_SIMULATION_THRESHOLD } from '~/utils/constants'
 import { logger } from '~/utils/logger'
 
@@ -254,14 +255,15 @@ export const useSimulationStore = defineStore('simulation', () => {
     try {
       const runtimeConfig = useRuntimeConfig()
       const apiBaseUrl = runtimeConfig.public.apiBase
+      const oddsStore = useOddsStore()
 
-      // Make parallel API calls just like SingleDrawPanel does
+      // Make parallel API calls - simulation and odds
       const [simResponse, winDataResponse] = await Promise.all([
         $fetch<{
           draw: { mainNumbers: number[]; euroNumbers: number[] }
           meta: Record<string, unknown>
         }>(`${apiBaseUrl}/simulate`),
-        $fetch<EurojackpotHistoricOdds>(`${apiBaseUrl}/fetchWinningData`),
+        oddsStore.fetchOdds(), // Use centralized odds store
       ])
 
       // Validate simulation result

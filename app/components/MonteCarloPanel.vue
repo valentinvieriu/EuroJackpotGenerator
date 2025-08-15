@@ -40,9 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted, watch, computed, type PropType } from 'vue'
-import { useRuntimeConfig } from '#app'
-import { formatDurationCompact } from '~/utils/time'
+import { onUnmounted, watch, computed, type PropType } from 'vue'
 import type {
   Ticket,
   EurojackpotHistoricOdds,
@@ -75,7 +73,9 @@ const emit = defineEmits<{
   (e: 'winning-data-updated', data: EurojackpotHistoricOdds): void
 }>()
 
-const error = ref('')
+// Use centralized error handling
+const { addError: addTransientError } = useTransientErrors()
+const error = computed(() => simStore.state.error || '')
 const simStore = useSimulationStore()
 const viewState = computed(() => {
   const s = simStore.state
@@ -93,11 +93,6 @@ const viewState = computed(() => {
     results: s.results as BatchSimulationResult | null,
   }
 })
-const config = useRuntimeConfig()
-const apiBaseUrl = config.public.apiBase
-
-// Kept for potential UI formatting; not used after store refactor
-const _formatEstimatedTime = formatDurationCompact
 
 /**
  * Apply highlights from completed batch simulation results.
@@ -114,17 +109,17 @@ const applyHighlightsFromResults = async (
 
 const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
   if (!props.tickets.length) return
-  error.value = ''
+  simStore.clearError()
 
-  // Fetch winning data for prize tooltips
+  // Fetch winning data for prize tooltips using centralized odds store
   try {
-    const winningData = await $fetch<EurojackpotHistoricOdds>(
-      `${apiBaseUrl}/fetchWinningData`
-    )
+    const oddsStore = useOddsStore()
+    const winningData = await oddsStore.fetchOdds()
     emit('winning-data-updated', winningData)
   } catch (winningDataError) {
     logger.warn('Failed to fetch winning data for tooltips:', winningDataError)
   }
+
   // Set store config and start simulation in store
   simStore.setConfig({
     simulationCount: cfg.simulationCount,
@@ -138,13 +133,13 @@ const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
     })
   } catch (err: unknown) {
     logger.error('Batch simulation error:', err)
-    // Error will also be reflected in store; show human-friendly UI message
+    // Error will also be reflected in store; show human-friendly transient error
     const anyErr = err as Record<string, unknown>
     const msg =
       (anyErr?.data as Record<string, unknown> | undefined)?.message ||
       (anyErr?.message as string | undefined) ||
       'An error occurred during batch simulation.'
-    error.value = String(msg)
+    addTransientError(String(msg), 5000)
   } finally {
     // Store manages running/cancel flags
   }

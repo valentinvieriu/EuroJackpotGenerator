@@ -659,10 +659,11 @@ const resetSingleDraw = () => {
 
 // Business rule functions
 const shouldResetSingleDrawOnTicketChange = (): boolean => {
-  return (
-    state.value.singleDraw.phase === 'results' ||
-    state.value.singleDraw.phase === 'error'
-  )
+  // Business rule: PRESERVE Single Draw results when tickets change
+  // This enables users to compare different ticket configurations against the same draw
+  // Re-highlight new tickets against preserved winning numbers for better UX
+  // Only reset on explicit user reset action, not on ticket changes
+  return false
 }
 ```
 
@@ -677,9 +678,12 @@ const generateTickets = (tickets: Ticket[]) => {
     resetToConfig()
   }
 
-  // Reset Single Draw if needed
+  // Preserve Single Draw and re-highlight with new tickets (better UX)
   if (shouldResetSingleDrawOnTicketChange()) {
     resetSingleDraw()
+  } else if (state.value.singleDraw.phase === 'results') {
+    // Re-calculate highlights for new tickets using preserved winning numbers
+    reHighlightSingleDrawResults()
   }
 }
 
