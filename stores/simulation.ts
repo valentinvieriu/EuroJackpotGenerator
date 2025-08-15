@@ -163,12 +163,26 @@ export const useSimulationStore = defineStore('simulation', () => {
       resetToConfig()
     }
 
-    // Business logic: Reset Single Draw when user generates new tickets
-    if (shouldResetSingleDrawOnTicketChange()) {
+    // Business logic: PRESERVE Single Draw and re-highlight with new tickets
+    console.log(`Single Draw current phase: ${state.value.singleDraw.phase}`)
+    const shouldReset = shouldResetSingleDrawOnTicketChange()
+    console.log(`shouldResetSingleDrawOnTicketChange returned: ${shouldReset}`)
+
+    if (shouldReset) {
       console.log(
         'SimulationStore: Resetting Single Draw for new user-generated tickets'
       )
       resetSingleDraw()
+    } else if (state.value.singleDraw.phase === 'results') {
+      // Re-calculate highlights for new tickets using preserved winning numbers
+      console.log(
+        'SimulationStore: Re-highlighting new tickets against preserved Single Draw results'
+      )
+      reHighlightSingleDrawResults()
+    } else {
+      console.log(
+        `SimulationStore: Single Draw phase is '${state.value.singleDraw.phase}', no action needed`
+      )
     }
   }
 
@@ -193,11 +207,11 @@ export const useSimulationStore = defineStore('simulation', () => {
   }
 
   const shouldResetSingleDrawOnTicketChange = (): boolean => {
-    // Business rule: Reset single draw when user changes tickets and we have results/errors
-    return (
-      state.value.singleDraw.phase === 'results' ||
-      state.value.singleDraw.phase === 'error'
-    )
+    // Business rule: PRESERVE Single Draw results when tickets change
+    // Only reset on explicit reset action, not on ticket changes
+    const shouldReset = false
+    console.log(`shouldResetSingleDrawOnTicketChange: returning ${shouldReset}`)
+    return shouldReset
   }
 
   // Single Draw Actions
@@ -319,6 +333,70 @@ export const useSimulationStore = defineStore('simulation', () => {
   const resetSingleDraw = () => {
     console.log('SimulationStore: Resetting single draw')
     state.value.singleDraw = createDefaultSingleDrawState()
+  }
+
+  const reHighlightSingleDrawResults = () => {
+    // Re-calculate highlights for current tickets using preserved winning numbers and odds
+    if (
+      !state.value.currentTickets ||
+      state.value.currentTickets.length === 0 ||
+      !state.value.singleDraw.winningNumbers ||
+      !state.value.singleDraw.oddsData
+    ) {
+      console.warn(
+        'Cannot re-highlight: missing tickets, winning numbers, or odds data'
+      )
+      return
+    }
+
+    const { winningNumbers, oddsData } = state.value.singleDraw
+
+    // Re-calculate ticket highlights with new tickets
+    const ticketHighlights = buildTicketHighlightUpdates(
+      state.value.currentTickets,
+      winningNumbers.mainNumbers,
+      winningNumbers.euroNumbers
+    )
+
+    // Re-calculate total winnings with new tickets
+    let totalWinnings = 0
+    if (oddsData?.eurojackpotOdds?.length) {
+      const oddsMap = buildOddsMap(oddsData)
+      for (const update of ticketHighlights) {
+        for (const [clsStr, count] of Object.entries(update.winClassCounts)) {
+          const amount = oddsMap.get(Number(clsStr)) ?? 0
+          totalWinnings += amount * (count as number)
+        }
+      }
+    }
+
+    // Calculate total ticket price for new tickets
+    const totalPrice = state.value.currentTickets.reduce(
+      (sum, ticket) => sum + (ticket.linesCount || 0) * 2.0, // €2.00 per line
+      0
+    )
+
+    // Re-calculate ROI
+    const netProfit = totalWinnings - totalPrice
+    const roiPercentage =
+      totalPrice > 0
+        ? (netProfit / totalPrice) * 100
+        : totalWinnings > 0
+          ? Infinity
+          : 0
+
+    // Update results with new calculations while preserving winning numbers and odds
+    state.value.singleDraw.results = {
+      totalWinnings: Number(totalWinnings.toFixed(2)),
+      netProfit: Number(netProfit.toFixed(2)),
+      roiPercentage,
+      timestamp: Date.now(), // Update timestamp to show when re-calculated
+      ticketHighlights,
+    }
+
+    console.log(
+      `Re-highlighted ${state.value.currentTickets.length} tickets against preserved winning numbers`
+    )
   }
 
   const resetToConfig = () => {
@@ -947,6 +1025,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     // Single Draw actions
     runSingleDraw,
     resetSingleDraw,
+    reHighlightSingleDrawResults,
   }
 })
 
