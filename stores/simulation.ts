@@ -4,7 +4,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed, readonly, watch } from 'vue'
+import { ref, computed, readonly } from 'vue'
 import type {
   BatchSimulationResult,
   BatchSimulationRequest,
@@ -83,29 +83,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     () => state.value.phase === 'config' && !!state.value.config
   )
 
-  // Reactive ticket fingerprint for auto-reset on ticket changes
-  const ticketFingerprint = computed(() => {
-    if (!state.value.currentTickets?.length) return null
-
-    // Create content-based fingerprint of tickets
-    return JSON.stringify(
-      state.value.currentTickets.map((ticket) => ({
-        id: ticket.id,
-        main: [...ticket.mainNumbers].sort(),
-        euro: [...ticket.euroNumbers].sort(),
-        linesCount: ticket.linesCount,
-      }))
-    )
-  })
-
-  // Watch ticket changes and auto-reset simulation state
-  watch(ticketFingerprint, (newFingerprint, oldFingerprint) => {
-    // Only reset if we had tickets before and they actually changed
-    if (oldFingerprint && newFingerprint !== oldFingerprint) {
-      console.log('Tickets changed, resetting simulation to config state')
-      resetToConfig()
-    }
-  })
+  // Tickets are now managed explicitly without automatic resets
 
   // Actions
   const setConfig = (config: SimulationConfig) => {
@@ -114,8 +92,38 @@ export const useSimulationStore = defineStore('simulation', () => {
     clearError()
   }
 
-  const setTickets = (tickets: Ticket[]) => {
+  // Semantic actions that encode business logic
+
+  const generateTickets = (tickets: Ticket[]) => {
+    console.log('SimulationStore: User generated new tickets')
     state.value.currentTickets = tickets
+
+    // Business logic: Reset simulation when user generates new tickets
+    if (shouldResetOnTicketChange()) {
+      console.log(
+        'SimulationStore: Resetting simulation for new user-generated tickets'
+      )
+      resetToConfig()
+    }
+  }
+
+  const resetTickets = () => {
+    console.log('SimulationStore: User reset tickets')
+    state.value.currentTickets = []
+
+    // Business logic: Always reset simulation when user explicitly resets
+    resetToConfig()
+  }
+
+  const syncTickets = (tickets: Ticket[]) => {
+    console.log('SimulationStore: Syncing tickets from component lifecycle')
+    // Just update tickets without reset logic - this is for component sync
+    state.value.currentTickets = tickets
+  }
+
+  const shouldResetOnTicketChange = (): boolean => {
+    // Business rule: Reset simulation when user changes tickets and we have results/errors
+    return state.value.phase === 'results' || state.value.phase === 'error'
   }
 
   const resetToConfig = () => {
@@ -436,7 +444,9 @@ export const useSimulationStore = defineStore('simulation', () => {
 
     // Actions
     setConfig,
-    setTickets,
+    generateTickets,
+    resetTickets,
+    syncTickets,
     startSimulation,
     cancelSimulation,
     resetSimulation,

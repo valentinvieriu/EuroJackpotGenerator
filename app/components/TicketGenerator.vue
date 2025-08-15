@@ -500,11 +500,27 @@ const simulationStore = useSimulationStore()
 // Watch tickets changes and sync to simulation store
 watch(
   tickets,
-  (newTickets) => {
-    simulationStore.setTickets(newTickets)
+  (newTickets, oldTickets) => {
+    // Only sync if tickets actually changed to avoid unnecessary updates
+    if (JSON.stringify(newTickets) !== JSON.stringify(oldTickets)) {
+      console.log(
+        'TicketGenerator: Syncing tickets to simulation store',
+        newTickets.length
+      )
+      // Use semantic action for component lifecycle sync
+      simulationStore.syncTickets(newTickets)
+    }
   },
-  { immediate: true, deep: true }
+  { deep: true }
 )
+
+// Initial sync on mount
+onMounted(() => {
+  if (tickets.value.length > 0) {
+    console.log('TicketGenerator: Initial ticket sync on mount')
+    simulationStore.syncTickets(tickets.value)
+  }
+})
 const apiBaseUrl = config.public.apiBase
 
 const totalPrice = computed<number>(() => {
@@ -565,7 +581,8 @@ const setMode = (m: 'single' | 'montecarlo'): void => {
 const clearTickets = (): void => {
   tickets.value = []
   error.value = ''
-  // Keys no longer needed - reactive state management handles reset
+  // Use semantic action for user-initiated reset
+  simulationStore.resetTickets()
 }
 
 const resetTickets = (): void => {
@@ -634,7 +651,8 @@ const generateTicketsHandler = async (): Promise<void> => {
 
     tickets.value = generatedTickets
     showGenerationForm.value = false
-    // Reactive state management will handle simulation reset automatically
+    // Use semantic action for user-initiated ticket generation
+    simulationStore.generateTickets(generatedTickets)
 
     // Update URL after successful generation (immediate persistence)
     syncUrlWithState()
@@ -831,7 +849,8 @@ const applyUrlConfig = async (config: Partial<AppConfig>): Promise<void> => {
 
       tickets.value = generatedTickets
       showGenerationForm.value = false
-      // Reactive state management will handle simulation reset automatically
+      // Use semantic action for user-initiated ticket generation
+      simulationStore.generateTickets(generatedTickets)
     } catch (err: unknown) {
       console.error('Error generating shared tickets:', err)
       error.value =

@@ -94,8 +94,8 @@ const viewState = computed(() => {
     totalSimulations: p?.totalSimulations ?? s.config?.simulationCount ?? 0,
     startTime: s.startTime,
     elapsedTime: p?.elapsedTime ?? 0,
-    estimatedTimeRemaining: p?.estimatedTimeRemaining ?? null,
-    partialResults: p?.partialResults ?? null,
+    estimatedTimeRemaining: p?.estimatedTimeRemaining ?? undefined,
+    partialResults: p?.partialResults ?? undefined,
     results: s.results as BatchSimulationResult | null,
   }
 })
@@ -379,8 +379,10 @@ watch(
   () => simStore.state.phase,
   async (phase) => {
     if (phase === 'results' && simStore.state.results) {
-      await applyHighlightsFromResults(simStore.state.results)
-      if (simStore.state.results.roiPercentage > 0) {
+      const results = simStore.state.results as BatchSimulationResult
+      await applyHighlightsFromResults(results)
+      // Double-check results still exist after async operation
+      if (simStore.state.results && simStore.state.results.roiPercentage > 0) {
         const r = simStore.state.results
         playWinSound(r.totalWinnings, r.totalCost)
       }

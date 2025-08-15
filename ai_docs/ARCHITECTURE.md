@@ -397,6 +397,186 @@ sequenceDiagram
 
 Legacy URL formats are no longer supported. All links must use the unified format documented above.
 
+## 13) Cross-Component State Coordination Patterns
+
+This section documents established patterns for managing state changes across components, particularly for UI actions that should trigger simulation resets or other cross-component side effects.
+
+### Problem Statement
+
+Complex applications often need to coordinate state changes between components. For example, when a user generates new tickets in `TicketGenerator.vue`, the `MonteCarloPanel.vue` should reset its simulation state. The challenge is implementing this coordination while following the 3-layer state management architecture and avoiding:
+
+- Scattered imperative reset flags
+- Tight coupling between components
+- Race conditions from reactive watchers
+- Architecture violations (business logic in components)
+
+### Solution: Semantic Action Pattern
+
+The recommended approach uses **semantic actions** that encode business intent rather than imperative commands.
+
+#### Pattern Structure
+
+```typescript
+// In Pinia store (Layer 2)
+const generateTickets = (tickets: Ticket[]) => {
+  console.log('SimulationStore: User generated new tickets')
+  state.value.currentTickets = tickets
+
+  // Business logic: Reset simulation when user generates new tickets
+  if (shouldResetOnTicketChange()) {
+    console.log(
+      'SimulationStore: Resetting simulation for new user-generated tickets'
+    )
+    resetToConfig()
+  }
+}
+
+const resetTickets = () => {
+  console.log('SimulationStore: User reset tickets')
+  state.value.currentTickets = []
+
+  // Business logic: Always reset simulation when user explicitly resets
+  resetToConfig()
+}
+
+const syncTickets = (tickets: Ticket[]) => {
+  console.log('SimulationStore: Syncing tickets from component lifecycle')
+  // Just update tickets without reset logic - this is for component sync
+  state.value.currentTickets = tickets
+}
+
+const shouldResetOnTicketChange = (): boolean => {
+  // Business rule: Reset simulation when user changes tickets and we have results/errors
+  return state.value.phase === 'results' || state.value.phase === 'error'
+}
+```
+
+#### Component Usage
+
+```typescript
+// In TicketGenerator.vue
+watch(
+  tickets,
+  (newTickets, oldTickets) => {
+    if (JSON.stringify(newTickets) !== JSON.stringify(oldTickets)) {
+      // Use lifecycle sync action - no business side effects
+      simulationStore.syncTickets(newTickets)
+    }
+  },
+  { deep: true }
+)
+
+const generateTicketsHandler = async () => {
+  // ... API call to generate tickets
+  tickets.value = generatedTickets
+
+  // Use semantic action for user-initiated generation
+  simulationStore.generateTickets(generatedTickets)
+}
+
+const clearTickets = () => {
+  tickets.value = []
+
+  // Use semantic action for user-initiated reset
+  simulationStore.resetTickets()
+}
+```
+
+### Key Principles
+
+#### 1. Semantic Intent Over Imperative Commands
+
+**Bad (Imperative):**
+
+```typescript
+simulationStore.setTickets(tickets, shouldReset: boolean)
+```
+
+**Good (Semantic):**
+
+```typescript
+simulationStore.generateTickets(tickets) // User action
+simulationStore.syncTickets(tickets) // Component lifecycle
+simulationStore.resetTickets() // User reset action
+```
+
+#### 2. Business Logic in Stores, Not Components
+
+**Bad:**
+
+```typescript
+// Component decides when to reset
+const handleTicketChange = () => {
+  if (hasResults && userTriggered) {
+    simulationStore.reset()
+  }
+  simulationStore.setTickets(tickets)
+}
+```
+
+**Good:**
+
+```typescript
+// Store encodes business rules
+const generateTickets = (tickets) => {
+  state.currentTickets = tickets
+  if (shouldResetOnTicketChange()) {
+    resetToConfig()
+  }
+}
+```
+
+#### 3. Distinguish User Actions from Lifecycle Events
+
+- **User Actions** (generateTickets, resetTickets): May trigger business logic side effects
+- **Lifecycle Events** (syncTickets): Update state without side effects
+
+#### 4. Clear Action Naming
+
+Action names should clearly indicate:
+
+- **Who** initiated the action (user vs system)
+- **What** the intent is (generate vs sync vs reset)
+- **When** side effects should occur
+
+### Implementation Steps
+
+1. **Identify Cross-Component Dependencies**
+   - Map which user actions should affect other components
+   - Identify the business rules that govern these relationships
+
+2. **Design Semantic Actions**
+   - Create action names that reflect user intent
+   - Separate user actions from component lifecycle events
+   - Encode business logic in the store actions
+
+3. **Update Components**
+   - Replace imperative store calls with semantic actions
+   - Use lifecycle actions (syncTickets) for reactive updates
+   - Use intent actions (generateTickets, resetTickets) for user actions
+
+4. **Test Cross-Component Behavior**
+   - Verify user actions trigger appropriate side effects
+   - Ensure lifecycle events don't cause unwanted resets
+   - Test edge cases and race conditions
+
+### Benefits
+
+- **Maintainable**: Business logic centralized in stores
+- **Testable**: Clear action boundaries enable focused testing
+- **Scalable**: Pattern extends to new cross-component relationships
+- **Debuggable**: Semantic action names make state changes traceable
+- **Architecture-Compliant**: Follows 3-layer state management principles
+
+### Common Pitfalls to Avoid
+
+1. **Overloaded Actions**: Don't add boolean flags to control side effects
+2. **Component Business Logic**: Keep cross-component rules in stores
+3. **Reactive Watchers for User Actions**: Use explicit semantic actions instead
+4. **Tight Coupling**: Components should call store actions, not other components directly
+
+This pattern ensures that future UI changes requiring cross-component coordination can be implemented cleanly and consistently.
+
 ## 12) Open Items / Future
 
 - Optional toggle: **uniform vs weighted** generation in UI.
