@@ -331,19 +331,18 @@ const breakEvenPercentage = computed(() => {
   const systemMain = firstTicket.mainNumbers.length
   const systemEuro = firstTicket.euroNumbers.length
 
-  // Calculate theoretical expected value using current odds
-  const expectedValue = calculateTheoreticalExpectedValue(
+  // EV for ONE simulation across ALL tickets/lines
+  const expectedValueTotal = calculateTheoreticalExpectedValue(
     props.ticketCount,
     systemMain,
     systemEuro,
     oddsStore.currentOdds
   )
 
-  if (expectedValue <= 0) return 100 // If no expected value, need 100% win rate to break even
+  if (expectedValueTotal <= 0) return 100 // If no expected value, need 100% win rate to break even
 
-  // Break-even percentage = cost per simulation / expected value per simulation * 100
-  const expectedValuePerSimulation = expectedValue / props.ticketCount
-  return (props.costPerSimulation / expectedValuePerSimulation) * 100
+  // Break-even percentage = cost per simulation / expected total EV per simulation * 100
+  return (props.costPerSimulation / expectedValueTotal) * 100
 })
 
 const handleStartSimulation = () => {
