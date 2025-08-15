@@ -57,17 +57,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount, type PropType } from 'vue'
-import { useRuntimeConfig } from '#app'
-import type {
-  Ticket,
-  EurojackpotHistoricOdds,
-  SimulateResponse,
-} from '~/schemas'
+import { computed, onMounted, onBeforeUnmount, type PropType } from 'vue'
+import type { Ticket, EurojackpotHistoricOdds } from '~/schemas'
 import SimulatedExtraction from './SimulatedExtraction.vue'
-import { buildOddsMap } from '~/utils/payout'
-import { buildTicketHighlightUpdates } from '~/utils/ticketHighlighting'
-import { playWinSound } from '~/utils/audioUtils'
 
 const props = defineProps({
   tickets: { type: Array as PropType<Ticket[]>, required: true },
@@ -88,97 +80,58 @@ const emit = defineEmits<{
   (e: 'winning-data-updated', data: EurojackpotHistoricOdds): void
 }>()
 
-const config = useRuntimeConfig()
-const apiBaseUrl = config.public.apiBase
+// Use simulation store for state management
+const simStore = useSimulationStore()
 
-const loading = ref(false)
-const error = ref('')
+// Computed getters based on store state
+const loading = computed(() => simStore.isSingleDrawRunning)
+const error = computed(() => simStore.state.singleDraw.error || '')
+const simulationResult = computed(() => {
+  const winningNumbers = simStore.state.singleDraw.winningNumbers
+  if (!winningNumbers) return null
 
-const simulationResult = ref<Pick<
-  Ticket,
-  'mainNumbers' | 'euroNumbers'
-> | null>(null)
-const latestWinningData = ref<EurojackpotHistoricOdds | null>(null)
-
-const totalWinnings = ref(0)
-const winLossRate = ref(0)
+  // Convert readonly arrays to mutable arrays for component compatibility
+  return {
+    mainNumbers: [...winningNumbers.mainNumbers] as number[],
+    euroNumbers: [...winningNumbers.euroNumbers] as number[],
+  }
+})
+const _latestWinningData = computed(() => simStore.state.singleDraw.oddsData)
+const totalWinnings = computed(
+  () => simStore.state.singleDraw.results?.totalWinnings || 0
+)
+const winLossRate = computed(
+  () => simStore.state.singleDraw.results?.roiPercentage || 0
+)
 const profitLossAmount = computed(() => totalWinnings.value - props.totalPrice)
 
-const reset = (): void => {
-  error.value = ''
-  simulationResult.value = null
-  latestWinningData.value = null
-  totalWinnings.value = 0
-  winLossRate.value = 0
-}
+// The reset function is no longer needed since the store manages state
 
 const simulateExtractionHandler = async (): Promise<void> => {
   if (!props.tickets.length || loading.value) return
-  loading.value = true
-  reset()
-  try {
-    const [simResponse, winDataResponse] = await Promise.all([
-      $fetch<SimulateResponse>(`${apiBaseUrl}/simulate`),
-      $fetch<EurojackpotHistoricOdds>(`${apiBaseUrl}/fetchWinningData`),
-    ])
 
-    // Adapt to new API: { draw: { mainNumbers, euroNumbers }, meta: {...} }
-    simulationResult.value = simResponse.draw
-    latestWinningData.value = winDataResponse
-    emit('winning-data-updated', winDataResponse)
+  // Use store action to run single draw
+  await simStore.runSingleDraw(props.totalPrice)
 
-    if (
-      !simulationResult.value?.mainNumbers ||
-      !simulationResult.value?.euroNumbers
-    ) {
-      throw new Error('Invalid simulation result received from API.')
-    }
+  // Emit winning data and highlights to parent if we have results
+  if (simStore.state.singleDraw.oddsData) {
+    emit(
+      'winning-data-updated',
+      simStore.state.singleDraw.oddsData as EurojackpotHistoricOdds
+    )
+  }
 
-    const simMain = simulationResult.value.mainNumbers
-    const simEuro = simulationResult.value.euroNumbers
-
-    const updates = buildTicketHighlightUpdates(props.tickets, simMain, simEuro)
-
-    emit('apply-highlights', updates)
-
-    if (latestWinningData.value?.eurojackpotOdds?.length) {
-      const oddsMap = buildOddsMap(latestWinningData.value)
-      let sum = 0
-      for (const u of updates) {
-        for (const [clsStr, count] of Object.entries(u.winClassCounts)) {
-          const amount = oddsMap.get(Number(clsStr)) ?? 0
-          sum += amount * (count as number)
-        }
-      }
-      totalWinnings.value = Number(sum.toFixed(2))
-    } else {
-      totalWinnings.value = 0
-    }
-
-    const cost = props.totalPrice
-    if (cost > 0) {
-      const profit = totalWinnings.value - cost
-      winLossRate.value = (profit / cost) * 100
-    } else {
-      winLossRate.value = totalWinnings.value > 0 ? Infinity : 0
-    }
-
-    playWinSound(totalWinnings.value, props.totalPrice)
-  } catch (err: unknown) {
-    console.error('Single-draw error:', err)
-    if (typeof err === 'object' && err !== null) {
-      const anyErr = err as Record<string, unknown>
-      const msg =
-        (anyErr.data as Record<string, unknown> | undefined)?.message ||
-        (anyErr.message as string | undefined) ||
-        'An error occurred during simulation.'
-      error.value = String(msg)
-    } else {
-      error.value = 'An error occurred during simulation.'
-    }
-    reset()
-  } finally {
-    loading.value = false
+  if (simStore.state.singleDraw.results?.ticketHighlights) {
+    emit(
+      'apply-highlights',
+      simStore.state.singleDraw.results.ticketHighlights as Array<{
+        id: number
+        winningMainNumbers: number[]
+        winningEuroNumbers: number[]
+        winClassCounts: Record<number, number>
+        winClass?: number
+      }>
+    )
   }
 }
 

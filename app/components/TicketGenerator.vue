@@ -514,6 +514,25 @@ watch(
   { deep: true }
 )
 
+// Watch simulation store state to apply contextual highlights when results change
+watch(
+  [
+    () => simulationStore.state.singleDraw.results,
+    () => simulationStore.state.results?.highlightingData,
+    () => mode.value,
+  ],
+  () => {
+    // Apply store highlights when:
+    // - Single Draw results change
+    // - Monte Carlo results/highlighting data changes
+    // - User switches between tabs
+    if (tickets.value.length > 0) {
+      applyStoreHighlights()
+    }
+  },
+  { deep: true }
+)
+
 // Initial sync on mount
 onMounted(() => {
   if (tickets.value.length > 0) {
@@ -576,6 +595,9 @@ const resetAllState = (clearTickets = false): void => {
 const setMode = (m: 'single' | 'montecarlo'): void => {
   mode.value = m
   error.value = ''
+
+  // Apply highlights when switching tabs
+  applyStoreHighlights()
 }
 
 const clearTickets = (): void => {
@@ -672,7 +694,7 @@ const updateWinningData = (data: EurojackpotHistoricOdds): void => {
 }
 
 const applyHighlightsOnTickets = (
-  updates: Array<{
+  _updates: Array<{
     id: number
     winningMainNumbers: number[]
     winningEuroNumbers: number[]
@@ -680,11 +702,30 @@ const applyHighlightsOnTickets = (
     winClass?: number
   }>
 ): void => {
-  const byId = new Map(updates.map((u) => [u.id, u]))
+  // This method is called by child components (Single Draw / Monte Carlo)
+  // Since highlighting is now centralized in the store, we just apply store highlights
+  applyStoreHighlights()
+}
+
+const applyStoreHighlights = (): void => {
+  // Apply highlights from the centralized store based on current mode
+  const highlights = simulationStore.getHighlightsForMode(mode.value)
+
+  // Apply the store highlights to tickets
+  const byId = new Map(highlights.map((u) => [u.id, u]))
   tickets.value = tickets.value
     .map((t) => {
       const u = byId.get(t.id)
-      if (!u) return t
+      if (!u) {
+        // Clear highlights if no data for this ticket
+        return {
+          ...t,
+          winningMainNumbers: [],
+          winningEuroNumbers: [],
+          winClassCounts: {},
+          winClass: undefined,
+        }
+      }
       return {
         ...t,
         winningMainNumbers: u.winningMainNumbers,

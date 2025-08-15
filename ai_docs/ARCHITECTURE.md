@@ -577,6 +577,130 @@ Action names should clearly indicate:
 
 This pattern ensures that future UI changes requiring cross-component coordination can be implemented cleanly and consistently.
 
+### Implementation Example: Single Draw Persistence
+
+The Single Draw persistence implementation demonstrates a complete application of the semantic action pattern for cross-component coordination.
+
+#### Problem Context
+
+Single Draw results were not persisting across user interactions:
+
+- Results disappeared when generating new tickets
+- Results disappeared when resetting tickets
+- Results disappeared when switching between Single Draw and Monte Carlo tabs
+- All state was managed locally in `SingleDrawPanel.vue` with no coordination
+
+#### Solution Architecture
+
+**1. Extended Simulation Store State:**
+
+```typescript
+interface SimulationState {
+  // Existing Monte Carlo state...
+
+  // Added Single Draw state
+  singleDraw: {
+    phase: 'idle' | 'running' | 'results' | 'error'
+    winningNumbers: { mainNumbers: number[]; euroNumbers: number[] } | null
+    oddsData: EurojackpotHistoricOdds | null
+    results: {
+      totalWinnings: number
+      netProfit: number
+      roiPercentage: number
+      timestamp: number
+      ticketHighlights: Array<TicketHighlightUpdate>
+    } | null
+    error: string | null
+  }
+}
+```
+
+**2. Single Draw Semantic Actions:**
+
+```typescript
+// User-initiated actions
+const runSingleDraw = async (totalPrice: number) => {
+  // Handle API calls, state transitions, and business logic
+  // Automatically manages: API calls, error handling, result calculation, win sound
+}
+
+const resetSingleDraw = () => {
+  // Clear single draw state
+}
+
+// Business rule functions
+const shouldResetSingleDrawOnTicketChange = (): boolean => {
+  return (
+    state.value.singleDraw.phase === 'results' ||
+    state.value.singleDraw.phase === 'error'
+  )
+}
+```
+
+**3. Updated Cross-Component Coordination:**
+
+```typescript
+const generateTickets = (tickets: Ticket[]) => {
+  state.value.currentTickets = tickets
+
+  // Reset Monte Carlo if needed
+  if (shouldResetOnTicketChange()) {
+    resetToConfig()
+  }
+
+  // Reset Single Draw if needed
+  if (shouldResetSingleDrawOnTicketChange()) {
+    resetSingleDraw()
+  }
+}
+
+const resetTickets = () => {
+  state.value.currentTickets = []
+
+  // Reset both simulations
+  resetToConfig() // Monte Carlo
+  resetSingleDraw() // Single Draw
+}
+```
+
+**4. Component Simplification:**
+
+```typescript
+// Before: 60+ lines of local state management and API calls
+const simulateExtractionHandler = async () => {
+  // Complex API orchestration, error handling, state management...
+}
+
+// After: Simple store action call
+const simulateExtractionHandler = async () => {
+  await simStore.runSingleDraw(props.totalPrice)
+
+  // Emit to parent for highlighting
+  if (simStore.state.singleDraw.results?.ticketHighlights) {
+    emit('apply-highlights', simStore.state.singleDraw.results.ticketHighlights)
+  }
+}
+```
+
+#### Results Achieved
+
+- **Persistence**: Single Draw results now persist across tab switches and component lifecycle
+- **Coordination**: Proper reset behavior when generating/resetting tickets
+- **Separation of Concerns**: Business logic centralized in store, UI concerns in component
+- **Consistency**: Same semantic action pattern as Monte Carlo
+- **Maintainability**: 70% reduction in component complexity
+- **Testability**: Store actions can be unit tested independently
+
+#### Key Design Decisions
+
+1. **Same Store vs Separate Store**: Used same simulation store to leverage existing semantic actions and ensure consistent coordination
+2. **State Persistence Level**: Memory-only persistence (no URL persistence for ephemeral Single Draw results)
+3. **Action Granularity**: Single `runSingleDraw` action encapsulates entire workflow rather than separate actions for each API call
+4. **Error Handling**: Centralized in store action rather than component
+5. **Component Interface**: Maintained existing emit interface for parent component compatibility
+
+This implementation serves as a reference for future features requiring similar cross-component coordination while following the established architectural patterns.
+
 ## 12) Open Items / Future
 
 - Optional toggle: **uniform vs weighted** generation in UI.
@@ -586,6 +710,14 @@ This pattern ensures that future UI changes requiring cross-component coordinati
 ````
 
 ---
+
+Addendum – Clarifications
+
+- Odds normalization: Performed in `app/schemas/winning.ts` using Zod preprocess (`101–112 → 1–12`); no separate `odds.ts` normalizer exists in this repo.
+- Statistics manager location: Frequency data cache is implemented in `server/utils/statistics.ts` (10‑minute cache), not an app‑side manager.
+- Batch streaming headers: Set `Content-Type: application/x-ndjson` only for streamed responses; return `application/json` for non‑streaming responses.
+- Cancel semantics: Current UI cancellation aborts the client stream; the server completes the current batch (optional cooperative cancellation can stop after batch boundaries).
+- Route naming: Current repo uses camelCase API filenames (e.g., `batchSimulate.ts`) mapping to `/api/batchSimulate`; kebab‑case is still recommended for new routes.
 
 ## `ai_docs/COMMON_GUIDE.md`
 
