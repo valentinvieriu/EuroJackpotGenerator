@@ -52,6 +52,8 @@ import BatchSimulationProgress from './BatchSimulationProgress.vue'
 import BatchSimulationResults from './BatchSimulationResults.vue'
 import { playWinSound } from '~/utils/audioUtils'
 import { logger } from '~/utils/logger'
+import { combinationCount } from '~/utils/combinatorics'
+import { PRICE_PER_LINE } from '~/utils/pricing'
 // useSimulationStore is auto-imported via @pinia/nuxt configuration
 
 const props = defineProps({
@@ -92,6 +94,15 @@ const viewState = computed(() => {
     results: s.results as BatchSimulationResult | null,
   }
 })
+
+// Cost per simulation across all provided tickets (all lines)
+const costPerSimulation = computed(() =>
+  props.tickets.reduce((sum, t) => {
+    const m = t.mainNumbers.length
+    const e = t.euroNumbers.length
+    return sum + combinationCount(m, e) * PRICE_PER_LINE
+  }, 0)
+)
 
 /**
  * Apply highlights from completed batch simulation results.

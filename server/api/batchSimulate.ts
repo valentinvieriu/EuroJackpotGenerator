@@ -134,6 +134,18 @@ export default defineEventHandler(
           await writer.write(encoder.encode(JSON.stringify(obj) + '\n'))
         }
 
+        // Track start time to compute a simple ETA on the server
+        const startTime = Date.now()
+
+        const formatETA = (remainingMs: number): string => {
+          const seconds = Math.ceil(remainingMs / 1000)
+          if (seconds < 60) return `${seconds}s`
+          if (seconds < 3600) return `${Math.ceil(seconds / 60)}m`
+          const hours = Math.floor(seconds / 3600)
+          const minutes = Math.ceil((seconds % 3600) / 60)
+          return `${hours}h ${minutes}m`
+        }
+
         ;(async () => {
           try {
             for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
@@ -165,6 +177,18 @@ export default defineEventHandler(
                 partialStats.individualResults = undefined
               }
 
+              // Compute simple ETA based on elapsed and progress
+              const elapsedMs = Date.now() - startTime
+              const progress = endIndex / effectiveSimulationCount
+              const estimatedTimeRemaining =
+                progress > 0
+                  ? (() => {
+                      const totalEstimated = elapsedMs / progress
+                      const remaining = totalEstimated - elapsedMs
+                      return remaining > 0 ? formatETA(remaining) : null
+                    })()
+                  : null
+
               // Emit progress update
               await writeLine({
                 type: 'progress',
@@ -173,7 +197,7 @@ export default defineEventHandler(
                   totalSimulations: effectiveSimulationCount,
                   progressPercentage:
                     (endIndex / effectiveSimulationCount) * 100,
-                  estimatedTimeRemaining: null,
+                  estimatedTimeRemaining,
                   canCancel: true,
                 },
                 summary: {

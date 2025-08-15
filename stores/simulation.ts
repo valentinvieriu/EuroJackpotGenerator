@@ -665,10 +665,10 @@ export const useSimulationStore = defineStore('simulation', () => {
       totalSimulations: progress.totalSimulations,
       progressPercentage: progress.progressPercentage,
       elapsedTime: elapsed,
-      estimatedTimeRemaining: calculateETA(
-        progress.progressPercentage,
-        elapsed
-      ),
+      estimatedTimeRemaining:
+        typeof progress.estimatedTimeRemaining !== 'undefined'
+          ? progress.estimatedTimeRemaining
+          : calculateETA(progress.progressPercentage, elapsed),
       partialResults: summary
         ? {
             simulationsCompleted: progress.currentSimulation,
