@@ -384,7 +384,6 @@
         <div v-else-if="!loading">
           <SingleDrawPanel
             v-if="mode === 'single'"
-            :key="singlePanelKey"
             :tickets="tickets"
             :total-price="totalPrice"
             @apply-highlights="applyHighlightsOnTickets"
@@ -392,7 +391,6 @@
           />
           <MonteCarloPanel
             v-if="mode === 'montecarlo'"
-            :key="montePanelKey"
             :tickets="tickets"
             :cost-per-simulation="totalPrice"
             @apply-highlights="applyHighlightsOnTickets"
@@ -476,8 +474,6 @@ const latestWinningData: Ref<EurojackpotHistoricOdds | null> = ref(null)
 
 // UI mode
 const mode = ref<'single' | 'montecarlo'>('single')
-const singlePanelKey = ref(0)
-const montePanelKey = ref(0)
 const showGenerationForm = ref(false)
 
 // App state management
@@ -497,6 +493,18 @@ watch(
 )
 
 const config = useRuntimeConfig()
+
+// Simulation store for reactive state management
+const simulationStore = useSimulationStore()
+
+// Watch tickets changes and sync to simulation store
+watch(
+  tickets,
+  (newTickets) => {
+    simulationStore.setTickets(newTickets)
+  },
+  { immediate: true, deep: true }
+)
 const apiBaseUrl = config.public.apiBase
 
 const totalPrice = computed<number>(() => {
@@ -557,8 +565,7 @@ const setMode = (m: 'single' | 'montecarlo'): void => {
 const clearTickets = (): void => {
   tickets.value = []
   error.value = ''
-  singlePanelKey.value++
-  montePanelKey.value++
+  // Keys no longer needed - reactive state management handles reset
 }
 
 const resetTickets = (): void => {
@@ -626,9 +633,8 @@ const generateTicketsHandler = async (): Promise<void> => {
     })
 
     tickets.value = generatedTickets
-    singlePanelKey.value++
-    montePanelKey.value++
     showGenerationForm.value = false
+    // Reactive state management will handle simulation reset automatically
 
     // Update URL after successful generation (immediate persistence)
     syncUrlWithState()
@@ -824,9 +830,8 @@ const applyUrlConfig = async (config: Partial<AppConfig>): Promise<void> => {
       )
 
       tickets.value = generatedTickets
-      singlePanelKey.value++
-      montePanelKey.value++
       showGenerationForm.value = false
+      // Reactive state management will handle simulation reset automatically
     } catch (err: unknown) {
       console.error('Error generating shared tickets:', err)
       error.value =

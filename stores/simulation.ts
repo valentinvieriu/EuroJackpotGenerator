@@ -4,7 +4,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed, readonly } from 'vue'
+import { ref, computed, readonly, watch } from 'vue'
 import type {
   BatchSimulationResult,
   BatchSimulationRequest,
@@ -50,6 +50,7 @@ export interface SimulationState {
   startTime: number
   canCancel: boolean
   abortController: AbortController | null
+  currentTickets: Ticket[] | null
 }
 
 /**
@@ -67,6 +68,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     startTime: 0,
     canCancel: false,
     abortController: null,
+    currentTickets: null,
   })
 
   // Computed getters
@@ -81,11 +83,59 @@ export const useSimulationStore = defineStore('simulation', () => {
     () => state.value.phase === 'config' && !!state.value.config
   )
 
+  // Reactive ticket fingerprint for auto-reset on ticket changes
+  const ticketFingerprint = computed(() => {
+    if (!state.value.currentTickets?.length) return null
+
+    // Create content-based fingerprint of tickets
+    return JSON.stringify(
+      state.value.currentTickets.map((ticket) => ({
+        id: ticket.id,
+        main: [...ticket.mainNumbers].sort(),
+        euro: [...ticket.euroNumbers].sort(),
+        linesCount: ticket.linesCount,
+      }))
+    )
+  })
+
+  // Watch ticket changes and auto-reset simulation state
+  watch(ticketFingerprint, (newFingerprint, oldFingerprint) => {
+    // Only reset if we had tickets before and they actually changed
+    if (oldFingerprint && newFingerprint !== oldFingerprint) {
+      console.log('Tickets changed, resetting simulation to config state')
+      resetToConfig()
+    }
+  })
+
   // Actions
   const setConfig = (config: SimulationConfig) => {
     state.value.config = config
     state.value.phase = 'config'
     clearError()
+  }
+
+  const setTickets = (tickets: Ticket[]) => {
+    state.value.currentTickets = tickets
+  }
+
+  const resetToConfig = () => {
+    // Cancel any running simulation first
+    if (state.value.phase === 'running') {
+      cancelSimulation()
+    }
+
+    // Reset to config state while preserving config and tickets
+    state.value = {
+      ...state.value,
+      phase: 'config',
+      progress: null,
+      results: null,
+      error: null,
+      startTime: 0,
+      canCancel: false,
+      abortController: null,
+      // Preserve: config, currentTickets
+    }
   }
 
   const startSimulation = async (
@@ -98,10 +148,11 @@ export const useSimulationStore = defineStore('simulation', () => {
       return
     }
 
-    // Reset state
+    // Reset state for simulation start
     state.value = {
       phase: 'running',
       config,
+      currentTickets: tickets, // Store tickets in state for fingerprint tracking
       progress: {
         currentSimulation: 0,
         totalSimulations: config.simulationCount,
@@ -184,6 +235,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     state.value = {
       phase: 'config',
       config: state.value.config, // Keep config for reuse
+      currentTickets: null, // Clear tickets for full reset
       progress: null,
       results: null,
       error: null,
@@ -357,8 +409,17 @@ export const useSimulationStore = defineStore('simulation', () => {
   const extractErrorMessage = (error: unknown): string => {
     if (typeof error === 'string') return error
     if (error instanceof Error) return error.message
-    if (error?.data?.message) return error.data.message
-    if (error?.statusText) return error.statusText
+    if (error && typeof error === 'object') {
+      const e = error as Record<string, unknown>
+      if (
+        e.data &&
+        typeof e.data === 'object' &&
+        (e.data as Record<string, unknown>).message
+      ) {
+        return String((e.data as Record<string, unknown>).message)
+      }
+      if (typeof e.statusText === 'string') return e.statusText
+    }
     return 'Simulation failed with unknown error'
   }
 
@@ -375,9 +436,11 @@ export const useSimulationStore = defineStore('simulation', () => {
 
     // Actions
     setConfig,
+    setTickets,
     startSimulation,
     cancelSimulation,
     resetSimulation,
+    resetToConfig,
     clearError,
   }
 })
