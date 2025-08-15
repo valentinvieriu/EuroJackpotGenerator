@@ -47,6 +47,7 @@ CLAUDE.md
 ai_docs/*
 !ai_docs/ARCHITECTURE.md
 __tests__
+
 # Cloudflare Workers
 worker-configuration.d.ts
 cloudflare-preset/
