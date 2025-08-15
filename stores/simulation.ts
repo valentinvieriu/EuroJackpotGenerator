@@ -15,6 +15,7 @@ import { parseNdjsonEvent } from '~/utils/ndjsonParser'
 import { buildTicketHighlightUpdates } from '~/utils/ticketHighlighting'
 import { buildOddsMap } from '~/utils/payout'
 import { playWinSound } from '~/utils/audioUtils'
+import { useAudioState } from '~/composables/useAppState'
 import { LARGE_SIMULATION_THRESHOLD } from '~/utils/constants'
 
 export type SimulationPhase =
@@ -305,8 +306,19 @@ export const useSimulationStore = defineStore('simulation', () => {
         error: null,
       }
 
-      // Play win sound
-      playWinSound(totalWinnings, totalPrice)
+      // Play win sound (respect user audio preferences)
+      const { audioEnabled, winSoundLevel } = useAudioState()
+      if (audioEnabled.value && winSoundLevel.value !== 'none') {
+        // Map sound level to volume multiplier
+        const volumeMap = {
+          low: 0.3,
+          medium: 0.7,
+          high: 1.0,
+          none: 0.0, // Should never reach this due to the check above
+        }
+        const volumeMultiplier = volumeMap[winSoundLevel.value]
+        playWinSound(totalWinnings, totalPrice, volumeMultiplier)
+      }
     } catch (error: unknown) {
       console.error('Single draw error:', error)
 

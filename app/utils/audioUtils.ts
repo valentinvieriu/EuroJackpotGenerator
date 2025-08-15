@@ -9,8 +9,13 @@
  *
  * @param winnings The total amount won (must be > 0 to play sound).
  * @param cost The total cost of the tickets played.
+ * @param volumeMultiplier Optional volume multiplier (0.0 to 1.0). Defaults to 1.0.
  */
-export const playWinSound = (winnings: number, cost: number): void => {
+export const playWinSound = (
+  winnings: number,
+  cost: number,
+  volumeMultiplier: number = 1.0
+): void => {
   // Only play sound if there are actual winnings.
   if (winnings <= 0) {
     // console.log("No winnings, skipping sound.");
@@ -46,7 +51,7 @@ export const playWinSound = (winnings: number, cost: number): void => {
     const maxFrequency = 990 // G5 - cap the pitch for very small wins approaching cost=1
     const durationPerTone = 0.15 // Duration of each sound pulse (seconds)
     const delayBetweenTones = 0.08 // Delay between repeated pulses (seconds)
-    const baseGain = 0.2 // Base volume
+    const baseGain = 0.2 * Math.max(0.0, Math.min(1.0, volumeMultiplier)) // Base volume scaled by user preference
 
     // 3. Helper function to schedule a single tone.
     /**
