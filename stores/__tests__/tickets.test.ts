@@ -199,6 +199,17 @@ describe('Tickets Store', () => {
     vi.useRealTimers()
   })
 
+  it('updateConfig does not update URL when shared', async () => {
+    vi.useFakeTimers()
+    const ticketsStore = useTicketsStore()
+    ticketsStore.setLuckyCode('EXISTING', 'SHARED')
+    ticketsStore.updateConfig({ ticketCount: 2 })
+
+    vi.advanceTimersByTime(250)
+    expect(mockHistoryReplace).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
   it('applyUrlConfig with lucky triggers auto-generate and welcome', async () => {
     // @ts-expect-error – global mock
     global.$fetch = vi.fn().mockResolvedValue([])
@@ -275,6 +286,38 @@ describe('Tickets Store', () => {
     expect(ticketsStore.state.error).toBeNull()
     expect(spyResetTickets).toHaveBeenCalled()
     expect(mockHistoryReplace).toHaveBeenCalledWith(null, '', '/')
+  })
+
+  it('clearError resets error state and phase', async () => {
+    const ticketsStore = useTicketsStore()
+
+    ticketsStore.updateConfig({ ticketCount: 0 })
+    await ticketsStore.generate()
+    expect(ticketsStore.state.phase).toBe('error')
+
+    ticketsStore.clearError()
+    expect(ticketsStore.state.error).toBeNull()
+    expect(ticketsStore.state.phase).toBe('fresh')
+
+    // generate valid tickets
+    // @ts-expect-error – global mock
+    global.$fetch = vi
+      .fn()
+      .mockResolvedValue([
+        { id: 1, mainNumbers: [], euroNumbers: [], linesCount: 1 },
+      ])
+    ticketsStore.updateConfig({ ticketCount: 1 })
+    await ticketsStore.generate()
+    expect(ticketsStore.state.phase).toBe('ready')
+
+    // trigger error again while tickets exist
+    ticketsStore.updateConfig({ ticketCount: 0 })
+    await ticketsStore.generate()
+    expect(ticketsStore.state.phase).toBe('error')
+
+    ticketsStore.clearError()
+    expect(ticketsStore.state.error).toBeNull()
+    expect(ticketsStore.state.phase).toBe('ready')
   })
 
   it('getDecoratedTickets merges highlights and sorts by winClass', async () => {
