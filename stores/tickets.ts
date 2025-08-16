@@ -34,6 +34,7 @@ import {
   EURO_NUMBER_MIN,
   EURO_NUMBER_MAX,
   FAVORITE_NUMBERS_MAX,
+  MINIMUM_TICKETS_FOR_DELETION,
 } from '~/utils/constants'
 import { extractErrorMessage } from '~/utils/errors'
 
@@ -572,6 +573,47 @@ export const useTicketsStore = defineStore('tickets', () => {
   }
 
   /**
+   * Remove ticket - removes a specific ticket by ID and updates all related state
+   */
+  const removeTicket = (ticketId: number): void => {
+    logger.debug('TicketsStore: Removing ticket', { ticketId })
+
+    // Find the ticket to remove
+    const ticketIndex = state.value.tickets.findIndex(
+      (ticket) => ticket.id === ticketId
+    )
+
+    if (ticketIndex === -1) {
+      logger.warn(`TicketsStore: Ticket with ID ${ticketId} not found`)
+      return
+    }
+
+    // Remove the ticket from the array
+    state.value.tickets.splice(ticketIndex, 1)
+
+    // Update the ticket count in config to match actual count
+    state.value.config.ticketCount = state.value.tickets.length
+
+    logger.debug('TicketsStore: Ticket removed successfully', {
+      ticketId,
+      remainingTickets: state.value.tickets.length,
+    })
+
+    // If no tickets remain, reset to fresh state
+    if (state.value.tickets.length <= MINIMUM_TICKETS_FOR_DELETION) {
+      state.value.phase = 'fresh'
+      state.value.error = null
+      logger.debug('TicketsStore: No tickets remaining, reset to fresh state')
+    }
+
+    // Notify simulation store of ticket removal
+    simulationStore.removeTicket(ticketId)
+
+    // Update URL to persist configuration changes
+    updateBrowserUrl()
+  }
+
+  /**
    * Get decorated tickets with simulation highlights
    */
   const getDecoratedTickets = (mode: 'single' | 'montecarlo') => {
@@ -633,6 +675,7 @@ export const useTicketsStore = defineStore('tickets', () => {
     updateConfig,
     setLuckyCode,
     clearError,
+    removeTicket,
 
     // Favorite Numbers Actions
     addFavoriteNumber,

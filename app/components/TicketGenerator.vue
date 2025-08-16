@@ -324,6 +324,7 @@
               :key="ticket.id"
               :ticket="ticket"
               :ticket-number="ticket.id"
+              @delete="handleDeleteTicket"
             />
           </div>
         </div>
@@ -598,6 +599,11 @@ const generateTicketsHandler = async (): Promise<void> => {
   if (ticketsStore.hasTickets) {
     if (showGenerationForm.value) toggleGenerationForm()
   }
+}
+
+const handleDeleteTicket = (ticketId: number): void => {
+  // Use semantic action - let the store handle the entire deletion process
+  ticketsStore.removeTicket(ticketId)
 }
 
 // Sharing functions (now simplified using centralized state)

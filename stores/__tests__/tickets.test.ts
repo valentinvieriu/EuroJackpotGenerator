@@ -644,4 +644,142 @@ describe('Tickets Store', () => {
       ])
     })
   })
+
+  describe('removeTicket', () => {
+    it('removes a ticket by ID and updates ticket count', async () => {
+      const ticketsApiResponse = [
+        {
+          id: 1,
+          mainNumbers: [1, 2, 3, 4, 5],
+          euroNumbers: [1, 2],
+          linesCount: 1,
+        },
+        {
+          id: 2,
+          mainNumbers: [6, 7, 8, 9, 10],
+          euroNumbers: [3, 4],
+          linesCount: 1,
+        },
+        {
+          id: 3,
+          mainNumbers: [11, 12, 13, 14, 15],
+          euroNumbers: [5, 6],
+          linesCount: 1,
+        },
+      ]
+      // @ts-expect-error – global mock
+      global.$fetch = vi.fn().mockResolvedValue(ticketsApiResponse)
+
+      const ticketsStore = useTicketsStore()
+      const simStore = useSimulationStore()
+      const spyRemove = vi.spyOn(simStore, 'removeTicket')
+
+      // Configure for 3 tickets
+      ticketsStore.updateConfig({ ticketCount: 3 })
+
+      // First generate tickets
+      await ticketsStore.generate()
+      expect(ticketsStore.state.tickets).toHaveLength(3)
+      expect(ticketsStore.state.config.ticketCount).toBe(3)
+
+      // Remove middle ticket
+      ticketsStore.removeTicket(2)
+
+      expect(ticketsStore.state.tickets).toHaveLength(2)
+      expect(ticketsStore.state.tickets.map((t) => t.id)).toEqual([1, 3])
+      expect(ticketsStore.state.config.ticketCount).toBe(2)
+      expect(spyRemove).toHaveBeenCalledWith(2)
+    })
+
+    it('handles removing non-existent ticket gracefully', async () => {
+      const ticketsApiResponse = [
+        {
+          id: 1,
+          mainNumbers: [1, 2, 3, 4, 5],
+          euroNumbers: [1, 2],
+          linesCount: 1,
+        },
+      ]
+      // @ts-expect-error – global mock
+      global.$fetch = vi.fn().mockResolvedValue(ticketsApiResponse)
+
+      const ticketsStore = useTicketsStore()
+      const simStore = useSimulationStore()
+      const spyRemove = vi.spyOn(simStore, 'removeTicket')
+
+      // First generate a ticket
+      await ticketsStore.generate()
+      expect(ticketsStore.state.tickets).toHaveLength(1)
+
+      // Try to remove non-existent ticket
+      ticketsStore.removeTicket(999)
+
+      // Should remain unchanged
+      expect(ticketsStore.state.tickets).toHaveLength(1)
+      expect(ticketsStore.state.config.ticketCount).toBe(1)
+      expect(spyRemove).not.toHaveBeenCalled()
+    })
+
+    it('resets to fresh state when all tickets are removed', async () => {
+      const ticketsApiResponse = [
+        {
+          id: 1,
+          mainNumbers: [1, 2, 3, 4, 5],
+          euroNumbers: [1, 2],
+          linesCount: 1,
+        },
+      ]
+      // @ts-expect-error – global mock
+      global.$fetch = vi.fn().mockResolvedValue(ticketsApiResponse)
+
+      const ticketsStore = useTicketsStore()
+      const simStore = useSimulationStore()
+      const spyRemove = vi.spyOn(simStore, 'removeTicket')
+
+      // First generate a ticket
+      await ticketsStore.generate()
+      expect(ticketsStore.state.tickets).toHaveLength(1)
+      expect(ticketsStore.state.phase).toBe('ready')
+
+      // Remove the last ticket
+      ticketsStore.removeTicket(1)
+
+      expect(ticketsStore.state.tickets).toHaveLength(0)
+      expect(ticketsStore.state.config.ticketCount).toBe(0)
+      expect(ticketsStore.state.phase).toBe('fresh')
+      expect(ticketsStore.state.error).toBeNull()
+      expect(spyRemove).toHaveBeenCalledWith(1)
+    })
+
+    it('updates browser URL after ticket removal', async () => {
+      const ticketsApiResponse = [
+        {
+          id: 1,
+          mainNumbers: [1, 2, 3, 4, 5],
+          euroNumbers: [1, 2],
+          linesCount: 1,
+        },
+        {
+          id: 2,
+          mainNumbers: [6, 7, 8, 9, 10],
+          euroNumbers: [3, 4],
+          linesCount: 1,
+        },
+      ]
+      // @ts-expect-error – global mock
+      global.$fetch = vi.fn().mockResolvedValue(ticketsApiResponse)
+
+      const ticketsStore = useTicketsStore()
+
+      // First generate tickets
+      await ticketsStore.generate()
+      vi.clearAllMocks() // Clear the generate call
+
+      // Remove a ticket
+      ticketsStore.removeTicket(1)
+
+      // Should have called URL update
+      expect(mockHistoryReplace).toHaveBeenCalled()
+    })
+  })
 })

@@ -8,18 +8,40 @@
         : 'bg-casino-blue-dark border border-casino-blue-light/30',
     ]"
   >
-    <h3 class="font-semibold mb-3 text-gray-200">
-      Ticket #{{ ticketNumber }}
-      <span v-if="ticket.linesCount" class="ml-2 text-sm text-gray-400">
-        ({{ ticket.linesCount }} lines)
-      </span>
-      <span
-        v-if="ticket.winClass"
-        :class="['ml-2 font-bold', getWinClassTextClass(ticket.winClass)]"
+    <div class="flex justify-between items-start mb-3">
+      <h3 class="font-semibold text-gray-200">
+        Ticket #{{ ticketNumber }}
+        <span v-if="ticket.linesCount" class="ml-2 text-sm text-gray-400">
+          ({{ ticket.linesCount }} lines)
+        </span>
+        <span
+          v-if="ticket.winClass"
+          :class="['ml-2 font-bold', getWinClassTextClass(ticket.winClass)]"
+        >
+          - Winner Class {{ ticket.winClass }}!
+        </span>
+      </h3>
+      <button
+        class="text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded-full p-1 transition-colors duration-200 flex-shrink-0"
+        title="Delete this ticket"
+        @click="emit('delete', ticket.id)"
       >
-        - Winner Class {{ ticket.winClass }}!
-      </span>
-    </h3>
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
     <div class="mb-3">
       <span class="font-medium text-sm text-gray-400 block mb-1"
         >Main Numbers:</span
@@ -82,6 +104,10 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  delete: [ticketId: number]
+}>()
 
 const isWinner = computed(() => !!props.ticket.winClass)
 

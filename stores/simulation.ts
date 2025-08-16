@@ -211,8 +211,39 @@ export const useSimulationStore = defineStore('simulation', () => {
     resetSingleDraw() // Reset Single Draw
   }
 
+  const removeTicket = (ticketId: number) => {
+    logger.debug('SimulationStore: Removing ticket from simulation', {
+      ticketId,
+    })
+
+    // Remove the ticket from current tickets
+    if (state.value.currentTickets) {
+      state.value.currentTickets = state.value.currentTickets.filter(
+        (ticket) => ticket.id !== ticketId
+      )
+    }
+
+    // Business logic: For single draw results, just re-highlight remaining tickets
+    // The winning numbers remain the same, but we need to update highlights
+    if (state.value.singleDraw.phase === 'results') {
+      logger.debug(
+        'SimulationStore: Re-highlighting remaining tickets after removal'
+      )
+      reHighlightSingleDrawResults()
+    }
+
+    // Business logic: For Monte Carlo, we should reset since removing tickets
+    // changes the overall simulation context significantly
+    if (state.value.phase === 'results') {
+      logger.debug(
+        'SimulationStore: Resetting Monte Carlo after ticket removal'
+      )
+      resetToConfig()
+    }
+  }
+
   // Note: No component-level sync; tickets are owned by TicketsStore
-  // and provided via semantic actions (generateTickets/resetTickets).
+  // and provided via semantic actions (generateTickets/resetTickets/removeTicket).
 
   const shouldResetOnTicketChange = (): boolean => {
     // Business rule: Reset simulation when user changes tickets and we have results/errors
@@ -1004,6 +1035,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     setConfig,
     generateTickets,
     resetTickets,
+    removeTicket,
     startSimulation,
     cancelSimulation,
     resetSimulation,

@@ -53,6 +53,9 @@ export const TRANSIENT_ERROR_MS = 5000 // Transient error auto-hide duration
 export const COPY_SUCCESS_MS = 2000 // Copy success feedback duration
 export const URL_DEBOUNCE_MS = 250 // URL update debounce delay
 
+// Ticket UI Constants
+export const MINIMUM_TICKETS_FOR_DELETION = 0 // Allow deleting all tickets (reset to fresh state)
+
 // Network Timeout Constants (milliseconds)
 export const DEFAULT_FETCH_TIMEOUT_MS = 8000 // Standard API timeout
 
