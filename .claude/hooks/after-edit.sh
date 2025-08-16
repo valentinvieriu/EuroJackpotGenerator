@@ -12,3 +12,4 @@ npm run -s format
 
 echo "— After formatting (git status):"
 git status --porcelain || true
+afplay /System/Library/Sounds/Hero.aiff

@@ -143,6 +143,38 @@ describe('/api/generate', () => {
     expect(result).toHaveLength(1)
   })
 
+  it('accepts algorithm=unpopular', async () => {
+    const { default: handler } = await import('../generate')
+    mockBody = {
+      ticketCount: 1,
+      mainCount: 5,
+      euroCount: 2,
+      algorithm: 'unpopular',
+    }
+    const result = await handler({} as any)
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(1)
+    expect(result[0]).toHaveProperty('mainNumbers')
+    expect(result[0]).toHaveProperty('euroNumbers')
+    expect(result[0].mainNumbers).toHaveLength(5)
+    expect(result[0].euroNumbers).toHaveLength(2)
+    expect(result[0]).toHaveProperty('linesCount')
+
+    // Verify numbers are in valid ranges
+    for (const num of result[0].mainNumbers) {
+      expect(num).toBeGreaterThanOrEqual(1)
+      expect(num).toBeLessThanOrEqual(50)
+    }
+    for (const num of result[0].euroNumbers) {
+      expect(num).toBeGreaterThanOrEqual(1)
+      expect(num).toBeLessThanOrEqual(12)
+    }
+
+    // Verify numbers are unique
+    expect([...new Set(result[0].mainNumbers)]).toHaveLength(5)
+    expect([...new Set(result[0].euroNumbers)]).toHaveLength(2)
+  })
+
   it('validates favoriteNumbers limits (max 5 per type)', async () => {
     const { default: handler } = await import('../generate')
     mockBody = {

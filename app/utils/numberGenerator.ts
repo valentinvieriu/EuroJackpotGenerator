@@ -1,7 +1,19 @@
 import type { StatisticsData } from '~/schemas/statistics'
 import { randomFloat, randomInt } from './rng'
 import { logger } from '~/utils/logger'
-import { FAVORITE_WEIGHT_MULTIPLIER } from '~/utils/constants'
+import {
+  FAVORITE_WEIGHT_MULTIPLIER,
+  MAIN_NUMBER_MIN,
+  MAIN_NUMBER_MAX,
+  EURO_NUMBER_MIN,
+  EURO_NUMBER_MAX,
+  POPULARITY_CANDIDATES_COUNT,
+} from '~/utils/constants'
+import {
+  scorePopularity,
+  type EuroJackpotCombo,
+  type PopularityResult,
+} from './popularityScorer'
 
 /**
  * Selects numbers based on weighted probabilities derived from statistics.
@@ -321,4 +333,115 @@ function generateNumbersWithFavoritesOnly(
   }
 
   return Array.from(selected).sort((a, b) => a - b)
+}
+
+/**
+ * Generates numbers optimised for unpopularity to minimise prize sharing.
+ * Creates multiple random candidates, scores each for popularity, and returns the least popular combination.
+ *
+ * @param mainCount The number of main numbers to generate.
+ * @param euroCount The number of euro numbers to generate.
+ * @param candidatesCount The number of candidate combinations to generate and evaluate.
+ * @returns An object containing the selected numbers and popularity explanation.
+ */
+export function generateUnpopularNumbers(
+  mainCount: number,
+  euroCount: number,
+  candidatesCount: number = POPULARITY_CANDIDATES_COUNT
+): {
+  mainNumbers: number[]
+  euroNumbers: number[]
+  popularityResult: PopularityResult
+} {
+  if (candidatesCount < 1) {
+    throw new Error('candidatesCount must be at least 1')
+  }
+
+  // Validate that this is standard EuroJackpot format (popularity scorer requirement)
+  if (mainCount !== 5 || euroCount !== 2) {
+    throw new Error(
+      'generateUnpopularNumbers only supports standard EuroJackpot format (5 main + 2 euro numbers)'
+    )
+  }
+
+  let bestCandidate: {
+    mains: number[]
+    euros: number[]
+    popularityResult: PopularityResult
+  } | null = null
+  let lowestPopularityScore = Infinity
+
+  // Generate multiple candidates and find the least popular
+  for (let i = 0; i < candidatesCount; i++) {
+    try {
+      // Generate random candidate combination
+      const candidateMains = generateRandomNumbers(
+        mainCount,
+        MAIN_NUMBER_MIN,
+        MAIN_NUMBER_MAX
+      )
+      const candidateEuros = generateRandomNumbers(
+        euroCount,
+        EURO_NUMBER_MIN,
+        EURO_NUMBER_MAX
+      )
+
+      // Score the candidate for popularity
+      const combo: EuroJackpotCombo = {
+        mains: candidateMains,
+        euros: candidateEuros,
+      }
+      const popularityResult = scorePopularity(combo)
+
+      // Keep track of the least popular (highest unpopularity score)
+      if (popularityResult.popularityScore < lowestPopularityScore) {
+        lowestPopularityScore = popularityResult.popularityScore
+        bestCandidate = {
+          mains: candidateMains,
+          euros: candidateEuros,
+          popularityResult,
+        }
+      }
+    } catch (error) {
+      // Continue with other candidates if one fails
+      logger.warn(
+        `Failed to generate/score candidate ${i + 1}:`,
+        error instanceof Error ? error.message : String(error)
+      )
+    }
+  }
+
+  if (!bestCandidate) {
+    // Fallback to simple random generation if all candidates failed
+    logger.warn(
+      'All unpopular candidates failed, falling back to random generation'
+    )
+    const fallbackMains = generateRandomNumbers(
+      mainCount,
+      MAIN_NUMBER_MIN,
+      MAIN_NUMBER_MAX
+    )
+    const fallbackEuros = generateRandomNumbers(
+      euroCount,
+      EURO_NUMBER_MIN,
+      EURO_NUMBER_MAX
+    )
+    const fallbackCombo: EuroJackpotCombo = {
+      mains: fallbackMains,
+      euros: fallbackEuros,
+    }
+    const fallbackResult = scorePopularity(fallbackCombo)
+
+    return {
+      mainNumbers: fallbackMains,
+      euroNumbers: fallbackEuros,
+      popularityResult: fallbackResult,
+    }
+  }
+
+  return {
+    mainNumbers: bestCandidate.mains,
+    euroNumbers: bestCandidate.euros,
+    popularityResult: bestCandidate.popularityResult,
+  }
 }

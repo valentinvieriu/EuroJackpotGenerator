@@ -14,7 +14,7 @@ export const generateRequestSchema = z.object({
   mainCount: z.number().int().min(MAIN_SYSTEM_MIN).max(MAIN_SYSTEM_MAX),
   euroCount: z.number().int().min(EURO_SYSTEM_MIN).max(EURO_SYSTEM_MAX),
   algorithm: z
-    .enum(['uniform', 'weighted', 'favorites'])
+    .enum(['uniform', 'weighted', 'favorites', 'unpopular'])
     .optional()
     .default('weighted'),
   seed: z.string().optional(),

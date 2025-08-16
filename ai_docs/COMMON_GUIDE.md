@@ -42,7 +42,7 @@ npm run format   # Format code
 ### Understanding the Codebase
 
 1. **State Management**: 3-layer architecture (URL → Pinia → SSR-safe) with favorite numbers persistence
-1. **Business Logic**: Located in `stores/` and `app/utils/` including custom number generation algorithms
+1. **Business Logic**: Located in `stores/` and `app/utils/` including custom number generation algorithms and popularity scoring
 1. **API Endpoints**: Server logic in `server/api/` including frequency analysis endpoints
 1. **Component Patterns**: Accordion UI, visual selectors, deletion handlers with state cleanup
 1. **Testing**: Focus on business logic, not UI rendering

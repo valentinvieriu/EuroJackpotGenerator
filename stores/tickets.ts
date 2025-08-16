@@ -272,7 +272,7 @@ export const useTicketsStore = defineStore('tickets', () => {
         ticketCount: number
         mainCount: number
         euroCount: number
-        algorithm: 'uniform' | 'weighted' | 'favorites'
+        algorithm: 'uniform' | 'weighted' | 'favorites' | 'unpopular'
         seed?: string
         favoriteNumbers?: FavoriteNumbers
       } = {
@@ -284,7 +284,9 @@ export const useTicketsStore = defineStore('tickets', () => {
             ? 'favorites'
             : method === 'weighted'
               ? 'weighted'
-              : 'uniform',
+              : method === 'unpopular'
+                ? 'unpopular'
+                : 'uniform',
       }
 
       // Add favorite numbers if method is favorites

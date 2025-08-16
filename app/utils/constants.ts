@@ -94,6 +94,23 @@ export const FAVORITE_NUMBERS_MIN = 0
 // Algorithm Enhancement Constants
 export const FAVORITE_WEIGHT_MULTIPLIER = 10 // Multiplier for favorite number weighting
 
+// Popularity Scoring Constants
+export const POPULARITY_WEIGHT_BIRTHDAY_PER_MAIN = 0.2 // Each main number ≤31 adds popularity
+export const POPULARITY_WEIGHT_LUCKY_PER_MAIN = 0.15 // "Lucky" numbers often over-picked
+export const POPULARITY_WEIGHT_SEQUENCE_BASE = 0.25 // Long arithmetic sequences
+export const POPULARITY_WEIGHT_SAME_LAST_DIGIT = 0.12 // Same last-digit clustering
+export const POPULARITY_WEIGHT_SAME_DECADE = 0.1 // Same-decade clustering
+export const POPULARITY_WEIGHT_TIGHT_SPREAD = 0.18 // Tight spread (numbers bunched)
+export const POPULARITY_WEIGHT_EURO_MONTH = 0.1 // Euro numbers close (month-like)
+export const POPULARITY_Q_MIN = 0.25 // Minimum qMultiplier relative to uniform
+export const POPULARITY_Q_MAX = 1.75 // Maximum qMultiplier relative to uniform
+export const POPULARITY_LUCKY_NUMBERS = new Set([3, 7, 11, 13, 17, 21]) // Common "lucky" numbers
+export const POPULARITY_CANDIDATES_COUNT = 100 // Number of combinations to generate for unpopular selection
+export const POPULARITY_EURO_MONTH_SPREAD_THRESHOLD = 3 // Euro numbers spread threshold for month effect
+
+// EuroJackpot System Constants (for popularity scoring)
+export const EUROJACKPOT_TOTAL_COMBINATIONS = 139_838_160 // C(50,5) * C(12,2)
+
 // Derived Arrays for Components
 export const WIN_CLASSES = Array.from(
   { length: WIN_CLASS_MAX - WIN_CLASS_MIN + 1 },

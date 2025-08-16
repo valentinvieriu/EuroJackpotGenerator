@@ -12,6 +12,7 @@ import { fetchStatistics } from '../utils/statistics'
 import {
   generateNumbers,
   generateNumbersWithFavorites,
+  generateUnpopularNumbers,
 } from '~/utils/numberGenerator'
 import {
   MAIN_NUMBER_MIN,
@@ -22,7 +23,7 @@ import {
 import { generateSeededRandomNumbers } from '../utils/seededRng'
 import { logger } from '~/utils/logger'
 
-type Algorithm = 'uniform' | 'weighted' | 'favorites'
+type Algorithm = 'uniform' | 'weighted' | 'favorites' | 'unpopular'
 
 /**
  * Generates a specified number of unique EuroJackpot tickets.
@@ -106,6 +107,13 @@ async function generateTickets(
             favoriteNumbers.euroNumbers,
             statsData?.additionalNumbers
           )
+        } else if (algorithm === 'unpopular') {
+          // Use unpopular generation to minimise prize sharing
+          const unpopularResult = generateUnpopularNumbers(mainCount, euroCount)
+          mainNumbers = unpopularResult.mainNumbers
+          euroNumbers = unpopularResult.euroNumbers
+          // Note: popularityResult is available but not used in ticket generation
+          // It could be stored for future analysis or UI display
         } else {
           // Use standard weighted or uniform generation
           mainNumbers = generateNumbers(

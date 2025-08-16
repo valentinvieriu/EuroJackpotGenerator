@@ -3,7 +3,9 @@ import {
   generateRandomNumbers,
   generateNumbers,
   generateNumbersWithFavorites,
+  generateUnpopularNumbers,
 } from '../numberGenerator'
+import { scorePopularity } from '../popularityScorer'
 
 describe('number generator', () => {
   it('generateRandomNumbers returns sorted unique numbers within range', () => {
@@ -126,6 +128,188 @@ describe('number generator', () => {
     it('throws when range too small', () => {
       const favorites = [1, 2]
       expect(() => generateNumbersWithFavorites(5, 1, 3, favorites)).toThrow()
+    })
+  })
+
+  describe('generateUnpopularNumbers', () => {
+    it('returns valid structure with correct counts', () => {
+      const result = generateUnpopularNumbers(5, 2)
+
+      expect(result).toMatchObject({
+        mainNumbers: expect.any(Array),
+        euroNumbers: expect.any(Array),
+        popularityResult: expect.any(Object),
+      })
+
+      expect(result.mainNumbers).toHaveLength(5)
+      expect(result.euroNumbers).toHaveLength(2)
+
+      // Numbers should be unique
+      expect([...new Set(result.mainNumbers)]).toHaveLength(5)
+      expect([...new Set(result.euroNumbers)]).toHaveLength(2)
+
+      // Numbers should be in valid ranges
+      for (const num of result.mainNumbers) {
+        expect(num).toBeGreaterThanOrEqual(1)
+        expect(num).toBeLessThanOrEqual(50)
+      }
+      for (const num of result.euroNumbers) {
+        expect(num).toBeGreaterThanOrEqual(1)
+        expect(num).toBeLessThanOrEqual(12)
+      }
+
+      // Numbers should be sorted
+      const sortedMains = [...result.mainNumbers].sort((a, b) => a - b)
+      const sortedEuros = [...result.euroNumbers].sort((a, b) => a - b)
+      expect(result.mainNumbers).toEqual(sortedMains)
+      expect(result.euroNumbers).toEqual(sortedEuros)
+    })
+
+    it('includes valid popularity result', () => {
+      const result = generateUnpopularNumbers(5, 2)
+      const { popularityResult } = result
+
+      expect(popularityResult).toMatchObject({
+        popularityScore: expect.any(Number),
+        unpopularityScore: expect.any(Number),
+        qMultiplier: expect.any(Number),
+        expectedLambda: expect.any(Function),
+        expectedShare: expect.any(Function),
+        features: expect.any(Object),
+        explain: expect.any(Array),
+        constants: expect.any(Object),
+      })
+
+      expect(popularityResult.popularityScore).toBeGreaterThanOrEqual(0)
+      expect(popularityResult.popularityScore).toBeLessThanOrEqual(100)
+      expect(popularityResult.unpopularityScore).toBeGreaterThanOrEqual(0)
+      expect(popularityResult.unpopularityScore).toBeLessThanOrEqual(100)
+      expect(
+        popularityResult.popularityScore + popularityResult.unpopularityScore
+      ).toBe(100)
+    })
+
+    it('works with standard EuroJackpot format only', () => {
+      // The popularity scorer is designed specifically for EuroJackpot (5+2)
+      // System tickets still use 5 main and 2 euro numbers for individual lines
+      const result = generateUnpopularNumbers(5, 2)
+
+      expect(result.mainNumbers).toHaveLength(5)
+      expect(result.euroNumbers).toHaveLength(2)
+      expect(result.popularityResult).toBeDefined()
+    })
+
+    it('respects candidatesCount parameter', () => {
+      // Test with small candidate count for faster execution
+      const result = generateUnpopularNumbers(5, 2, 5)
+
+      expect(result).toMatchObject({
+        mainNumbers: expect.any(Array),
+        euroNumbers: expect.any(Array),
+        popularityResult: expect.any(Object),
+      })
+
+      expect(result.mainNumbers).toHaveLength(5)
+      expect(result.euroNumbers).toHaveLength(2)
+    })
+
+    it('throws with invalid candidatesCount', () => {
+      expect(() => generateUnpopularNumbers(5, 2, 0)).toThrow(
+        'candidatesCount must be at least 1'
+      )
+      expect(() => generateUnpopularNumbers(5, 2, -1)).toThrow(
+        'candidatesCount must be at least 1'
+      )
+    })
+
+    it('throws with non-standard EuroJackpot format', () => {
+      expect(() => generateUnpopularNumbers(6, 3)).toThrow(
+        'generateUnpopularNumbers only supports standard EuroJackpot format'
+      )
+      expect(() => generateUnpopularNumbers(7, 2)).toThrow(
+        'generateUnpopularNumbers only supports standard EuroJackpot format'
+      )
+      expect(() => generateUnpopularNumbers(5, 3)).toThrow(
+        'generateUnpopularNumbers only supports standard EuroJackpot format'
+      )
+    })
+
+    it('generates different results on multiple calls', () => {
+      // Generate multiple results with small candidate count for speed
+      const results = Array.from({ length: 10 }, () =>
+        generateUnpopularNumbers(5, 2, 10)
+      )
+
+      // Not all results should be identical (very unlikely with random generation)
+      const uniqueMainCombos = new Set(
+        results.map((r) => r.mainNumbers.join(','))
+      )
+      expect(uniqueMainCombos.size).toBeGreaterThan(1)
+    })
+
+    it('aims for lower popularity scores', () => {
+      // Generate multiple results and check that they're generally more unpopular than random
+      const unpopularResults = Array.from(
+        { length: 10 },
+        () => generateUnpopularNumbers(5, 2, 100) // Use more candidates for better selection
+      )
+
+      // Generate some purely random combinations for comparison
+      const randomResults = Array.from({ length: 10 }, () => {
+        const mains = generateRandomNumbers(5, 1, 50)
+        const euros = generateRandomNumbers(2, 1, 12)
+        return scorePopularity({ mains, euros })
+      })
+
+      const avgUnpopularScore =
+        unpopularResults.reduce(
+          (sum, r) => sum + r.popularityResult.popularityScore,
+          0
+        ) / unpopularResults.length
+      const avgRandomScore =
+        randomResults.reduce((sum, r) => sum + r.popularityScore, 0) /
+        randomResults.length
+
+      // The unpopular generation should on average produce lower popularity scores than pure random
+      expect(avgUnpopularScore).toBeLessThan(avgRandomScore)
+
+      // At least 70% of unpopular results should be below the average random score
+      const unpopularBelowAverage = unpopularResults.filter(
+        (r) => r.popularityResult.popularityScore < avgRandomScore
+      ).length
+      expect(unpopularBelowAverage).toBeGreaterThanOrEqual(7) // 7 out of 10
+    })
+
+    it('handles fallback gracefully when all candidates fail', () => {
+      // This test would be hard to trigger naturally, but we can test the structure
+      // The fallback logic is covered by ensuring valid output even in edge cases
+      const result = generateUnpopularNumbers(5, 2, 1)
+
+      expect(result).toMatchObject({
+        mainNumbers: expect.any(Array),
+        euroNumbers: expect.any(Array),
+        popularityResult: expect.any(Object),
+      })
+    })
+
+    it('produces combinations that avoid common patterns better than pure random', () => {
+      // Generate several unpopular combinations
+      const unpopularResults = Array.from({ length: 20 }, () =>
+        generateUnpopularNumbers(5, 2, 50)
+      )
+
+      // Check that most avoid obvious patterns like consecutive sequences
+      const consecutiveCount = unpopularResults.filter((result) => {
+        const sorted = [...result.mainNumbers].sort((a, b) => a - b)
+        // Check if all 5 numbers are consecutive
+        for (let i = 0; i < sorted.length - 1; i++) {
+          if (sorted[i + 1] - sorted[i] !== 1) return false
+        }
+        return true
+      }).length
+
+      // Expect very few (ideally zero) consecutive sequences in unpopular results
+      expect(consecutiveCount).toBeLessThan(3) // Allow some variance due to randomness
     })
   })
 })

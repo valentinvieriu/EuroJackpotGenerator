@@ -231,6 +231,7 @@ const handleStartSimulation = () => {
 
 - **TicketGenerator**: Orchestrates ticket configuration and generation through `TicketsStore`
 - **FavoriteNumbersSelector**: Visual interface for custom number selection with add/remove functionality
+- **UnpopularityDisplay**: Educational component explaining unpopular combination factors and cognitive biases
 - **FrequencyDisplay**: Comprehensive frequency visualization with bar charts and statistical analysis
 - **TicketItem**: Individual ticket display with deletion capability and visual highlight support
 - **SimulationPanels**: Handle single-draw and Monte Carlo simulation UIs via `SimulationStore`
@@ -248,10 +249,11 @@ const handleStartSimulation = () => {
 
 **API Endpoints & Responsibilities**:
 
-**`POST /api/generate`**: Ticket generation with weighted/uniform algorithms
+**`POST /api/generate`**: Ticket generation with multiple algorithms
 
 - Validates system configuration and ticket parameters
 - Implements Efraimidis-Spirakis algorithm for weighted sampling
+- Supports unpopular combination generation using Monte Carlo candidate selection
 - Caches historical statistics for 10 minutes
 - Supports deterministic generation via optional seeding
 
@@ -281,6 +283,48 @@ const handleStartSimulation = () => {
 - Returns structured data with color-coded tier analysis
 - Supports visual frequency display and informed number selection
 
+### Number Generation Algorithms
+
+The application supports four distinct number generation methods, each serving different educational and strategic purposes:
+
+**1. Uniform Random (Default)**
+
+- Pure Fisher-Yates shuffle for unbiased selection
+- Cryptographically secure randomness
+- No external data dependencies
+
+**2. Weighted by Historical Frequencies**
+
+- Efraimidis-Spirakis algorithm for weighted sampling without replacement
+- Uses square root transformation to smooth probability distributions
+- Caches Lotto Bayern API data for 10 minutes
+
+**3. Favorite Numbers Enhanced**
+
+- Hybrid approach combining user preferences with statistical weighting
+- Applies 2.5x multiplier to favorite numbers in weighted sampling
+- Falls back to pure favorite + random filling when statistics unavailable
+
+**4. Unpopular Combinations (Monte Carlo)**
+
+- Generates 100 random candidates and selects least popular combination
+- Uses sophisticated popularity scoring based on cognitive bias research:
+  - **Birthday Bias**: Numbers 1-31 (dates) over-selected by humans
+  - **Lucky Numbers**: Culturally significant numbers (3, 7, 11, 13, 17, 21)
+  - **Arithmetic Sequences**: Consecutive or evenly spaced patterns
+  - **Visual Patterns**: Same last digit or decade clustering
+  - **Tight Spread**: Numbers bunched together
+  - **Euro Month Effect**: Euro numbers resembling month pairs
+- Aims to minimize prize sharing by avoiding commonly chosen patterns
+- Provides educational explanations of detected bias patterns
+
+**Technical Implementation Details**:
+
+- All algorithms maintain deterministic seeding for testing reproducibility
+- Popularity scoring uses tanh function for bounded [0.25, 1.75] multiplier range
+- Unpopular generation validates standard EuroJackpot format (5+2) only
+- Comprehensive test coverage ensures algorithm correctness and stability
+
 ### External Integrations
 
 **Lotto Bayern API Integration**:
@@ -298,7 +342,7 @@ const handleStartSimulation = () => {
 
 1. **User Configuration**: Component captures system parameters (main/euro numbers) and optional favorite numbers
 1. **Validation**: Zod schemas validate parameters including favorite number constraints before API call
-1. **Generation**: Server applies uniform, weighted, or favorite-enhanced algorithms based on configuration
+1. **Generation**: Server applies uniform, weighted, favorite-enhanced, or unpopular algorithms based on configuration
 1. **State Update**: Store receives tickets, updates URL persistence including favorite numbers, triggers UI refresh
 1. **Cost Calculation**: Real-time price computation using official €2.00/line pricing
 1. **Individual Management**: Users can delete specific tickets with automatic state recalculation

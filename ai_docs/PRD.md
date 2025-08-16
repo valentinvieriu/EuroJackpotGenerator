@@ -36,7 +36,7 @@ Most lottery players lack intuitive understanding of system ticket mathematics a
 
 1. **Quick Exploration**: Generate system tickets → Run single draw → See immediate ROI
 1. **Strategy Comparison**: Generate different system sizes → Compare costs and coverage
-1. **Custom Strategy Testing**: Select favorite numbers → Compare against random selection → Analyze performance differences
+1. **Custom Strategy Testing**: Select favorite numbers or unpopular combinations → Compare against random selection → Analyze performance differences
 1. **Frequency Analysis**: Examine historical draw patterns → Make informed number selections → Test strategies
 1. **Statistical Analysis**: Run 1000+ simulations → Analyze distributions and percentiles
 1. **Reproducible Research**: Share specific configurations via URLs with seeds
@@ -47,9 +47,12 @@ Most lottery players lack intuitive understanding of system ticket mathematics a
 User selects different system presets (5/2 vs 7/3), generates tickets, and immediately sees total cost breakdown. A single mock draw highlights matches and calculates winnings with clear ROI display.
 
 **Scenario 2: Custom Number Strategy**
-User selects favorite numbers based on personal preference or frequency analysis, generates tickets incorporating these preferences, and compares outcomes against random selection through repeated simulations.
+User selects favorite numbers based on personal preference, frequency analysis, or chooses unpopular combinations to minimise prize sharing. They generate tickets incorporating these preferences and compare outcomes against random selection through repeated simulations.
 
-**Scenario 3: Monte Carlo Analysis**  
+**Scenario 3: Unpopular Combination Strategy**
+User selects the unpopular generation method to create combinations that avoid common human biases (birthday numbers, lucky patterns, sequences). The system explains why combinations are considered unpopular and demonstrates potential benefits for prize sharing reduction.
+
+**Scenario 4: Monte Carlo Analysis**  
 User configures 100-10,000 simulations with real-time progress streaming. Final report shows comprehensive statistics: total costs, winnings, net results, win-class distributions, percentiles, and profitability rates.
 
 ## Functional Requirements
@@ -60,7 +63,7 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 
 - Support system presets with 5-16 main numbers and 2-12 Euro numbers
 - Generate 1-500 unique tickets per request with transparent €2.00/line pricing
-- Offer uniform random, historically-weighted, or custom favorite number generation methods
+- Offer uniform random, historically-weighted, custom favorite numbers, or unpopular combination generation methods
 - Allow users to specify favorite main numbers (1-50) and Euro numbers (1-12) for personalised ticket generation
 - Provide visual frequency analysis with historical draw data and color-coded tiers
 - Enable individual ticket deletion with automatic cost and simulation recalculation

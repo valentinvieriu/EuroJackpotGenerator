@@ -204,6 +204,32 @@ describe('Tickets Store', () => {
     })
   })
 
+  it('sends unpopular algorithm when unpopular method is selected', async () => {
+    const ticketsApiResponse: any[] = []
+    // @ts-expect-error – global mock
+    global.$fetch = vi.fn().mockResolvedValue(ticketsApiResponse)
+
+    const ticketsStore = useTicketsStore()
+    ticketsStore.updateConfig({
+      ticketCount: 1,
+      method: 'unpopular',
+      mainCount: 5,
+      euroCount: 2,
+    })
+
+    await ticketsStore.generate()
+
+    expect(global.$fetch).toHaveBeenCalledWith('/api/generate', {
+      method: 'POST',
+      body: expect.objectContaining({
+        algorithm: 'unpopular',
+        ticketCount: 1,
+        mainCount: 5,
+        euroCount: 2,
+      }),
+    })
+  })
+
   it('validates ticketCount and sets error without calling API', async () => {
     // @ts-expect-error – global mock
     global.$fetch = vi.fn()

@@ -237,6 +237,44 @@
                   <FavoriteNumbersSelector />
                 </div>
               </div>
+              <div class="space-y-0">
+                <label
+                  class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+                >
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model="selectionMethod"
+                      value="unpopular"
+                      type="radio"
+                      name="selectionMethod"
+                      class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
+                    />
+                    <span class="text-sm text-gray-200">
+                      <strong>Random (unpopular)</strong><br />
+                      <span class="text-xs text-gray-400">
+                        Avoids common patterns to minimise prize sharing
+                      </span>
+                    </span>
+                  </div>
+                  <button
+                    v-if="selectionMethod === 'unpopular'"
+                    type="button"
+                    class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
+                    :class="{ 'rotate-180': showUnpopularDetails }"
+                    @click.stop="toggleUnpopularDetails"
+                  >
+                    ▼
+                  </button>
+                </label>
+
+                <!-- Unpopular Details Accordion Content -->
+                <div
+                  v-if="selectionMethod === 'unpopular' && showUnpopularDetails"
+                  class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
+                >
+                  <UnpopularityDisplay />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -551,7 +589,9 @@ const ticketCount = computed<number>({
   },
 })
 
-const selectionMethod = computed<'random' | 'weighted' | 'favorites'>({
+const selectionMethod = computed<
+  'random' | 'weighted' | 'favorites' | 'unpopular'
+>({
   get: () => ticketsStore.state.config.method,
   set: (val) => ticketsStore.updateConfig({ method: val }),
 })
@@ -568,6 +608,7 @@ const error = computed(() => ticketsStore.state.error || '')
 // Accordion state for frequency details
 const showFrequencyDetails = ref(false)
 const showFavoritesDetails = ref(false)
+const showUnpopularDetails = ref(false)
 
 const toggleFrequencyDetails = () => {
   showFrequencyDetails.value = !showFrequencyDetails.value
@@ -577,12 +618,18 @@ const toggleFavoritesDetails = () => {
   showFavoritesDetails.value = !showFavoritesDetails.value
 }
 
+const toggleUnpopularDetails = () => {
+  showUnpopularDetails.value = !showUnpopularDetails.value
+}
+
 // Auto-expand accordions when methods are selected
 watch(selectionMethod, (newMethod) => {
   if (newMethod === 'weighted') {
     showFrequencyDetails.value = true
   } else if (newMethod === 'favorites') {
     showFavoritesDetails.value = true
+  } else if (newMethod === 'unpopular') {
+    showUnpopularDetails.value = true
   }
 })
 

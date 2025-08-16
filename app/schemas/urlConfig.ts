@@ -49,10 +49,11 @@ export const TicketSystemSchema = z
  * Schema for selection method
  */
 export const SelectionMethodSchema = z.enum(
-  ['random', 'weighted', 'favorites'],
+  ['random', 'weighted', 'favorites', 'unpopular'],
   {
     errorMap: () => ({
-      message: 'Method must be "random", "weighted", or "favorites"',
+      message:
+        'Method must be "random", "weighted", "favorites", or "unpopular"',
     }),
   }
 )
