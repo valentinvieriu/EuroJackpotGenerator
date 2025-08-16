@@ -42,9 +42,12 @@ EuroJackpot Simulator is an educational web application that helps users underst
 - **Nuxt 4** - Latest framework with enhanced performance
 - **Vue 3** - Composition API for modern component development
 - **TypeScript** - Type-safe development with comprehensive validation
+- **Pinia** - Centralized state management for business logic and caching
 - **Tailwind CSS** - Casino-themed styling with custom colour palette
 - **Cloudflare Workers** - Serverless edge deployment with Nitro
 - **NDJSON Streaming** - Real-time progress updates for long operations
+- **Zod** - Runtime validation with comprehensive schemas
+- **Vitest** - Fast unit testing framework for business logic
 
 ## Setup
 
@@ -66,9 +69,9 @@ bun install
 
 ## API Endpoints
 
-- `GET /api/generate` - Generate system tickets (1-500)
+- `POST /api/generate` - Generate system tickets (1-500)
 - `GET /api/simulate` - Single draw simulation
-- `GET /api/batchSimulate` - Monte Carlo simulation with streaming
+- `POST /api/batchSimulate` - Monte Carlo simulation with streaming
 - `GET /api/fetchWinningData` - Current win class payouts
 
 ## Environment Variables
@@ -109,6 +112,24 @@ Preview production build locally:
 npm run preview
 ```
 
+## Testing
+
+The project uses Vitest for testing business logic, utilities, and server-side handlers:
+
+```bash
+# Run all tests once
+npm test
+
+# Run tests in watch mode for development
+npm test -- --watch
+
+# Check code quality and formatting
+npm run lint
+npm run format
+```
+
+**Testing Focus**: Business logic in Pinia stores and utilities are thoroughly tested. UI component rendering is not tested, following the principle of testing behaviour rather than implementation.
+
 ## Deployment
 
 This project is configured for Cloudflare Workers deployment:
@@ -125,9 +146,12 @@ npm run cf-typegen
 
 - **Frontend**: Nuxt 4 SPA with Vue 3 Composition API
 - **Backend**: Nitro serverless API on Cloudflare Workers
+- **State Management**: 3-layer architecture (URL persistence, Pinia stores, SSR-safe state)
 - **External APIs**: Lotto Bayern for statistics and payout data
 - **Caching**: 10-minute cache for external data with fallbacks
 - **Streaming**: NDJSON for real-time Monte Carlo progress
+
+For detailed architecture information, see [ai_docs/ARCHITECTURE.md](ai_docs/ARCHITECTURE.md).
 
 ## Performance Targets
 

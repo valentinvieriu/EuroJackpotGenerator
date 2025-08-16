@@ -15,6 +15,8 @@ This document provides a high-level overview of the EuroJackpot Simulator applic
 
 The application is a Single Page Application (SPA) with a serverless backend. A Pinia-based state management layer mediates all interactions between the UI components and the server, handling business logic, caching, and state synchronization.
 
+For development guidelines and workflows, see [COMMON_GUIDE.md](./COMMON_GUIDE.md). For product requirements, see [PRD.md](./PRD.md).
+
 ```mermaid
 sequenceDiagram
     participant User
@@ -97,7 +99,7 @@ The frontend is responsible for the user interface and delegates all complex log
 
 The backend provides four main serverless endpoints. All endpoints use **Zod** for strict input and output validation.
 
-- **`/api/generate`**: Generates unique lottery tickets. It can use a uniform random algorithm or a weighted one based on historical stats (cached for 10 minutes).
+- **`/api/generate`**: Generates unique lottery tickets (1-500 per request). It can use a uniform random algorithm or a weighted one based on historical stats (cached for 10 minutes).
 
   ```pseudocode
   // The server handles the core generation logic
@@ -113,7 +115,7 @@ The backend provides four main serverless endpoints. All endpoints use **Zod** f
 
 - **`/api/fetchWinningData`**: A proxy to the Lotto Bayern API for winning odds. It includes an 8-second timeout and uses a hardcoded fallback on failure.
 
-- **`/api/batchSimulate`**: The engine for Monte Carlo simulations.
+- **`/api/batchSimulate`**: The engine for Monte Carlo simulations (100-10,000 simulations).
   - **Streaming:** Streams progress back to the client using **NDJSON** (`application/x-ndjson`) to keep the UI responsive.
   - **Logic:**
 
@@ -137,23 +139,30 @@ The backend provides four main serverless endpoints. All endpoints use **Zod** f
 
 ---
 
-## 3. State Management Strategy
+## 3. State Management Strategy (3-Layer Architecture)
 
-The app uses a 3-layer approach to state management for clarity, persistence, and performance.
+The application follows a strict **3-layer state model** that enforces clear separation of concerns and ensures maintainability:
 
-1.  **URL (Source of Truth for Configuration):**
-    - **What:** The user's core configuration (ticket system, quantity, method, and optional "lucky" seed).
-    - **Why:** Ensures the state is shareable and persists across page refreshes.
-    - **How:** The `TicketsStore` decodes the URL hash on page load and encodes it back on any configuration change.
+### Layer 1: URL Persistence (Configuration State)
 
-2.  **Pinia Stores (Complex & Session State):**
-    - **What:** Manages complex state that isn't part of the URL, such as the list of generated tickets, live simulation progress, final results, and cached API data.
-    - **Why:** Centralizes business logic, handles async operations, and provides a single source of truth for the UI components during a session.
+- **PURPOSE**: Shareable, bookmarkable configuration that survives page refreshes.
+- **WHEN TO USE**: User-defined simulation parameters (e.g., system type, number of tickets), reproducible seeds.
+- **IMPLEMENTATION**: The `TicketsStore` decodes the URL hash on page load and encodes it back on any configuration change.
+- **EXAMPLE**: `const config = { system: '7x3', tickets: 50, seed: 'LUCKY123' }` is synced to the URL hash `#system=7x3&tickets=50&seed=LUCKY123`.
 
-3.  **Composables (`useState`) (Ephemeral UI State):**
-    - **What:** Manages temporary UI state like the visibility of a dialog, loading spinners, or transient error messages.
-    - **Why:** `useState` is Nuxt's SSR-safe tool for simple, non-domain state.
-    - **How:** The `useAppState.ts` composable centralizes this logic.
+### Layer 2: Pinia Domain Stores (Business Logic & Caching)
+
+- **PURPOSE**: Managing complex state machines, business rules, API caching, and side effects.
+- **WHEN TO USE**: Simulation lifecycle (`'config' → 'running' → 'results'`), caching API data (like winning odds), and implementing all core application logic.
+- **IMPLEMENTATION**: Manages complex state that isn't part of the URL, such as the list of generated tickets, live simulation progress, final results, and cached API data.
+- **EXAMPLE**: The `useSimulationStore` handles the entire process of starting a simulation, tracking its progress, and storing results or errors.
+
+### Layer 3: SSR-Safe Ephemeral State (UI State)
+
+- **PURPOSE**: Temporary, non-business UI state that must work with Server-Side Rendering (SSR).
+- **WHEN TO USE**: Component-level loading indicators, modal visibility, temporary notifications, UI toggles.
+- **IMPLEMENTATION**: `useState` is Nuxt's SSR-safe tool for simple, non-domain state.
+- **EXAMPLE**: `const showWelcomeMessage = useState('welcome-visible', () => false)` for a temporary banner.
 
 ---
 
