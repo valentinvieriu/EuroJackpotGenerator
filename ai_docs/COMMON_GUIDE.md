@@ -1,102 +1,85 @@
-# EuroJackpot Simulator - AI Agent Integration Guide
+# EuroJackpot Simulator - LLM Development Guide
 
-## Project Context & Agent's Role
+## Project Overview
 
-**EuroJackpot Simulator** is a production educational lottery simulation app built with **Nuxt 4 + Vue 3**, deployed on **Cloudflare Workers**. You're working with a sophisticated codebase that simulates EuroJackpot system tickets with Monte Carlo analysis.
-**Your expertise is most valuable for**: Complex refactoring, performance optimization, advanced TypeScript patterns, architectural decisions, debugging edge cases, and implementing new mathematical algorithms.
+**EuroJackpot Simulator** is a production educational lottery simulation application built with **Nuxt 4 + Vue 3**, deployed on **Cloudflare Workers**. This sophisticated codebase simulates EuroJackpot system tickets with Monte Carlo analysis for educational purposes.
 
-## Architecture Mental Model
+**Key Capabilities**: Complex refactoring, performance optimization, advanced TypeScript patterns, architectural decisions, debugging edge cases, and implementing mathematical algorithms.
 
-### Technology Stack Understanding
+## Technology Stack
 
-- **Nuxt 4**: Latest version with `app/` directory structure, auto-imports, and file-based routing.
-- **Vue 3 Composition API**: TypeScript-first with sophisticated reactivity patterns.
-- **Pinia**: Centralized state management for business logic and caching.
-- **Cloudflare Workers**: Edge computing with Nitro, custom preset in `cloudflare-preset/`.
-- **NDJSON Streaming**: Real-time progress updates for Monte Carlo simulations.
-- **Zod + TypeScript**: Comprehensive validation with centralized constants.
-- **Vitest & Testing Library**: For unit and integration testing of business logic.
-- **ESLint & Prettier**: For automated code quality and formatting.
+**Frontend**: Nuxt 4, Vue 3 Composition API, TypeScript, Pinia state management  
+**Backend**: Cloudflare Workers with Nitro, NDJSON streaming  
+**Quality**: Zod validation, Vitest testing, ESLint/Prettier
 
-### Critical Architectural Principles
+## Core Architectural Principles
 
-1.  **Single Source of Truth**: All numeric bounds are in `app/utils/constants.ts` - **NEVER hardcode values**.
-2.  **Server-Side Generation**: All ticket generation logic resides in `/server/api/generate` for security and consistency.
-3.  **3-Layer State Management**: A strict separation between URL, Pinia, and `useState` is enforced.
-4.  **Thin Components**: Components are for presentation only. All business logic lives in Pinia stores.
-5.  **Logic is Tested**: Business logic in stores and utilities must be covered by tests. We do not test UI rendering.
+1. **Constants Management**: All values in `app/utils/constants.ts` - never hardcode
+1. **Server-Side Security**: Ticket generation in `/server/api/generate` only
+1. **3-Layer State**: URL persistence → Pinia stores → SSR-safe state (see [ARCHITECTURE.md](./ARCHITECTURE.md))
+1. **Thin Components**: UI only, business logic in Pinia stores
+1. **Logic Testing**: Test business logic, not UI rendering
 
-## 3-Layer State Architecture (CRITICAL PATTERN)
+_For detailed architectural information, see [ARCHITECTURE.md](./ARCHITECTURE.md)_
 
-The application follows a strict **3-layer state model** that you must understand and maintain:
+## Quick Start
 
-### Layer 1: URL Persistence (Configuration State)
+### Development Setup
 
-- **PURPOSE**: Shareable, bookmarkable configuration that survives page refreshes.
-- **WHEN TO USE**: User-defined simulation parameters (e.g., system type, number of tickets), reproducible seeds.
-- **EXAMPLE**: `const config = { system: '7x3', tickets: 50, seed: 'LUCKY123' }` is synced to the URL hash `#system=7x3&tickets=50&seed=LUCKY123`.
+```bash
+npm install
+npm run dev  # Starts on localhost:3000
+```
 
-### Layer 2: Pinia Domain Stores (Business Logic & Caching)
+### Key Commands
 
-- **PURPOSE**: Managing complex state machines, business rules, API caching, and side effects.
-- **WHEN TO USE**: Simulation lifecycle (`'config' → 'running' → 'results'`), caching API data (like winning odds), and implementing all core application logic.
-- **EXAMPLE**: The `useSimulationStore` handles the entire process of starting a simulation, tracking its progress, and storing results or errors.
+```bash
+npm test         # Run tests
+npm run lint     # Check code quality
+npm run format   # Format code
+```
 
-### Layer 3: SSR-Safe Ephemeral State (UI State)
+### Understanding the Codebase
 
-- **PURPOSE**: Temporary, non-business UI state that must work with Server-Side Rendering (SSR).
-- **WHEN TO USE**: Component-level loading indicators, modal visibility, temporary notifications, UI toggles.
-- **EXAMPLE**: `const showWelcomeMessage = useState('welcome-visible', () => false)` for a temporary banner.
+1. **State Management**: 3-layer architecture (URL → Pinia → SSR-safe)
+1. **Business Logic**: Located in `stores/` and `app/utils/`
+1. **API Endpoints**: Server logic in `server/api/`
+1. **Testing**: Focus on business logic, not UI rendering
 
-## Code Quality & Testing Philosophy (MANDATORY)
+_For detailed patterns and examples, see [ARCHITECTURE.md](./ARCHITECTURE.md)_
 
-### Linting & Formatting
+## Development Standards
 
-To maintain pristine code quality, we use ESLint and Prettier. These are enforced via pre-commit hooks.
+### Code Quality
 
-- **`npm run lint`**: Checks for code quality, logical errors, and adherence to style guides.
-- **`npm run format`**: Automatically formats all code to a consistent style.
+- **Linting**: ESLint enforced via pre-commit hooks
+- **Formatting**: Prettier with consistent styling
+- **Workflow**: Always run `npm run format` and `npm run lint` before committing
 
-**Workflow Requirement**: You **MUST** run `npm run format` and `npm run lint` at the end of every development session to ensure all changes are clean and consistent before finalizing your work.
+### Testing Philosophy
 
-### Testing Strategy
+- **Test**: Business logic in stores, utilities, server endpoints, Zod schemas
+- **Don't Test**: UI rendering, CSS, simple event handlers
+- **Requirement**: New features must include business logic tests
 
-Our testing philosophy is precise: **We test business logic and state, not UI implementation.**
+_For detailed testing strategies and examples, see testing sections in [ARCHITECTURE.md](./ARCHITECTURE.md)_
 
-- **`npm run test`**: Runs the full suite of tests using Vitest.
+## Development Workflows
 
-#### What to Test:
+### Feature Development Pattern
 
-- **Pinia Stores**: Actions, getters, and complex state transitions are the primary targets.
-- **Utility Functions**: All shared helpers (`/app/utils`, `/server/utils`) must be tested.
-- **Server API Logic**: Endpoint handlers, especially validation and business logic.
-- **Zod Schemas**: Ensure they correctly validate expected and invalid data.
+1. **Schema First**: Define Zod schemas in `app/schemas/`
+1. **Constants**: Add values to `app/utils/constants.ts` (never hardcode)
+1. **Business Logic**: Implement in Pinia stores with tests
+1. **API Layer**: Create server endpoints with validation
+1. **UI Components**: Thin presentation layer only
+1. **Quality Check**: Run tests, lint, and format before completion
 
-#### What NOT to Test:
+### Debugging Approach
 
-- Vue component rendering output (e.g., "does this `div` exist?").
-- CSS styles or classes.
-- Basic component event handlers that only call store actions.
+1. **Identify Layer**: URL state vs Pinia stores vs UI state
+1. **Test-Driven**: Write failing test to reproduce issue
+1. **Isolate & Fix**: Use watch mode for rapid feedback
+1. **Verify**: Ensure fix doesn't introduce regressions
 
-**Workflow Requirement**: Every major new feature or significant refactor **MUST** include corresponding tests for its business logic.
-
-## Agent Development Workflows
-
-### Adding a New Feature Workflow
-
-1.  **Schema First**: Define Zod schemas for any new data structures in `app/schemas/`.
-2.  **Constants**: Add any new magic numbers or strings to `app/utils/constants.ts`. **Do not hardcode**.
-3.  **Store Creation**: Implement all business logic in a new Pinia store (e.g., `stores/newFeature.ts`).
-4.  **Test-Driven Logic**: Write Vitest tests for your new Pinia store's logic. Focus on actions, state transitions, and edge cases. Run `npm run test` frequently as you develop.
-5.  **API Endpoint**: If needed, create the server endpoint in `/server/api/`. Ensure it uses the Zod schema for validation.
-6.  **Component Implementation**: Build a thin presentation component that uses the store. It should only coordinate actions and display state.
-7.  **URL Integration**: If the feature's configuration needs to be persistent, integrate it with the URL state (Layer 1).
-8.  **Finalization & Quality Check**: Before concluding, run a full quality pass: `npm run test`, `npm run lint`, and `npm run format`.
-
-### Debugging Complex Issues Workflow
-
-1.  **Isolate the Layer**: First, identify if the bug is in URL state (Layer 1), business logic (Layer 2), or UI state (Layer 3).
-2.  **Write a Failing Test**: If the bug is in business logic (the most common case), write a minimal Vitest test that reproduces the bug within the relevant Pinia store or utility. This is the most effective way to isolate the issue.
-3.  **Use Watch Mode**: Run `npm run test -- --watch` to get instant feedback as you develop the fix.
-4.  **Verify the Fix**: The bug is fixed when the failing test passes.
-5.  **Check Boundaries**: Ensure the fix hasn't introduced regressions in component coordination or URL state management.
+_For detailed workflow examples and best practices, see development sections in [ARCHITECTURE.md](./ARCHITECTURE.md)_

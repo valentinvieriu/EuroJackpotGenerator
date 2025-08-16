@@ -1,8 +1,21 @@
 # EuroJackpot Simulator
 
-EuroJackpot Simulator is an educational web application that helps users understand EuroJackpot system tickets through realistic simulations. Built with Nuxt 4 and Vue 3, it provides single draw simulations and comprehensive Monte Carlo analysis with detailed analytics.
+**Ever wondered how EuroJackpot system tickets really work?** This educational web application lets you explore the fascinating world of lottery mathematics through realistic simulations and detailed analytics.
 
-**⚠️ Educational Purpose Only**: This application is for educational and entertainment purposes. It does not predict real lottery draws or guarantee any outcomes.
+## What Does This Do?
+
+EuroJackpot Simulator helps you understand:
+
+- **System Tickets**: How selecting more numbers affects your chances and costs
+- **Real Probabilities**: What actually happens when you play different strategies
+- **Cost vs. Benefit**: Whether system tickets are worth the extra expense
+- **Monte Carlo Analysis**: See patterns emerge from thousands of simulated draws
+
+## Why This Matters
+
+Instead of guessing about lottery strategies, you can **see the data**. Run 10,000 simulations to understand what "1 in 95 million" really means in practice. Perfect for statistics students, curious players, or anyone who loves probability puzzles.
+
+**⚠️ Educational Purpose Only**: This is a learning tool, not a prediction system. It won't help you win the lottery, but it will help you understand it.
 
 ## Features
 
@@ -37,137 +50,39 @@ EuroJackpot Simulator is an educational web application that helps users underst
 - Edge deployment on Cloudflare Workers
 - Responsive design optimised for desktop and mobile
 
-## Technologies Used
+## How It Works
 
-- **Nuxt 4** - Latest framework with enhanced performance
-- **Vue 3** - Composition API for modern component development
-- **TypeScript** - Type-safe development with comprehensive validation
-- **Pinia** - Centralized state management for business logic and caching
-- **Tailwind CSS** - Casino-themed styling with custom colour palette
-- **Cloudflare Workers** - Serverless edge deployment with Nitro
-- **NDJSON Streaming** - Real-time progress updates for long operations
-- **Zod** - Runtime validation with comprehensive schemas
-- **Vitest** - Fast unit testing framework for business logic
+The simulator uses the official EuroJackpot format (5 numbers from 1-50, plus 2 Euro numbers from 1-12) and real win-class payouts to provide accurate simulations. Choose your system size, generate tickets, and run either single draws or large-scale Monte Carlo simulations to see the mathematics in action.
 
-## Setup
+## Quick Start
 
-Make sure to install the dependencies:
+1. **Try It Online**: Visit the live application [eurojackpot.vv42.workers.dev](https://eurojackpot.vv42.workers.dev)
+1. **Local Development**: See [ai_docs/COMMON_GUIDE.md](ai_docs/COMMON_GUIDE.md) for setup instructions
+1. **Understand the Code**: Review [ai_docs/ARCHITECTURE.md](ai_docs/ARCHITECTURE.md) for technical details
 
-```bash
-# npm
-npm install
+## Learn More
 
-# pnpm
-pnpm install
+This project demonstrates several interesting concepts:
 
-# yarn
-yarn install
+- **Probability Theory**: See how mathematical expectations play out in practice
+- **System Tickets**: Understand the trade-offs between coverage and cost
+- **Monte Carlo Methods**: Watch statistical patterns emerge from large samples
+- **Web Performance**: Real-time streaming of long-running calculations
 
-# bun
-bun install
-```
+## Documentation
 
-## API Endpoints
+- **[Product Requirements](ai_docs/PRD.md)** - What we're building and why
+- **[Architecture Guide](ai_docs/ARCHITECTURE.md)** - Technical implementation details
+- **[Development Guide](ai_docs/COMMON_GUIDE.md)** - Setup, testing, and contribution guidelines
 
-- `POST /api/generate` - Generate system tickets (1-500)
-- `GET /api/simulate` - Single draw simulation
-- `POST /api/batchSimulate` - Monte Carlo simulation with streaming
-- `GET /api/fetchWinningData` - Current win class payouts
+## Responsible Use
 
-## Environment Variables
+This simulator is designed for education and entertainment:
 
-Optional configuration:
-
-- `NUXT_PUBLIC_API_BASE` - Base URL for API endpoints (default: `/api`)
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm run dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-npm run build
-```
-
-Preview production build locally:
-
-```bash
-npm run preview
-```
-
-## Testing
-
-The project uses Vitest for testing business logic, utilities, and server-side handlers:
-
-```bash
-# Run all tests once
-npm test
-
-# Run tests in watch mode for development
-npm test -- --watch
-
-# Check code quality and formatting
-npm run lint
-npm run format
-```
-
-**Testing Focus**: Business logic in Pinia stores and utilities are thoroughly tested. UI component rendering is not tested, following the principle of testing behaviour rather than implementation.
-
-## Deployment
-
-This project is configured for Cloudflare Workers deployment:
-
-```bash
-# Deploy to production
-npm run deploy
-
-# Generate Cloudflare Worker types
-npm run cf-typegen
-```
-
-## Architecture
-
-- **Frontend**: Nuxt 4 SPA with Vue 3 Composition API
-- **Backend**: Nitro serverless API on Cloudflare Workers
-- **State Management**: 3-layer architecture (URL persistence, Pinia stores, SSR-safe state)
-- **External APIs**: Lotto Bayern for statistics and payout data
-- **Caching**: 10-minute cache for external data with fallbacks
-- **Streaming**: NDJSON for real-time Monte Carlo progress
-
-For detailed architecture information, see [ai_docs/ARCHITECTURE.md](ai_docs/ARCHITECTURE.md).
-
-## Performance Targets
-
-- P95 API latency < 1500ms
-- Monte Carlo simulations with real-time progress
-- Error rate < 0.1% with graceful fallbacks
-- Global edge deployment for optimal performance
-
-## Responsible Gaming
-
-This application is designed for educational and entertainment purposes only:
-
-- No real-money transactions
-- Clear cost transparency (€2.00 per line)
-- Educational focus on understanding probabilities
-- Does not predict or guarantee real lottery outcomes
+- No real-money transactions or gambling features
+- Clear cost transparency (€2.00 per line, matching real EuroJackpot pricing)
+- Educational focus on understanding probabilities and mathematics
+- **Does not predict or guarantee real lottery outcomes**
 
 ## License
 

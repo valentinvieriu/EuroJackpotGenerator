@@ -45,7 +45,7 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
 ## 7. User Scenarios _(Optional)_
 
 1. **Generate & Single Draw:** User selects a system preset and ticket count (1–500); app shows total price; a single mock draw highlights matches and shows winnings and ROI.
-2. **Monte Carlo Run:** User configures **100–10,000** simulations; progress streams via NDJSON with partial stats; final report shows totals, ROI, distributions, and percentiles; optional JSON export when enabled; cancel stops after current batch.
+1. **Monte Carlo Run:** User configures **100–10,000** simulations; progress streams via NDJSON with partial stats; final report shows totals, ROI, distributions, and percentiles; optional JSON export when enabled; cancel stops after current batch.
 
 ## 8. Scope
 
@@ -155,5 +155,5 @@ EuroJackpot Simulator is a web application that lets users explore EuroJackpot *
 
 ## 17. Related Documents _(Optional)_
 
-- [Architecture](./ARCHITECTURE.md)
-- [Common Guide](./COMMON_GUIDE.md)
+- **[Architecture Guide](./ARCHITECTURE.md)** - Technical implementation details and system design
+- **[Development Guide](./COMMON_GUIDE.md)** - LLM integration guide and development workflows

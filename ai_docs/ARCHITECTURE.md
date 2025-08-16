@@ -99,43 +99,52 @@ The frontend is responsible for the user interface and delegates all complex log
 
 The backend provides four main serverless endpoints. All endpoints use **Zod** for strict input and output validation.
 
-- **`/api/generate`**: Generates unique lottery tickets (1-500 per request). It can use a uniform random algorithm or a weighted one based on historical stats (cached for 10 minutes).
+#### API Endpoints
 
-  ```pseudocode
-  // The server handles the core generation logic
-  function generate(ticket_config):
-    if ticket_config.method == "weighted" and not ticket_config.seed:
-      stats = get_cached_statistics()
-      return generate_weighted_tickets(stats)
-    else:
-      return generate_uniform_tickets() // Can be seeded
-  ```
+- **`POST /api/generate`**: Generates unique lottery tickets (1-500 per request)
+  - **Parameters**: System configuration, ticket count, generation method (uniform/weighted), optional seed
+  - **Response**: Array of ticket objects with main and euro numbers
+  - **Logic**: Uses either uniform random or weighted algorithm based on historical stats (cached for 10 minutes)
 
-- **`/api/simulate`**: Simulates a single draw, returning one set of winning numbers. Uses a cryptographically secure RNG unless a `seed` is provided for deterministic results.
+- **`GET /api/simulate`**: Single draw simulation
+  - **Parameters**: Optional seed for deterministic results
+  - **Response**: Single set of winning numbers (5 main + 2 euro)
+  - **Logic**: Cryptographically secure RNG unless seed provided
 
-- **`/api/fetchWinningData`**: A proxy to the Lotto Bayern API for winning odds. It includes an 8-second timeout and uses a hardcoded fallback on failure.
+- **`GET /api/fetchWinningData`**: Current win class payouts
+  - **Response**: Normalised payout data for classes 1-12
+  - **Reliability**: 8-second timeout with hardcoded fallback data
 
-- **`/api/batchSimulate`**: The engine for Monte Carlo simulations (100-10,000 simulations).
-  - **Streaming:** Streams progress back to the client using **NDJSON** (`application/x-ndjson`) to keep the UI responsive.
-  - **Logic:**
+- **`POST /api/batchSimulate`**: Monte Carlo simulation engine (100-10,000 simulations)
+  - **Parameters**: Tickets array, simulation count, batch size configuration
+  - **Response**: NDJSON stream with progress events and final results
+  - **Streaming**: Real-time progress via `application/x-ndjson` content type
 
-    ```pseudocode
-    function batchSimulate(tickets, simulation_count):
-      // Fetch odds once at the start
-      odds_map = fetch_and_normalize_odds()
-      stream = create_ndjson_stream()
+#### API Logic Patterns
 
-      // Process in chunks to avoid blocking the event loop
-      loop over simulation_count in batches:
-        batch_results = run_simulations_for_chunk(...)
-        progress_summary = aggregate(batch_results)
-        stream.write({ type: "progress", data: progress_summary })
+```pseudocode
+// Ticket Generation
+function generate(ticket_config):
+  if ticket_config.method == "weighted" and not ticket_config.seed:
+    stats = get_cached_statistics()
+    return generate_weighted_tickets(stats)
+  else:
+    return generate_uniform_tickets() // Can be seeded
 
-      // Send final, detailed statistics when done
-      final_result = calculate_final_statistics()
-      stream.write({ type: "result", data: final_result })
-      stream.close()
-    ```
+// Monte Carlo Simulation
+function batchSimulate(tickets, simulation_count):
+  odds_map = fetch_and_normalize_odds()
+  stream = create_ndjson_stream()
+
+  loop over simulation_count in batches:
+    batch_results = run_simulations_for_chunk(...)
+    progress_summary = aggregate(batch_results)
+    stream.write({ type: "progress", data: progress_summary })
+
+  final_result = calculate_final_statistics()
+  stream.write({ type: "result", data: final_result })
+  stream.close()
+```
 
 ---
 
@@ -198,24 +207,71 @@ The project uses **Vitest** with **happy-dom** for fast and reliable unit testin
 
 ---
 
-## 6. Deployment & Code Quality
+## 6. Development Environment
 
-### Deployment
+### Local Development Setup
 
-The application is built and deployed as a serverless application to **Cloudflare Workers** using Nitro's built-in preset.
+```bash
+# Install dependencies
+npm install
 
-- **Deployment Process:**
-  1.  The `npm run build` command compiles the Nuxt app and Nitro server into an optimized format for Cloudflare.
-  2.  The `npm run deploy` command uses the Wrangler CLI to publish the build output to the Cloudflare network.
+# Start development server (localhost:3000)
+npm run dev
 
-### Code Quality
+# Build for production
+npm run build
 
-To ensure a high standard of code quality and consistency, the project enforces strict linting and formatting rules.
+# Preview production build
+npm run preview
+```
 
-- **Tools:**
-  - **ESLint:** For static code analysis and enforcing coding standards. `npm run lint`
-  - **Prettier:** For consistent and automatic code formatting. `npm run format`
+### Environment Configuration
 
-- **Pre-commit Hook (Mandatory):**
-  - The project uses **Husky** and **lint-staged** to run ESLint and Prettier on all staged files before a commit is created.
-  - **You cannot commit code that fails these checks.** This policy guarantees that all code in the repository adheres to the established formatting and linting rules, preventing style inconsistencies and common errors.
+Optional environment variables:
+
+- `NUXT_PUBLIC_API_BASE`: Base URL for API endpoints (default: `/api`)
+
+### Code Quality Tools
+
+- **ESLint**: Static code analysis and coding standards enforcement
+- **Prettier**: Automatic code formatting with consistent styling
+- **Husky + lint-staged**: Pre-commit hooks ensuring quality standards
+
+### Essential Commands
+
+```bash
+npm test              # Run all tests
+npm run test -- --watch  # Watch mode for TDD
+npm run lint          # Check code quality
+npm run format        # Format all code
+npm run cf-typegen    # Generate Cloudflare Worker types
+```
+
+---
+
+## 7. Deployment & Performance
+
+### Deployment Architecture
+
+**Target Platform**: Cloudflare Workers with Nitro serverless preset
+**Build Process**: Nuxt generates optimised bundle for edge deployment
+**CLI Tool**: Wrangler for deployment management
+
+```bash
+npm run deploy        # Deploy to Cloudflare Workers
+```
+
+### Performance Targets
+
+- **API Latency**: P95 < 1500ms for all endpoints
+- **Error Rate**: < 0.1% with graceful fallbacks
+- **Streaming**: Real-time Monte Carlo progress via NDJSON
+- **Caching**: 10-minute cache for external data sources
+- **Edge Distribution**: Global deployment for optimal performance
+
+### Reliability Features
+
+- **Graceful Fallbacks**: External API failures handled with cached/hardcoded data
+- **Timeout Management**: 8-second timeout for external data fetching
+- **Data Validation**: Comprehensive Zod schemas at all API boundaries
+- **Error Boundaries**: Robust error handling throughout the application stack
