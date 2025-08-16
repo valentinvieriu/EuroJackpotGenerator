@@ -17,8 +17,13 @@ import { buildOddsMap } from '~/utils/payout'
 import { playWinSound } from '~/utils/audioUtils'
 import { useAudioState } from '~/composables/useAppState'
 import { useOddsStore } from './odds'
-import { LARGE_SIMULATION_THRESHOLD } from '~/utils/constants'
+import {
+  LARGE_SIMULATION_THRESHOLD,
+  NUMBER_FREQUENCY_THRESHOLD,
+} from '~/utils/constants'
+import { PRICE_PER_LINE } from '~/utils/pricing'
 import { logger } from '~/utils/logger'
+import { extractErrorMessage } from '~/utils/errors'
 
 // Helper function to normalize winsByClass from string keys to number keys
 const normalizeWinsByClass = (
@@ -394,7 +399,7 @@ export const useSimulationStore = defineStore('simulation', () => {
 
     // Calculate total ticket price for new tickets
     const totalPrice = state.value.currentTickets.reduce(
-      (sum, ticket) => sum + (ticket.linesCount || 0) * 2.0, // €2.00 per line
+      (sum, ticket) => sum + (ticket.linesCount || 0) * PRICE_PER_LINE,
       0
     )
 
@@ -853,7 +858,7 @@ export const useSimulationStore = defineStore('simulation', () => {
       // Use a simple threshold: show numbers that matched in at least 10% of simulations
       const minFrequency = Math.max(
         1,
-        Math.floor(individualResults.length * 0.1)
+        Math.floor(individualResults.length * NUMBER_FREQUENCY_THRESHOLD)
       )
 
       const winningMainNumbers = ticket.mainNumbers.filter(
@@ -968,23 +973,6 @@ export const useSimulationStore = defineStore('simulation', () => {
       const minutes = Math.ceil((remainingSeconds % 3600) / 60)
       return `${hours}h ${minutes}m`
     }
-  }
-
-  const extractErrorMessage = (error: unknown): string => {
-    if (typeof error === 'string') return error
-    if (error instanceof Error) return error.message
-    if (error && typeof error === 'object') {
-      const e = error as Record<string, unknown>
-      if (
-        e.data &&
-        typeof e.data === 'object' &&
-        (e.data as Record<string, unknown>).message
-      ) {
-        return String((e.data as Record<string, unknown>).message)
-      }
-      if (typeof e.statusText === 'string') return e.statusText
-    }
-    return 'Simulation failed with unknown error'
   }
 
   // Return store interface

@@ -9,6 +9,7 @@ import type { EurojackpotHistoricOdds } from '~/schemas'
 import { buildOddsMap } from '~/utils/payout'
 import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
 import { logger } from '~/utils/logger'
+import { extractErrorMessage } from '~/utils/errors'
 
 interface OddsCache {
   data: EurojackpotHistoricOdds | null
@@ -143,14 +144,6 @@ export const useOddsStore = defineStore('odds', () => {
       }
       checkLoading()
     })
-  }
-
-  const extractErrorMessage = (error: unknown): string => {
-    if (typeof error === 'string') return error
-    if (error instanceof Error) return error.message
-    if (error?.data?.message) return error.data.message
-    if (error?.statusText) return error.statusText
-    return 'Failed to fetch odds data'
   }
 
   /**

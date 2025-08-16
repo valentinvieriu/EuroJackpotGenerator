@@ -55,6 +55,8 @@
 </template>
 
 <script setup lang="ts">
+import { TICKET_COUNT_MIN, TICKET_COUNT_MAX } from '~/utils/constants'
+
 interface Props {
   modelValue: number
   min?: number
@@ -62,8 +64,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  min: 1,
-  max: 500,
+  min: TICKET_COUNT_MIN,
+  max: TICKET_COUNT_MAX,
 })
 
 const emit = defineEmits<{

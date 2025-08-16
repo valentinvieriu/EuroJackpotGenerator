@@ -31,12 +31,10 @@ import {
   calculateBatchStatistics,
   simulateSingleDraw,
 } from '~/utils/batchStatistics'
-import { combinationCount } from '~/utils/combinatorics'
 import { buildTicketHighlightUpdate } from '~/utils/ticketHighlighting'
-import type { Ticket } from '~/schemas/ticket'
 import { buildOddsMap } from '~/utils/payout'
-import { PRICE_PER_LINE } from '~/utils/pricing'
 import { logger } from '~/utils/logger'
+import { calculateTotalSimulationCost } from '~/utils/simulationMath'
 
 /**
  * API endpoint to run batch simulations of EuroJackpot draws.
@@ -96,7 +94,7 @@ export default defineEventHandler(
         : simulationCount
 
       // Calculate cost per simulation (assuming all tickets have same system price)
-      const costPerSimulation = calculateTotalCost(tickets)
+      const costPerSimulation = calculateTotalSimulationCost(tickets)
       const totalCost = costPerSimulation * effectiveSimulationCount
 
       logger.info(
@@ -405,16 +403,4 @@ function collectHighlightingDataFromResult(
       }
     })
   })
-}
-
-/**
- * Calculates the total cost for a set of tickets.
- * For now, uses a simplified approach assuming standard system pricing.
- */
-function calculateTotalCost(tickets: Ticket[]): number {
-  return tickets.reduce((sum, t) => {
-    const m = t.mainNumbers.length
-    const e = t.euroNumbers.length
-    return sum + combinationCount(m, e) * PRICE_PER_LINE
-  }, 0)
 }

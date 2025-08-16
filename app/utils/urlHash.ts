@@ -14,6 +14,7 @@ import {
   type SelectionMethod,
 } from '~/schemas/urlConfig'
 import { logger } from '~/utils/logger'
+import { TICKET_COUNT_MAX } from '~/utils/constants'
 
 // Re-export types for compatibility
 export type { AppConfig, SelectionMethod }
@@ -86,8 +87,8 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
       if (validParams.tickets) {
         const parsedTickets = Number.parseInt(validParams.tickets, 10)
         if (!Number.isNaN(parsedTickets) && parsedTickets > 0) {
-          // Apply validation: clamp tickets to max of 500
-          config.tickets = Math.min(parsedTickets, 500)
+          // Apply validation: clamp tickets to max
+          config.tickets = Math.min(parsedTickets, TICKET_COUNT_MAX)
         }
       }
 

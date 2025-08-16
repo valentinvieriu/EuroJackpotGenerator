@@ -26,6 +26,7 @@ import {
   TRANSIENT_ERROR_MS,
   URL_DEBOUNCE_MS,
 } from '~/utils/constants'
+import { extractErrorMessage } from '~/utils/errors'
 
 export type TicketPhase = 'fresh' | 'generating' | 'ready' | 'error'
 export type AppState = 'FRESH' | 'SHARED'
@@ -109,25 +110,6 @@ export const useTicketsStore = defineStore('tickets', () => {
     if (state.value.phase === 'error') {
       state.value.phase = hasTickets.value ? 'ready' : 'fresh'
     }
-  }
-
-  const extractErrorMessage = (err: unknown): string => {
-    if (typeof err === 'string') return err
-    if (err instanceof Error) return err.message
-    if (err && typeof err === 'object') {
-      const e = err as Record<string, unknown>
-      const data = (e.data as Record<string, unknown> | undefined) ?? undefined
-      const candidates = [
-        data?.message,
-        data?.statusMessage,
-        e.statusText,
-        e.message,
-      ]
-      for (const c of candidates) {
-        if (typeof c === 'string' && c) return c
-      }
-    }
-    return 'Failed to generate tickets.'
   }
 
   const updateBrowserUrl = (config?: Partial<AppConfig> | null) => {
