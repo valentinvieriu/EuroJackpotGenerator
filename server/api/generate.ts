@@ -9,7 +9,10 @@ import {
   handleEndpointError,
 } from '../utils/validation'
 import { fetchStatistics } from '../utils/statistics'
-import { generateNumbers } from '~/utils/numberGenerator'
+import {
+  generateNumbers,
+  generateNumbersWithFavorites,
+} from '~/utils/numberGenerator'
 import {
   MAIN_NUMBER_MIN,
   MAIN_NUMBER_MAX,
@@ -19,7 +22,7 @@ import {
 import { generateSeededRandomNumbers } from '../utils/seededRng'
 import { logger } from '~/utils/logger'
 
-type Algorithm = 'uniform' | 'weighted'
+type Algorithm = 'uniform' | 'weighted' | 'favorites'
 
 /**
  * Generates a specified number of unique EuroJackpot tickets.
@@ -31,11 +34,12 @@ async function generateTickets(
   mainCount: number,
   euroCount: number,
   algorithm: Algorithm = 'weighted',
-  seed?: string
+  seed?: string,
+  favoriteNumbers?: { mainNumbers: number[]; euroNumbers: number[] }
 ): Promise<Ticket[]> {
   // Decide whether to fetch stats (only if not using seeded generation)
   let statsData: StatisticsData | null = null
-  if (algorithm === 'weighted' && !seed) {
+  if ((algorithm === 'weighted' || algorithm === 'favorites') && !seed) {
     try {
       statsData = await fetchStatistics()
       if (!statsData) {
@@ -86,18 +90,37 @@ async function generateTickets(
         )
       } else {
         // Use weighted stats when available; generateNumbers falls back to uniform when statsData is null
-        mainNumbers = generateNumbers(
-          mainCount,
-          MAIN_NUMBER_MIN,
-          MAIN_NUMBER_MAX,
-          statsData?.numbers
-        )
-        euroNumbers = generateNumbers(
-          euroCount,
-          EURO_NUMBER_MIN,
-          EURO_NUMBER_MAX,
-          statsData?.additionalNumbers
-        )
+        if (algorithm === 'favorites' && favoriteNumbers) {
+          // Use favorites-enhanced generation
+          mainNumbers = generateNumbersWithFavorites(
+            mainCount,
+            MAIN_NUMBER_MIN,
+            MAIN_NUMBER_MAX,
+            favoriteNumbers.mainNumbers,
+            statsData?.numbers
+          )
+          euroNumbers = generateNumbersWithFavorites(
+            euroCount,
+            EURO_NUMBER_MIN,
+            EURO_NUMBER_MAX,
+            favoriteNumbers.euroNumbers,
+            statsData?.additionalNumbers
+          )
+        } else {
+          // Use standard weighted or uniform generation
+          mainNumbers = generateNumbers(
+            mainCount,
+            MAIN_NUMBER_MIN,
+            MAIN_NUMBER_MAX,
+            statsData?.numbers
+          )
+          euroNumbers = generateNumbers(
+            euroCount,
+            EURO_NUMBER_MIN,
+            EURO_NUMBER_MAX,
+            statsData?.additionalNumbers
+          )
+        }
       }
 
       ticketKey =
@@ -133,12 +156,18 @@ export default defineEventHandler(
     try {
       // 1. Validate input at the edge
       const rawBody = await readBody(event)
-      const { ticketCount, mainCount, euroCount, algorithm, seed } =
-        validateInput(
-          generateRequestSchema,
-          rawBody,
-          'ticket generation request'
-        )
+      const {
+        ticketCount,
+        mainCount,
+        euroCount,
+        algorithm,
+        seed,
+        favoriteNumbers,
+      } = validateInput(
+        generateRequestSchema,
+        rawBody,
+        'ticket generation request'
+      )
 
       // 2. Execute business logic
       logger.debug(
@@ -149,7 +178,8 @@ export default defineEventHandler(
         mainCount,
         euroCount,
         algorithm,
-        seed
+        seed,
+        favoriteNumbers
       )
 
       // 3. Set linesCount for each ticket

@@ -84,6 +84,13 @@ export const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   debug: 3,
 }
 
+// Favorite Numbers Limits
+export const FAVORITE_NUMBERS_MAX = 5
+export const FAVORITE_NUMBERS_MIN = 0
+
+// Algorithm Enhancement Constants
+export const FAVORITE_WEIGHT_MULTIPLIER = 10 // Multiplier for favorite number weighting
+
 // Derived Arrays for Components
 export const WIN_CLASSES = Array.from(
   { length: WIN_CLASS_MAX - WIN_CLASS_MIN + 1 },

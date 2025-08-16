@@ -7,13 +7,18 @@ import {
   EURO_SYSTEM_MIN,
   EURO_SYSTEM_MAX,
 } from '~/utils/constants'
+import { FavoriteNumbersSchema } from './urlConfig'
 
 export const generateRequestSchema = z.object({
   ticketCount: z.number().int().min(TICKET_COUNT_MIN).max(TICKET_COUNT_MAX),
   mainCount: z.number().int().min(MAIN_SYSTEM_MIN).max(MAIN_SYSTEM_MAX),
   euroCount: z.number().int().min(EURO_SYSTEM_MIN).max(EURO_SYSTEM_MAX),
-  algorithm: z.enum(['uniform', 'weighted']).optional().default('weighted'),
+  algorithm: z
+    .enum(['uniform', 'weighted', 'favorites'])
+    .optional()
+    .default('weighted'),
   seed: z.string().optional(),
+  favoriteNumbers: FavoriteNumbersSchema.optional(),
 })
 
 export type GenerateRequest = z.infer<typeof generateRequestSchema>

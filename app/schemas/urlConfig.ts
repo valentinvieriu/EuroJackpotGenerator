@@ -10,6 +10,12 @@ import {
   MAIN_SYSTEM_MAX,
   EURO_SYSTEM_MIN,
   EURO_SYSTEM_MAX,
+  MAIN_NUMBER_MIN,
+  MAIN_NUMBER_MAX,
+  EURO_NUMBER_MIN,
+  EURO_NUMBER_MAX,
+  FAVORITE_NUMBERS_MIN,
+  FAVORITE_NUMBERS_MAX,
 } from '~/utils/constants'
 import { logger } from '~/utils/logger'
 /**
@@ -42,9 +48,14 @@ export const TicketSystemSchema = z
 /**
  * Schema for selection method
  */
-export const SelectionMethodSchema = z.enum(['random', 'weighted'], {
-  errorMap: () => ({ message: 'Method must be either "random" or "weighted"' }),
-})
+export const SelectionMethodSchema = z.enum(
+  ['random', 'weighted', 'favorites'],
+  {
+    errorMap: () => ({
+      message: 'Method must be "random", "weighted", or "favorites"',
+    }),
+  }
+)
 
 /**
  * Schema for ticket count
@@ -54,6 +65,22 @@ export const TicketCountSchema = z.coerce
   .int()
   .min(1, 'Minimum 1 ticket required')
   .max(500, 'Maximum 500 tickets allowed')
+
+/**
+ * Schema for favorite numbers configuration
+ */
+export const FavoriteNumbersSchema = z.object({
+  mainNumbers: z
+    .array(z.number().int().min(MAIN_NUMBER_MIN).max(MAIN_NUMBER_MAX))
+    .min(FAVORITE_NUMBERS_MIN)
+    .max(FAVORITE_NUMBERS_MAX)
+    .default([]),
+  euroNumbers: z
+    .array(z.number().int().min(EURO_NUMBER_MIN).max(EURO_NUMBER_MAX))
+    .min(FAVORITE_NUMBERS_MIN)
+    .max(FAVORITE_NUMBERS_MAX)
+    .default([]),
+})
 
 /**
  * Schema for lucky code (adjective-noun-number format)
@@ -73,6 +100,8 @@ export const AppConfigSchema = z.object({
   tickets: TicketCountSchema,
   method: SelectionMethodSchema,
   lucky: LuckyCodeSchema.optional(),
+  fav_main: z.string().optional(), // comma-separated favorite main numbers
+  fav_euro: z.string().optional(), // comma-separated favorite euro numbers
 })
 
 /**
@@ -89,6 +118,8 @@ export const UrlParamsSchema = z.object({
   tickets: z.string().optional(),
   method: z.string().optional(),
   lucky: z.string().optional(),
+  fav_main: z.string().optional(),
+  fav_euro: z.string().optional(),
 })
 
 /**
@@ -106,6 +137,7 @@ export type AppConfig = z.infer<typeof AppConfigSchema>
 export type UrlParams = z.infer<typeof UrlParamsSchema>
 export type ParsedSystem = z.infer<typeof ParsedSystemSchema>
 export type SelectionMethod = z.infer<typeof SelectionMethodSchema>
+export type FavoriteNumbers = z.infer<typeof FavoriteNumbersSchema>
 
 /**
  * Validation helpers with descriptive error messages

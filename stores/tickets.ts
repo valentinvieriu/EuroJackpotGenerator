@@ -7,7 +7,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import type { Ticket } from '~/schemas'
-import type { AppConfig, SelectionMethod } from '~/schemas/urlConfig'
+import type {
+  AppConfig,
+  SelectionMethod,
+  FavoriteNumbers,
+} from '~/schemas/urlConfig'
 import { useSimulationStore } from './simulation'
 import { useUIState, useTransientErrors } from '~/composables/useAppState'
 import {
@@ -25,6 +29,11 @@ import {
   WELCOME_DISPLAY_MS,
   TRANSIENT_ERROR_MS,
   URL_DEBOUNCE_MS,
+  MAIN_NUMBER_MIN,
+  MAIN_NUMBER_MAX,
+  EURO_NUMBER_MIN,
+  EURO_NUMBER_MAX,
+  FAVORITE_NUMBERS_MAX,
 } from '~/utils/constants'
 import { extractErrorMessage } from '~/utils/errors'
 
@@ -36,6 +45,7 @@ export interface TicketConfig {
   euroCount: number
   ticketCount: number
   method: SelectionMethod
+  favoriteNumbers?: FavoriteNumbers
 }
 
 export interface TicketsState {
@@ -60,6 +70,10 @@ export const useTicketsStore = defineStore('tickets', () => {
     euroCount: 2,
     ticketCount: 1,
     method: 'weighted',
+    favoriteNumbers: {
+      mainNumbers: [],
+      euroNumbers: [],
+    },
   })
 
   // State
@@ -79,6 +93,11 @@ export const useTicketsStore = defineStore('tickets', () => {
   const isGenerating = computed(() => state.value.phase === 'generating')
   const hasError = computed(() => !!state.value.error)
   const isShared = computed(() => state.value.appState === 'SHARED')
+
+  const hasFavoriteNumbers = computed(() => {
+    const favorites = state.value.config.favoriteNumbers
+    return !!(favorites?.mainNumbers.length || favorites?.euroNumbers.length)
+  })
 
   const totalPrice = computed(() => {
     const config = state.value.config
@@ -129,6 +148,12 @@ export const useTicketsStore = defineStore('tickets', () => {
       tickets: state.value.config.ticketCount,
       method: state.value.config.method,
       ...(state.value.luckyCode && { lucky: state.value.luckyCode }),
+      ...(state.value.config.favoriteNumbers?.mainNumbers.length && {
+        fav_main: state.value.config.favoriteNumbers.mainNumbers.join(','),
+      }),
+      ...(state.value.config.favoriteNumbers?.euroNumbers.length && {
+        fav_euro: state.value.config.favoriteNumbers.euroNumbers.join(','),
+      }),
       ...config,
     }
 
@@ -183,13 +208,24 @@ export const useTicketsStore = defineStore('tickets', () => {
         ticketCount: number
         mainCount: number
         euroCount: number
-        algorithm: 'uniform' | 'weighted'
+        algorithm: 'uniform' | 'weighted' | 'favorites'
         seed?: string
+        favoriteNumbers?: FavoriteNumbers
       } = {
         ticketCount,
         mainCount,
         euroCount,
-        algorithm: method === 'weighted' ? 'weighted' : 'uniform',
+        algorithm:
+          method === 'favorites'
+            ? 'favorites'
+            : method === 'weighted'
+              ? 'weighted'
+              : 'uniform',
+      }
+
+      // Add favorite numbers if method is favorites
+      if (method === 'favorites' && state.value.config.favoriteNumbers) {
+        requestBody.favoriteNumbers = state.value.config.favoriteNumbers
       }
 
       // Add seed if we have one (for reproducible generation)
@@ -320,6 +356,52 @@ export const useTicketsStore = defineStore('tickets', () => {
       state.value.config.method = config.method
     }
 
+    // Handle favorite numbers if present
+    if (config.fav_main || config.fav_euro) {
+      if (!state.value.config.favoriteNumbers) {
+        state.value.config.favoriteNumbers = {
+          mainNumbers: [],
+          euroNumbers: [],
+        }
+      }
+
+      if (config.fav_main) {
+        const mainNumbers = config.fav_main
+          .split(',')
+          .map((n) => Number.parseInt(n.trim(), 10))
+          .filter(
+            (n) =>
+              !Number.isNaN(n) && n >= MAIN_NUMBER_MIN && n <= MAIN_NUMBER_MAX
+          )
+          .slice(0, FAVORITE_NUMBERS_MAX)
+        state.value.config.favoriteNumbers.mainNumbers = mainNumbers.sort(
+          (a, b) => a - b
+        )
+      }
+
+      if (config.fav_euro) {
+        const euroNumbers = config.fav_euro
+          .split(',')
+          .map((n) => Number.parseInt(n.trim(), 10))
+          .filter(
+            (n) =>
+              !Number.isNaN(n) && n >= EURO_NUMBER_MIN && n <= EURO_NUMBER_MAX
+          )
+          .slice(0, FAVORITE_NUMBERS_MAX)
+        state.value.config.favoriteNumbers.euroNumbers = euroNumbers.sort(
+          (a, b) => a - b
+        )
+      }
+
+      // Auto-switch to favorites method if favorites are present
+      if (
+        state.value.config.favoriteNumbers.mainNumbers.length > 0 ||
+        state.value.config.favoriteNumbers.euroNumbers.length > 0
+      ) {
+        state.value.config.method = 'favorites'
+      }
+    }
+
     // Handle lucky seed if present (shared configuration)
     if (config.lucky) {
       state.value.appState = 'SHARED'
@@ -389,6 +471,107 @@ export const useTicketsStore = defineStore('tickets', () => {
   }
 
   /**
+   * Add a favorite number
+   */
+  const addFavoriteNumber = (type: 'main' | 'euro', number: number): void => {
+    if (!state.value.config.favoriteNumbers) {
+      state.value.config.favoriteNumbers = { mainNumbers: [], euroNumbers: [] }
+    }
+
+    const favorites = state.value.config.favoriteNumbers
+    const targetArray =
+      type === 'main' ? favorites.mainNumbers : favorites.euroNumbers
+    const minRange = type === 'main' ? MAIN_NUMBER_MIN : EURO_NUMBER_MIN
+    const maxRange = type === 'main' ? MAIN_NUMBER_MAX : EURO_NUMBER_MAX
+
+    // Validate number is in range
+    if (number < minRange || number > maxRange) {
+      logger.warn(
+        `Invalid ${type} number: ${number} (range: ${minRange}-${maxRange})`
+      )
+      return
+    }
+
+    // Check if already exists
+    if (targetArray.includes(number)) {
+      logger.warn(`${type} number ${number} already in favorites`)
+      return
+    }
+
+    // Check limit
+    if (targetArray.length >= FAVORITE_NUMBERS_MAX) {
+      logger.warn(
+        `Maximum ${FAVORITE_NUMBERS_MAX} favorite ${type} numbers allowed`
+      )
+      return
+    }
+
+    // Add and sort
+    targetArray.push(number)
+    targetArray.sort((a, b) => a - b)
+
+    logger.debug(`Added favorite ${type} number: ${number}`)
+
+    // Update URL if not in shared mode
+    if (state.value.appState === 'FRESH') {
+      updateBrowserUrl()
+    }
+  }
+
+  /**
+   * Remove a favorite number
+   */
+  const removeFavoriteNumber = (
+    type: 'main' | 'euro',
+    number: number
+  ): void => {
+    if (!state.value.config.favoriteNumbers) return
+
+    const favorites = state.value.config.favoriteNumbers
+    const targetArray =
+      type === 'main' ? favorites.mainNumbers : favorites.euroNumbers
+    const index = targetArray.indexOf(number)
+
+    if (index === -1) {
+      logger.warn(`${type} number ${number} not found in favorites`)
+      return
+    }
+
+    targetArray.splice(index, 1)
+    logger.debug(`Removed favorite ${type} number: ${number}`)
+
+    // Update URL if not in shared mode
+    if (state.value.appState === 'FRESH') {
+      updateBrowserUrl()
+    }
+  }
+
+  /**
+   * Clear favorite numbers
+   */
+  const clearFavoriteNumbers = (type?: 'main' | 'euro'): void => {
+    if (!state.value.config.favoriteNumbers) return
+
+    const favorites = state.value.config.favoriteNumbers
+
+    if (type === 'main') {
+      favorites.mainNumbers = []
+    } else if (type === 'euro') {
+      favorites.euroNumbers = []
+    } else {
+      favorites.mainNumbers = []
+      favorites.euroNumbers = []
+    }
+
+    logger.debug(`Cleared favorite numbers: ${type || 'all'}`)
+
+    // Update URL if not in shared mode
+    if (state.value.appState === 'FRESH') {
+      updateBrowserUrl()
+    }
+  }
+
+  /**
    * Get decorated tickets with simulation highlights
    */
   const getDecoratedTickets = (mode: 'single' | 'montecarlo') => {
@@ -436,6 +619,7 @@ export const useTicketsStore = defineStore('tickets', () => {
     isGenerating,
     hasError,
     isShared,
+    hasFavoriteNumbers,
     totalPrice,
     ticketTypeLabel,
     systemCost,
@@ -449,6 +633,11 @@ export const useTicketsStore = defineStore('tickets', () => {
     updateConfig,
     setLuckyCode,
     clearError,
+
+    // Favorite Numbers Actions
+    addFavoriteNumber,
+    removeFavoriteNumber,
+    clearFavoriteNumbers,
 
     // View models
     getDecoratedTickets,

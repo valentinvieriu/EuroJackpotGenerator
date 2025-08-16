@@ -178,6 +178,28 @@
                   </span>
                 </span>
               </label>
+              <label
+                class="flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+              >
+                <input
+                  v-model="selectionMethod"
+                  value="favorites"
+                  type="radio"
+                  name="selectionMethod"
+                  class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
+                />
+                <span class="text-sm text-gray-200">
+                  <strong>Your favorite numbers</strong><br />
+                  <span class="text-xs text-gray-400">
+                    Prioritize up to 5 favorite numbers for each pool
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <!-- Favorite Numbers Selection (shown when favorites method is selected) -->
+            <div v-if="selectionMethod === 'favorites'" class="mt-6">
+              <FavoriteNumbersSelector />
             </div>
           </div>
 
@@ -400,6 +422,7 @@ import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
 import StepperInput from './StepperInput.vue'
+import FavoriteNumbersSelector from './FavoriteNumbersSelector.vue'
 import { logger } from '~/utils/logger'
 import {
   formatTicketType,
@@ -489,7 +512,7 @@ const ticketCount = computed<number>({
   },
 })
 
-const selectionMethod = computed<'random' | 'weighted'>({
+const selectionMethod = computed<'random' | 'weighted' | 'favorites'>({
   get: () => ticketsStore.state.config.method,
   set: (val) => ticketsStore.updateConfig({ method: val }),
 })

@@ -89,6 +89,78 @@ describe('/api/generate', () => {
     expect(result).toHaveLength(1)
   })
 
+  it('accepts algorithm=favorites with favoriteNumbers', async () => {
+    const { default: handler } = await import('../generate')
+    mockBody = {
+      ticketCount: 1,
+      mainCount: 5,
+      euroCount: 2,
+      algorithm: 'favorites',
+      favoriteNumbers: {
+        mainNumbers: [7, 23, 42],
+        euroNumbers: [5, 11],
+      },
+    }
+    const result = await handler({} as any)
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(1)
+    expect(result[0]).toHaveProperty('mainNumbers')
+    expect(result[0]).toHaveProperty('euroNumbers')
+    expect(result[0].mainNumbers).toHaveLength(5)
+    expect(result[0].euroNumbers).toHaveLength(2)
+  })
+
+  it('validates favoriteNumbers schema when provided', async () => {
+    const { default: handler2 } = await import('../generate')
+    // Invalid favorite numbers (outside valid ranges)
+    mockBody = {
+      ticketCount: 1,
+      mainCount: 5,
+      euroCount: 2,
+      algorithm: 'favorites',
+      favoriteNumbers: {
+        mainNumbers: [0, 51, 100], // Invalid range
+        euroNumbers: [-1, 13, 20], // Invalid range
+      },
+    }
+    // Should reject invalid favorite numbers through schema validation
+    await expect(handler2({} as any)).rejects.toMatchObject({
+      statusCode: 400,
+    })
+  })
+
+  it('handles favorites algorithm without favoriteNumbers gracefully', async () => {
+    const { default: handler } = await import('../generate')
+    mockBody = {
+      ticketCount: 1,
+      mainCount: 5,
+      euroCount: 2,
+      algorithm: 'favorites',
+      // No favoriteNumbers provided
+    }
+    const result = await handler({} as any)
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(1)
+  })
+
+  it('validates favoriteNumbers limits (max 5 per type)', async () => {
+    const { default: handler } = await import('../generate')
+    mockBody = {
+      ticketCount: 1,
+      mainCount: 5,
+      euroCount: 2,
+      algorithm: 'favorites',
+      favoriteNumbers: {
+        mainNumbers: [1, 2, 3, 4, 5, 6, 7], // More than max (5)
+        euroNumbers: [1, 2, 3, 4, 5, 6], // More than max (5)
+      },
+    }
+    // Should reject arrays that exceed the maximum length
+    await expect(handler({} as any)).rejects.toMatchObject({
+      statusCode: 400,
+    })
+  })
+
   it('defaults to weighted algorithm when algorithm parameter is omitted', async () => {
     const { default: handler } = await import('../generate')
     mockBody = { ticketCount: 1, mainCount: 5, euroCount: 2 }

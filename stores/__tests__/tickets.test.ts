@@ -146,6 +146,64 @@ describe('Tickets Store', () => {
     })
   })
 
+  it('sends favorites algorithm and data when favorites method is selected', async () => {
+    const ticketsApiResponse: any[] = []
+    // @ts-expect-error – global mock
+    global.$fetch = vi.fn().mockResolvedValue(ticketsApiResponse)
+
+    const ticketsStore = useTicketsStore()
+    ticketsStore.updateConfig({
+      ticketCount: 1,
+      method: 'favorites',
+      mainCount: 5,
+      euroCount: 2,
+      favoriteNumbers: {
+        mainNumbers: [7, 23, 42],
+        euroNumbers: [5, 11],
+      },
+    })
+
+    await ticketsStore.generate()
+
+    expect(global.$fetch).toHaveBeenCalledWith('/api/generate', {
+      method: 'POST',
+      body: expect.objectContaining({
+        algorithm: 'favorites',
+        favoriteNumbers: {
+          mainNumbers: [7, 23, 42],
+          euroNumbers: [5, 11],
+        },
+      }),
+    })
+  })
+
+  it('does not send favoriteNumbers when method is not favorites', async () => {
+    const ticketsApiResponse: any[] = []
+    // @ts-expect-error – global mock
+    global.$fetch = vi.fn().mockResolvedValue(ticketsApiResponse)
+
+    const ticketsStore = useTicketsStore()
+    ticketsStore.updateConfig({
+      ticketCount: 1,
+      method: 'weighted',
+      mainCount: 5,
+      euroCount: 2,
+      favoriteNumbers: {
+        mainNumbers: [7, 23, 42],
+        euroNumbers: [5, 11],
+      },
+    })
+
+    await ticketsStore.generate()
+
+    expect(global.$fetch).toHaveBeenCalledWith('/api/generate', {
+      method: 'POST',
+      body: expect.not.objectContaining({
+        favoriteNumbers: expect.anything(),
+      }),
+    })
+  })
+
   it('validates ticketCount and sets error without calling API', async () => {
     // @ts-expect-error – global mock
     global.$fetch = vi.fn()
@@ -356,5 +414,234 @@ describe('Tickets Store', () => {
     const t3 = decorated[0]
     expect(t3.winClass).toBe(2)
     expect(t3.winningMainNumbers).toEqual([])
+  })
+
+  describe('Favorite Numbers Management', () => {
+    it('addFavoriteNumber adds valid numbers within limits', () => {
+      const ticketsStore = useTicketsStore()
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      ticketsStore.addFavoriteNumber('main', 23)
+      ticketsStore.addFavoriteNumber('euro', 5)
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        7, 23,
+      ])
+      expect(ticketsStore.state.config.favoriteNumbers?.euroNumbers).toEqual([
+        5,
+      ])
+    })
+
+    it('addFavoriteNumber maintains sorted order', () => {
+      const ticketsStore = useTicketsStore()
+
+      ticketsStore.addFavoriteNumber('main', 23)
+      ticketsStore.addFavoriteNumber('main', 7)
+      ticketsStore.addFavoriteNumber('main', 42)
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        7, 23, 42,
+      ])
+    })
+
+    it('addFavoriteNumber rejects invalid numbers', () => {
+      const ticketsStore = useTicketsStore()
+
+      // Out of range numbers
+      ticketsStore.addFavoriteNumber('main', 0)
+      ticketsStore.addFavoriteNumber('main', 51)
+      ticketsStore.addFavoriteNumber('euro', 0)
+      ticketsStore.addFavoriteNumber('euro', 13)
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([])
+      expect(ticketsStore.state.config.favoriteNumbers?.euroNumbers).toEqual([])
+    })
+
+    it('addFavoriteNumber prevents duplicates', () => {
+      const ticketsStore = useTicketsStore()
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      ticketsStore.addFavoriteNumber('main', 7) // Duplicate
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        7,
+      ])
+    })
+
+    it('addFavoriteNumber enforces maximum limit', () => {
+      const ticketsStore = useTicketsStore()
+
+      // Add maximum allowed (5)
+      for (let i = 1; i <= 5; i++) {
+        ticketsStore.addFavoriteNumber('main', i)
+      }
+
+      // Try to add one more
+      ticketsStore.addFavoriteNumber('main', 6)
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        1, 2, 3, 4, 5,
+      ])
+    })
+
+    it('removeFavoriteNumber removes existing numbers', () => {
+      const ticketsStore = useTicketsStore()
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      ticketsStore.addFavoriteNumber('main', 23)
+      ticketsStore.addFavoriteNumber('euro', 5)
+
+      ticketsStore.removeFavoriteNumber('main', 7)
+      ticketsStore.removeFavoriteNumber('euro', 5)
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        23,
+      ])
+      expect(ticketsStore.state.config.favoriteNumbers?.euroNumbers).toEqual([])
+    })
+
+    it('removeFavoriteNumber handles non-existent numbers gracefully', () => {
+      const ticketsStore = useTicketsStore()
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      ticketsStore.removeFavoriteNumber('main', 23) // Not in favorites
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        7,
+      ])
+    })
+
+    it('clearFavoriteNumbers clears specific type', () => {
+      const ticketsStore = useTicketsStore()
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      ticketsStore.addFavoriteNumber('main', 23)
+      ticketsStore.addFavoriteNumber('euro', 5)
+      ticketsStore.addFavoriteNumber('euro', 11)
+
+      ticketsStore.clearFavoriteNumbers('main')
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([])
+      expect(ticketsStore.state.config.favoriteNumbers?.euroNumbers).toEqual([
+        5, 11,
+      ])
+    })
+
+    it('clearFavoriteNumbers clears all when no type specified', () => {
+      const ticketsStore = useTicketsStore()
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      ticketsStore.addFavoriteNumber('euro', 5)
+
+      ticketsStore.clearFavoriteNumbers()
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([])
+      expect(ticketsStore.state.config.favoriteNumbers?.euroNumbers).toEqual([])
+    })
+
+    it('hasFavoriteNumbers computed returns correct status', () => {
+      const ticketsStore = useTicketsStore()
+
+      expect(ticketsStore.hasFavoriteNumbers).toBe(false)
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      expect(ticketsStore.hasFavoriteNumbers).toBe(true)
+
+      ticketsStore.clearFavoriteNumbers()
+      expect(ticketsStore.hasFavoriteNumbers).toBe(false)
+
+      ticketsStore.addFavoriteNumber('euro', 5)
+      expect(ticketsStore.hasFavoriteNumbers).toBe(true)
+    })
+
+    it('favorite numbers management updates URL in FRESH state', () => {
+      vi.useFakeTimers()
+      const ticketsStore = useTicketsStore()
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      vi.advanceTimersByTime(250) // Trigger debounced URL update
+
+      expect(mockHistoryReplace).toHaveBeenCalled()
+      vi.useRealTimers()
+    })
+
+    it('favorite numbers management does not update URL in SHARED state', () => {
+      vi.useFakeTimers()
+      const ticketsStore = useTicketsStore()
+      ticketsStore.setLuckyCode('SHARED', 'SHARED')
+
+      ticketsStore.addFavoriteNumber('main', 7)
+      vi.advanceTimersByTime(250)
+
+      expect(mockHistoryReplace).not.toHaveBeenCalled()
+      vi.useRealTimers()
+    })
+  })
+
+  describe('URL Configuration with Favorites', () => {
+    it('applyUrlConfig parses favorite numbers from URL', async () => {
+      const ticketsStore = useTicketsStore()
+
+      await ticketsStore.applyUrlConfig({
+        system: '5x2',
+        tickets: 1,
+        method: 'favorites',
+        fav_main: '7,23,42',
+        fav_euro: '5,11',
+      })
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        7, 23, 42,
+      ])
+      expect(ticketsStore.state.config.favoriteNumbers?.euroNumbers).toEqual([
+        5, 11,
+      ])
+      expect(ticketsStore.state.config.method).toBe('favorites')
+    })
+
+    it('applyUrlConfig auto-switches to favorites method when favorites present', async () => {
+      const ticketsStore = useTicketsStore()
+
+      await ticketsStore.applyUrlConfig({
+        system: '5x2',
+        tickets: 1,
+        method: 'weighted', // Will be overridden
+        fav_main: '7,23',
+      })
+
+      expect(ticketsStore.state.config.method).toBe('favorites')
+    })
+
+    it('applyUrlConfig filters invalid favorite numbers', async () => {
+      const ticketsStore = useTicketsStore()
+
+      await ticketsStore.applyUrlConfig({
+        fav_main: '0,7,23,51,abc', // 0 and 51 invalid, abc not a number
+        fav_euro: '-1,5,13,def', // -1 and 13 invalid, def not a number
+      })
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        7, 23,
+      ])
+      expect(ticketsStore.state.config.favoriteNumbers?.euroNumbers).toEqual([
+        5,
+      ])
+    })
+
+    it('applyUrlConfig enforces favorite number limits', async () => {
+      const ticketsStore = useTicketsStore()
+
+      await ticketsStore.applyUrlConfig({
+        fav_main: '1,2,3,4,5,6,7,8', // More than max allowed (5)
+        fav_euro: '1,2,3,4,5,6', // More than max allowed (5)
+      })
+
+      expect(ticketsStore.state.config.favoriteNumbers?.mainNumbers).toEqual([
+        1, 2, 3, 4, 5,
+      ])
+      expect(ticketsStore.state.config.favoriteNumbers?.euroNumbers).toEqual([
+        1, 2, 3, 4, 5,
+      ])
+    })
   })
 })

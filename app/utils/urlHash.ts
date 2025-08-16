@@ -40,6 +40,8 @@ export function encodeAppConfigToHash(config: AppConfig): string {
   if (validConfig.tickets) params.set('tickets', validConfig.tickets.toString())
   if (validConfig.method) params.set('method', validConfig.method)
   if (validConfig.lucky) params.set('lucky', validConfig.lucky)
+  if (validConfig.fav_main) params.set('fav_main', validConfig.fav_main)
+  if (validConfig.fav_euro) params.set('fav_euro', validConfig.fav_euro)
 
   return params.toString()
 }
@@ -75,7 +77,9 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
       validParams.system ||
       validParams.tickets ||
       validParams.method ||
-      validParams.lucky
+      validParams.lucky ||
+      validParams.fav_main ||
+      validParams.fav_euro
     ) {
       const config: Partial<AppConfig> = {}
 
@@ -94,13 +98,22 @@ export function decodeUrlHash(hash: string): Partial<AppConfig> | null {
 
       if (
         validParams.method === 'random' ||
-        validParams.method === 'weighted'
+        validParams.method === 'weighted' ||
+        validParams.method === 'favorites'
       ) {
         config.method = validParams.method
       }
 
       if (validParams.lucky) {
         config.lucky = validParams.lucky
+      }
+
+      if (validParams.fav_main) {
+        config.fav_main = validParams.fav_main
+      }
+
+      if (validParams.fav_euro) {
+        config.fav_euro = validParams.fav_euro
       }
 
       // Attempt to validate the complete configuration
