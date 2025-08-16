@@ -57,7 +57,12 @@ The simulator uses the official EuroJackpot format (5 numbers from 1-50, plus 2 
 ## Quick Start
 
 1. **Try It Online**: Visit the live application [eurojackpot.vv42.workers.dev](https://eurojackpot.vv42.workers.dev)
-1. **Local Development**: See [ai_docs/COMMON_GUIDE.md](ai_docs/COMMON_GUIDE.md) for setup instructions
+1. **Run Locally**:
+   ```bash
+   npm install
+   npm run dev  # Starts on localhost:3000
+   ```
+   For detailed setup, testing, and contribution guidelines, see [ai_docs/COMMON_GUIDE.md](ai_docs/COMMON_GUIDE.md)
 1. **Understand the Code**: Review [ai_docs/ARCHITECTURE.md](ai_docs/ARCHITECTURE.md) for technical details
 
 ## Learn More

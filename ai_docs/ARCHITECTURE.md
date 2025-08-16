@@ -22,22 +22,48 @@ sequenceDiagram
     participant API as "Serverless APIs"
     participant External as "Lotto Bayern API"
 
-    Note over User, External: Ticket Generation & Simulation Flow
+    Note over User, External: Ticket Generation Flow
     User->>Frontend: Configure system tickets
     Frontend->>Store: Dispatch generation action
     Store->>API: POST /api/generate
-    API->>External: Fetch weighted statistics (cached)
-    External-->>API: Historical frequency data
+
+    alt User selects "Weighted by past frequencies"
+        API->>External: Fetch weighted statistics (cached)
+        External-->>API: Historical frequency data
+    else User selects "Random (recommended)"
+        Note over API: Use uniform random generation (no external call)
+    end
+
     API-->>Store: Generated ticket objects
     Store->>Store: Update state & sync URL
     Store-->>Frontend: Reactive state updates
     Frontend-->>User: Display tickets & costs
+
+    Note over User, External: Single Draw Simulation Flow
+    User->>Frontend: Click "Run Single Draw"
+    Frontend->>Store: Dispatch single draw action
+    Store->>API: GET /api/simulate
+    API-->>Store: Generated winning numbers
+
+    alt Odds cache is stale or empty
+        Store->>API: GET /api/fetchWinningData
+        API->>External: Fetch current odds
+        External-->>API: Payout data
+        API-->>Store: Normalized odds data
+    else Odds cache is fresh
+        Note over Store: Use cached odds data
+    end
+
+    Store->>Store: Calculate matches & winnings
+    Store-->>Frontend: Display results & ROI
+    Frontend-->>User: Show single draw results
 
     Note over User, External: Monte Carlo Simulation Flow
     User->>Frontend: Start mass simulation
     Frontend->>Store: Initialize simulation
     Store->>API: POST /api/batchSimulate (NDJSON stream)
     API->>External: Fetch current odds (once)
+    External-->>API: Odds data
 
     loop Streaming Progress
         API-->>Store: Progress events via NDJSON
@@ -66,10 +92,10 @@ The application enforces strict **state layer separation** to maintain clarity a
 
 **Layer 2: Pinia Domain Stores (Business Logic & Caching)**
 
-- **Purpose**: Complex state machines, business rules, API orchestration
+- **Purpose**: Complex business logic, API orchestration, and application state management
 - **Scope**: Simulation lifecycle management, data caching, async operations
 - **Implementation**: Domain-specific stores (`tickets`, `simulation`, `odds`)
-- **Pattern**: State machine transitions (`config` → `running` → `results`)
+- **Application State Flow**: Simulation lifecycle (`config` → `running` → `results`)
 
 **Layer 3: SSR-Safe Ephemeral State (UI State)**
 
@@ -78,27 +104,51 @@ The application enforces strict **state layer separation** to maintain clarity a
 - **Implementation**: Nuxt's `useState` composables for SSR safety
 - **Constraint**: Must work identically on server and client rendering
 
-### Component Architecture Pattern
+### Component Architecture Pattern (CRITICAL: "Dumb" UI Principle)
 
-**Thin Components Principle**: Vue components handle **presentation only**, delegating all business logic to Pinia stores.
+**ABSOLUTE RULE**: Vue components are **"dumb"** presentation layers that NEVER contain business logic or call APIs directly.
+
+**Component-Store Interaction Flow**:
+
+```
+User Interaction → Component Event → Store Action → API Call → Store State Update → Component Reactive Update
+```
+
+**✅ CORRECT Component Pattern**:
 
 ```typescript
-// ✅ Correct: Thin component delegates to store
+// Components ONLY dispatch actions and consume reactive state
 const simulationStore = useSimulationStore()
 const { startSimulation, cancelSimulation } = simulationStore
 const { progress, isRunning, results } = storeToRefs(simulationStore)
 
-// ❌ Incorrect: Business logic in component
-const calculateROI = (winnings: number, cost: number) => {
-  return ((winnings - cost) / cost) * 100
+const handleStartClick = () => {
+  // Component ONLY triggers store action - NO business logic
+  startSimulation()
 }
 ```
 
-**Component Responsibility Boundaries**:
+**❌ FORBIDDEN Component Anti-Patterns**:
 
-- **UI Components**: Event handling, reactive rendering, user feedback
-- **Pinia Stores**: Business logic, API calls, state transitions
-- **Utilities**: Pure functions, calculations, data transformations
+```typescript
+// NEVER: Direct API calls from components
+const response = await fetch('/api/simulate')
+
+// NEVER: Business logic in components
+const calculateROI = (winnings: number, cost: number) => {
+  return ((winnings - cost) / cost) * 100
+}
+
+// NEVER: Complex state management in components
+const [tickets, setTickets] = useState([])
+const [isLoading, setIsLoading] = useState(false)
+```
+
+**Strict Responsibility Boundaries**:
+
+- **UI Components**: Event handling, reactive rendering, user feedback **ONLY**
+- **Pinia Stores**: **ALL** business logic, **ALL** API calls, **ALL** complex state management
+- **Utilities**: Pure functions, calculations, data transformations (called by stores, not components)
 
 ### API Design Patterns
 
@@ -121,6 +171,53 @@ function apiEndpoint(request):
   // 3. Validate and return response
   return ResponseSchema.parse(result)
 ```
+
+### Store-Component Interaction Patterns
+
+**Fundamental Principle**: Components are **reactive consumers** of store state and **action dispatchers** to stores. They NEVER perform business operations directly.
+
+**Store State Consumption Pattern**:
+
+```typescript
+// ✅ CORRECT: Components reactively consume store state
+const simulationStore = useSimulationStore()
+const ticketsStore = useTicketsStore()
+
+// Destructure reactive state (automatically updates component)
+const { progress, isRunning, error } = storeToRefs(simulationStore)
+const { tickets, totalCost } = storeToRefs(ticketsStore)
+```
+
+**Store Action Dispatch Pattern**:
+
+```typescript
+// ✅ CORRECT: Components only trigger store actions
+const handleGenerateTickets = (config) => {
+  // Component passes data to store action - store handles the rest
+  ticketsStore.generateTickets(config)
+}
+
+const handleStartSimulation = () => {
+  // Store handles ALL logic: API calls, state updates, error handling
+  simulationStore.startMonteCarlo()
+}
+```
+
+**Critical Architecture Flow**:
+
+1. **User Interaction** → Component captures event
+1. **Component Action** → Dispatches to appropriate store action
+1. **Store Logic** → Handles ALL business logic and API calls
+1. **Store State Update** → Updates internal state
+1. **Component Reactivity** → Component automatically re-renders based on store state changes
+
+**What Components Should NEVER Do**:
+
+- Make HTTP requests or API calls
+- Perform calculations or data transformations
+- Manage complex state beyond simple UI state
+- Contain business logic or validation rules
+- Directly manipulate data structures
 
 ---
 

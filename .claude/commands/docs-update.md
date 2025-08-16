@@ -11,7 +11,7 @@ READ:
 
 **Document Roles & Boundaries**:
 
-- **README.md**: Human-targeted general project knowledge. Should be accessible, welcoming, and explain "what this project does" without overwhelming technical details.
+- **README.md**: Human-targeted general project knowledge. Should be accessible, welcoming, and explain "what this project does" without overwhelming technical details. Include basic setup commands (`npm install`, `npm run dev`) to meet developer expectations, but link to detailed guides rather than duplicating content.
 - **PRD.md**: Human+LLM product requirements. Focus on WHAT we're building and WHY, with minimal technical implementation details.
 - **COMMON_GUIDE.md**: Universal LLM introduction (not Claude-specific). Comprehensive overview with pointers for further exploration, including project setup, debugging, and coding standards. Think "CLAUDE.md but for all LLMs".
 - **ARCHITECTURE.md**: LLM technical guide. Medium-level architecture with clear recommendations and best practices. Use pseudo code only - never maintain real code samples.
@@ -105,7 +105,7 @@ READ:
    - COMMON_GUIDE.md should provide overview + pointers, not detailed explanations
 
 7. **Audience Tone Alignment**:
-   - README.md: Welcoming, accessible language explaining project value to newcomers
+   - README.md: Welcoming, accessible language explaining project value to newcomers with immediate setup commands for developers
    - PRD.md: Professional requirement language for stakeholders and LLMs
    - COMMON_GUIDE.md: Instructional tone for LLMs with clear, actionable guidance
    - ARCHITECTURE.md: Technical precision with architectural reasoning and trade-offs
