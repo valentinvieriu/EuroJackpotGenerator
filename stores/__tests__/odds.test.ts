@@ -285,6 +285,19 @@ describe('Odds Store', () => {
       expect(store.cache.data).toBeNull()
       expect(store.cache.timestamp).toBe(0)
     })
+
+    it('should clear error state', async () => {
+      global.$fetch = vi.fn().mockRejectedValue(new Error('fail'))
+
+      const store = useOddsStore()
+      await store.fetchOdds()
+      expect(store.hasError).toBe(true)
+
+      store.clearError()
+
+      expect(store.cache.error).toBeNull()
+      expect(store.hasError).toBe(false)
+    })
   })
 
   describe('utility functions', () => {
