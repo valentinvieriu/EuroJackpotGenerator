@@ -1,277 +1,299 @@
-# Architecture – EuroJackpot Simulator
+# EuroJackpot Simulator - Architecture Guide
 
-This document provides a high-level overview of the EuroJackpot Simulator application. Its purpose is to help an AI assistant understand the system's design for future development tasks.
+This document provides architectural guidance for LLMs working with the EuroJackpot Simulator codebase. It focuses on system design patterns, architectural decisions, and medium-level implementation strategies that enable effective code contributions.
 
-**Core Technology:**
-
-- **Framework:** Nuxt 4 (Vue 3) SPA
-- **API:** Nitro serverless functions
-- **Deployment:** Cloudflare Workers
-- **External Data:** Lotto Bayern public API for odds and statistics.
+**System Context**: Educational lottery simulation SPA with serverless backend, deployed on Cloudflare Workers, emphasizing reliability and real-time streaming capabilities.
 
 ---
 
-## 1. System Overview
+## System Overview
 
-The application is a Single Page Application (SPA) with a serverless backend. A Pinia-based state management layer mediates all interactions between the UI components and the server, handling business logic, caching, and state synchronization.
+The application implements a **3-tier serverless architecture** with clear separation between presentation, business logic, and data persistence layers:
 
-For development guidelines and workflows, see [COMMON_GUIDE.md](./COMMON_GUIDE.md). For product requirements, see [PRD.md](./PRD.md).
+**Frontend**: Nuxt 4 SPA with Vue 3 Composition API, handling user interaction and real-time updates
+**Backend**: Nitro serverless functions providing validated APIs with streaming capabilities  
+**External Integration**: Lotto Bayern API with intelligent caching and fallback strategies
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant UI Components
-    participant TicketsStore as "Tickets Store (Pinia)"
-    participant SimStore as "Simulation Store (Pinia)"
-    participant OddsStore as "Odds Store (Pinia)"
-    participant Server as "Server Endpoints (/api/*)"
-    participant LottoBayern as "Lotto Bayern API"
+    participant Frontend as "Vue Components"
+    participant Store as "Pinia Stores"
+    participant API as "Serverless APIs"
+    participant External as "Lotto Bayern API"
 
-    Note over User, LottoBayern: Ticket Generation Flow
-    User->>UI Components: Configures ticket settings
-    UI Components->>TicketsStore: Calls generate() action
-    TicketsStore->>Server: POST /api/generate
-    Server->>LottoBayern: Fetch frequency stats (cached)
-    LottoBayern-->>Server: Stats data
-    Server-->>TicketsStore: Receives generated ticket objects
-    TicketsStore->>TicketsStore: Updates its state with new tickets
-    TicketsStore-->>UI Components: UI reactively updates to show tickets
+    Note over User, External: Ticket Generation & Simulation Flow
+    User->>Frontend: Configure system tickets
+    Frontend->>Store: Dispatch generation action
+    Store->>API: POST /api/generate
+    API->>External: Fetch weighted statistics (cached)
+    External-->>API: Historical frequency data
+    API-->>Store: Generated ticket objects
+    Store->>Store: Update state & sync URL
+    Store-->>Frontend: Reactive state updates
+    Frontend-->>User: Display tickets & costs
 
-    Note over User, LottoBayern: Single Draw Simulation Flow
-    User->>UI Components: Clicks "Run Single Draw"
-    UI Components->>SimStore: Calls runSingleDraw() action
-    SimStore->>Server: POST /api/simulate (to get winning numbers)
-    Server-->>SimStore: Returns one set of winning numbers
-    SimStore->>OddsStore: Calls fetchOdds() action for payout data
+    Note over User, External: Monte Carlo Simulation Flow
+    User->>Frontend: Start mass simulation
+    Frontend->>Store: Initialize simulation
+    Store->>API: POST /api/batchSimulate (NDJSON stream)
+    API->>External: Fetch current odds (once)
 
-    alt Odds Cache is stale or empty
-        OddsStore->>Server: GET /api/fetchWinningData
-        Server->>LottoBayern: Fetch latest odds data
-        LottoBayern-->>Server: Odds data
-        Server-->>OddsStore: Payout data is returned
-        OddsStore->>OddsStore: Updates its local cache
+    loop Streaming Progress
+        API-->>Store: Progress events via NDJSON
+        Store->>Store: Update progress state
+        Store-->>Frontend: Real-time UI updates
     end
-    OddsStore-->>SimStore: Returns odds from cache
 
-    SimStore->>SimStore: Calculates results, updates its state
-    SimStore-->>UI Components: UI reactively updates to show single draw results
-
-    Note over User, LottoBayern: Monte Carlo (Mass Simulation) Flow
-    User->>UI Components: Clicks "Start Mass Simulation"
-    UI Components->>SimStore: Calls startSimulation() action
-    SimStore->>Server: POST /api/batchSimulate (initiates NDJSON stream)
-    Server->>LottoBayern: Fetch odds data (once at the start)
-    LottoBayern-->>Server: Odds data
-    Server-->>SimStore: Streams back NDJSON progress events
-
-    loop For each received progress event
-        SimStore->>SimStore: Processes the event, updates progress state
-        SimStore-->>UI Components: UI reactively updates the progress bar & summary
-    end
-    Server-->>SimStore: Streams back the final NDJSON result event
-    SimStore->>SimStore: Processes final result, updates state to 'results'
-    SimStore-->>UI Components: UI reactively switches to the results view
+    API-->>Store: Final results event
+    Store-->>Frontend: Display comprehensive analytics
 ```
 
 ---
 
-## 2. Core Components & Logic
+## Architecture Patterns
 
-### Frontend (`app/`)
+### 3-Layer State Management (Critical Pattern)
 
-The frontend is responsible for the user interface and delegates all complex logic to the Pinia stores.
+The application enforces strict **state layer separation** to maintain clarity and prevent architectural drift:
 
-- **UI Components:**
-  - `TicketGenerator.vue`: The main user interface for configuring tickets. It dispatches actions to the `TicketsStore`.
-  - `SingleDrawPanel.vue` & `MonteCarloPanel.vue`: These components initiate simulations by calling actions on the `SimulationStore` and reactively display the state (progress, results, errors) managed by the store.
+**Layer 1: URL Persistence (Configuration State)**
 
-- **State Management (Pinia Stores):**
-  - `stores/tickets.ts`: Manages the ticket generation lifecycle, holds the list of generated tickets, and syncs the URL state.
-  - `stores/simulation.ts`: A state machine for both single draw and Monte Carlo simulations (`config` -> `running` -> `results`). It encapsulates all the logic for fetching data, processing streams, and calculating results.
-  - `stores/odds.ts`: Caches winning odds from the `/api/fetchWinningData` endpoint to prevent redundant API calls.
+- **Purpose**: Shareable, bookmarkable configurations surviving page refreshes
+- **Scope**: User simulation parameters, system settings, reproducible seeds
+- **Implementation**: Hash-based URL synchronization via `urlHash.ts` utility
+- **Example**: `#system=7x3&tickets=50&seed=LUCKY123` enables exact reproduction
 
-- **Utilities (`app/utils/`):**
-  - `combinatorics.ts`: Core logic for calculating line counts and determining win classes.
-  - `batchStatistics.ts`: Client-side helpers for processing the final aggregated results from a Monte Carlo simulation.
-  - `urlHash.ts`: Logic for encoding and decoding application state to/from the URL hash for persistence and sharing.
+**Layer 2: Pinia Domain Stores (Business Logic & Caching)**
 
-### Backend API (`server/api/`)
+- **Purpose**: Complex state machines, business rules, API orchestration
+- **Scope**: Simulation lifecycle management, data caching, async operations
+- **Implementation**: Domain-specific stores (`tickets`, `simulation`, `odds`)
+- **Pattern**: State machine transitions (`config` → `running` → `results`)
 
-The backend provides four main serverless endpoints. All endpoints use **Zod** for strict input and output validation.
+**Layer 3: SSR-Safe Ephemeral State (UI State)**
 
-#### API Endpoints
+- **Purpose**: Temporary UI state compatible with server-side rendering
+- **Scope**: Loading indicators, modal visibility, transient notifications
+- **Implementation**: Nuxt's `useState` composables for SSR safety
+- **Constraint**: Must work identically on server and client rendering
 
-- **`POST /api/generate`**: Generates unique lottery tickets (1-500 per request)
-  - **Parameters**: System configuration, ticket count, generation method (uniform/weighted), optional seed
-  - **Response**: Array of ticket objects with main and euro numbers
-  - **Logic**: Uses either uniform random or weighted algorithm based on historical stats (cached for 10 minutes)
+### Component Architecture Pattern
 
-- **`GET /api/simulate`**: Single draw simulation
-  - **Parameters**: Optional seed for deterministic results
-  - **Response**: Single set of winning numbers (5 main + 2 euro)
-  - **Logic**: Cryptographically secure RNG unless seed provided
+**Thin Components Principle**: Vue components handle **presentation only**, delegating all business logic to Pinia stores.
 
-- **`GET /api/fetchWinningData`**: Current win class payouts
-  - **Response**: Normalised payout data for classes 1-12
-  - **Reliability**: 8-second timeout with hardcoded fallback data
+```typescript
+// ✅ Correct: Thin component delegates to store
+const simulationStore = useSimulationStore()
+const { startSimulation, cancelSimulation } = simulationStore
+const { progress, isRunning, results } = storeToRefs(simulationStore)
 
-- **`POST /api/batchSimulate`**: Monte Carlo simulation engine (100-10,000 simulations)
-  - **Parameters**: Tickets array, simulation count, batch size configuration
-  - **Response**: NDJSON stream with progress events and final results
-  - **Streaming**: Real-time progress via `application/x-ndjson` content type
+// ❌ Incorrect: Business logic in component
+const calculateROI = (winnings: number, cost: number) => {
+  return ((winnings - cost) / cost) * 100
+}
+```
 
-#### API Logic Patterns
+**Component Responsibility Boundaries**:
+
+- **UI Components**: Event handling, reactive rendering, user feedback
+- **Pinia Stores**: Business logic, API calls, state transitions
+- **Utilities**: Pure functions, calculations, data transformations
+
+### API Design Patterns
+
+**Validation-First Design**: Every endpoint uses **Zod schemas** for comprehensive input/output validation, preventing runtime errors and ensuring type safety across the stack.
+
+**Progressive Enhancement**: APIs designed with fallback strategies enabling graceful degradation when external dependencies fail.
 
 ```pseudocode
-// Ticket Generation
-function generate(ticket_config):
-  if ticket_config.method == "weighted" and not ticket_config.seed:
-    stats = get_cached_statistics()
-    return generate_weighted_tickets(stats)
-  else:
-    return generate_uniform_tickets() // Can be seeded
+// Standard API Pattern
+function apiEndpoint(request):
+  // 1. Validate input with Zod schema
+  validated_input = InputSchema.parse(request.body)
 
-// Monte Carlo Simulation
-function batchSimulate(tickets, simulation_count):
-  odds_map = fetch_and_normalize_odds()
-  stream = create_ndjson_stream()
+  // 2. Execute business logic with error handling
+  try:
+    result = performBusinessLogic(validated_input)
+  catch external_api_error:
+    result = fallbackStrategy(validated_input)
 
-  loop over simulation_count in batches:
-    batch_results = run_simulations_for_chunk(...)
-    progress_summary = aggregate(batch_results)
-    stream.write({ type: "progress", data: progress_summary })
-
-  final_result = calculate_final_statistics()
-  stream.write({ type: "result", data: final_result })
-  stream.close()
+  // 3. Validate and return response
+  return ResponseSchema.parse(result)
 ```
 
 ---
 
-## 3. State Management Strategy (3-Layer Architecture)
+## System Components
 
-The application follows a strict **3-layer state model** that enforces clear separation of concerns and ensures maintainability:
+### Frontend Architecture
 
-### Layer 1: URL Persistence (Configuration State)
+**State-Driven UI**: All components react to Pinia store state changes, creating predictable data flow and simplifying debugging.
 
-- **PURPOSE**: Shareable, bookmarkable configuration that survives page refreshes.
-- **WHEN TO USE**: User-defined simulation parameters (e.g., system type, number of tickets), reproducible seeds.
-- **IMPLEMENTATION**: The `TicketsStore` decodes the URL hash on page load and encodes it back on any configuration change.
-- **EXAMPLE**: `const config = { system: '7x3', tickets: 50, seed: 'LUCKY123' }` is synced to the URL hash `#system=7x3&tickets=50&seed=LUCKY123`.
+**Key Components**:
 
-### Layer 2: Pinia Domain Stores (Business Logic & Caching)
+- **TicketGenerator**: Orchestrates ticket configuration and generation through `TicketsStore`
+- **SimulationPanels**: Handle single-draw and Monte Carlo simulation UIs via `SimulationStore`
+- **Progress Components**: Real-time NDJSON stream visualization with cancellation support
 
-- **PURPOSE**: Managing complex state machines, business rules, API caching, and side effects.
-- **WHEN TO USE**: Simulation lifecycle (`'config' → 'running' → 'results'`), caching API data (like winning odds), and implementing all core application logic.
-- **IMPLEMENTATION**: Manages complex state that isn't part of the URL, such as the list of generated tickets, live simulation progress, final results, and cached API data.
-- **EXAMPLE**: The `useSimulationStore` handles the entire process of starting a simulation, tracking its progress, and storing results or errors.
+**Utility Organization**:
 
-### Layer 3: SSR-Safe Ephemeral State (UI State)
+- **Constants Management**: All numeric bounds centralized in `app/utils/constants.ts`
+- **Pure Functions**: Mathematical calculations, data transformations in dedicated utilities
+- **Type Safety**: Comprehensive TypeScript coverage with Zod schema integration
 
-- **PURPOSE**: Temporary, non-business UI state that must work with Server-Side Rendering (SSR).
-- **WHEN TO USE**: Component-level loading indicators, modal visibility, temporary notifications, UI toggles.
-- **IMPLEMENTATION**: `useState` is Nuxt's SSR-safe tool for simple, non-domain state.
-- **EXAMPLE**: `const showWelcomeMessage = useState('welcome-visible', () => false)` for a temporary banner.
+### Backend Architecture
 
----
+**Serverless Function Design**: Each endpoint is a self-contained function optimized for Cloudflare Workers edge deployment.
 
-## 4. Key Design Principles
+**API Endpoints & Responsibilities**:
 
-- **Reliability through Fallbacks:** The system is designed to be resilient. If an external API for odds or statistics fails, the application gracefully falls back to using cached or hardcoded data, ensuring core features remain functional.
-- **Performance:** Long-running Monte Carlo simulations are offloaded to the server. The NDJSON stream prevents the UI from freezing and provides a responsive user experience with real-time progress.
-- **Maintainability:**
-  - **Centralized Constants:** All "magic numbers" (e.g., lottery number ranges, ticket limits) are stored in `app/utils/constants.ts`, providing a single source of truth.
-  - **Strict Validation:** Zod schemas (`app/schemas/`) are used at all API boundaries to ensure data integrity.
-  - **Separation of Concerns:** Business logic is kept in stores and utils, API logic on the server, and UI logic in Vue components.
+**`POST /api/generate`**: Ticket generation with weighted/uniform algorithms
 
----
+- Validates system configuration and ticket parameters
+- Implements Efraimidis-Spirakis algorithm for weighted sampling
+- Caches historical statistics for 10 minutes
+- Supports deterministic generation via optional seeding
 
-## 5. Testing
+**`GET /api/simulate`**: Single draw number generation
 
-The project uses **Vitest** with **happy-dom** for fast and reliable unit testing. The focus is on testing business logic, utilities, and server-side handlers rather than UI components.
+- Cryptographically secure randomness by default
+- Optional seeding for reproducible testing
+- Immediate response for interactive user experience
 
-- **Testing Strategy:**
-  - **Utilities (`app/utils/`):** All critical logic, such as combinatorics, pricing, and RNGs, is thoroughly unit tested.
-  - **Server Endpoints (`server/api/`):** API handlers are tested to ensure they correctly validate input, handle errors, and return data in the expected format.
-  - **Pinia Stores (`stores/`):** The logic within store actions is tested to verify correct state transitions and side effects.
+**`POST /api/batchSimulate`**: Monte Carlo simulation engine
 
-- **Running Tests:**
+- Processes 100-10,000 simulations with configurable batching
+- Streams real-time progress via NDJSON format
+- Implements cancellation and comprehensive error handling
+- Generates detailed statistical analysis in final response
 
-  ```bash
-  # Run all tests once
-  npm test
+**`GET /api/fetchWinningData`**: External API proxy with resilience
 
-  # Run tests in watch mode for TDD
-  npm test -- --watch
-  ```
+- Normalizes Lotto Bayern API responses (classes 101-112 → 1-12)
+- 8-second timeout with hardcoded fallback data
+- Handles API inconsistencies and network failures gracefully
 
----
+### External Integrations
 
-## 6. Development Environment
+**Lotto Bayern API Integration**:
 
-### Local Development Setup
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server (localhost:3000)
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-### Environment Configuration
-
-Optional environment variables:
-
-- `NUXT_PUBLIC_API_BASE`: Base URL for API endpoints (default: `/api`)
-
-### Code Quality Tools
-
-- **ESLint**: Static code analysis and coding standards enforcement
-- **Prettier**: Automatic code formatting with consistent styling
-- **Husky + lint-staged**: Pre-commit hooks ensuring quality standards
-
-### Essential Commands
-
-```bash
-npm test              # Run all tests
-npm run test -- --watch  # Watch mode for TDD
-npm run lint          # Check code quality
-npm run format        # Format all code
-npm run cf-typegen    # Generate Cloudflare Worker types
-```
+- **Purpose**: Fetch current win-class payouts and historical number frequencies
+- **Reliability Strategy**: Timeout + fallback ensures application never fails due to external dependencies
+- **Caching Strategy**: 10-minute cache prevents excessive API calls while maintaining reasonable freshness
+- **Data Normalization**: Converts external class numbering to consistent internal format
 
 ---
 
-## 7. Deployment & Performance
+## Data Flow & Interactions
 
-### Deployment Architecture
+### Ticket Generation Flow
 
-**Target Platform**: Cloudflare Workers with Nitro serverless preset
-**Build Process**: Nuxt generates optimised bundle for edge deployment
-**CLI Tool**: Wrangler for deployment management
+1. **User Configuration**: Component captures system parameters (main/euro numbers)
+1. **Validation**: Zod schemas validate parameters before API call
+1. **Generation**: Server applies uniform or weighted algorithms based on configuration
+1. **State Update**: Store receives tickets, updates URL persistence, triggers UI refresh
+1. **Cost Calculation**: Real-time price computation using official €2.00/line pricing
 
-```bash
-npm run deploy        # Deploy to Cloudflare Workers
-```
+### Simulation Execution Flow
 
-### Performance Targets
+**Single Draw**: Immediate feedback loop for quick experimentation
 
-- **API Latency**: P95 < 1500ms for all endpoints
-- **Error Rate**: < 0.1% with graceful fallbacks
-- **Streaming**: Real-time Monte Carlo progress via NDJSON
-- **Caching**: 10-minute cache for external data sources
-- **Edge Distribution**: Global deployment for optimal performance
+- Generate winning numbers → Compare against tickets → Calculate payouts → Display ROI
 
-### Reliability Features
+**Monte Carlo**: Streaming architecture for long-running operations
 
-- **Graceful Fallbacks**: External API failures handled with cached/hardcoded data
-- **Timeout Management**: 8-second timeout for external data fetching
-- **Data Validation**: Comprehensive Zod schemas at all API boundaries
-- **Error Boundaries**: Robust error handling throughout the application stack
+- Initialize progress tracking → Stream batch results → Aggregate statistics → Final analytics
+
+### State Synchronization Patterns
+
+**URL ↔ Store Synchronization**: Bidirectional sync ensures configuration persistence
+**Store ↔ Component Reactivity**: Vue's reactive system propagates state changes automatically
+**API ↔ Store Integration**: Async actions handle loading states and error boundaries
+
+---
+
+## Quality & Reliability
+
+### Error Handling Architecture
+
+**Layered Error Boundaries**: Each architectural layer implements appropriate error handling strategies:
+
+- **API Layer**: Input validation, timeout handling, fallback responses
+- **Store Layer**: Loading states, error state management, retry logic
+- **Component Layer**: User-friendly error messages, recovery actions
+
+### Performance Strategies
+
+**Streaming Architecture**: NDJSON streaming prevents UI blocking during long simulations
+**Edge Deployment**: Cloudflare Workers global distribution minimizes latency
+**Intelligent Caching**: Strategic caching of external data balances freshness with performance
+**Batch Processing**: Server-side batching prevents event loop blocking
+
+### Testing Architecture
+
+**Business Logic Focus**: Testing strategy prioritizes logic over presentation:
+
+- **Pinia Stores**: State transitions, async actions, error handling
+- **Utilities**: Mathematical functions, data transformations, edge cases
+- **API Endpoints**: Request/response validation, business logic, error scenarios
+- **Not Tested**: Vue component rendering, CSS styling, trivial event handlers
+
+---
+
+## Development Patterns
+
+### Code Organization Principles
+
+**Domain-Driven Structure**: Code organized by business domain rather than technical layer
+**Dependency Direction**: Dependencies flow inward (UI → Stores → Utilities)  
+**Single Responsibility**: Each module, store, and component has a clear, focused purpose
+
+### Validation Strategies
+
+**Schema-Driven Development**: Zod schemas define data contracts throughout the system
+**Runtime Validation**: All external data boundaries protected by validation
+**Type Derivation**: TypeScript types derived from Zod schemas ensure consistency
+
+### State Management Best Practices
+
+**Store Composition**: Each store handles a specific domain with clear boundaries
+**Action Patterns**: Async actions handle loading states and error conditions consistently
+**Computed Properties**: Derived state computed reactively rather than stored redundantly
+
+---
+
+## Deployment Architecture
+
+### Platform Constraints
+
+**Cloudflare Workers Limitations**:
+
+- 30-second execution time limit (addressed via streaming for long operations)
+- Memory constraints (handled through batch processing)
+- Cold start considerations (minimized through optimization)
+
+**Edge Computing Benefits**:
+
+- Global distribution for optimal user experience
+- Automatic scaling based on demand
+- Integrated CDN for static asset delivery
+
+### Deployment Patterns
+
+**Serverless-First Design**: Application architected specifically for serverless deployment
+**Environment Agnostic**: Minimal environment configuration required
+**Atomic Deployments**: Single deployment unit prevents configuration drift
+
+**Performance Targets**:
+
+- P95 API latency < 1500ms across all endpoints
+- Error rate < 0.1% with comprehensive fallback coverage
+- Real-time streaming responsiveness for simulations up to 10,000 iterations
+
+---
+
+## Related Documentation
+
+- **[Product Requirements](./PRD.md)** - Business context and feature specifications
+- **[Development Guide](./COMMON_GUIDE.md)** - Setup instructions, testing commands, and development workflows

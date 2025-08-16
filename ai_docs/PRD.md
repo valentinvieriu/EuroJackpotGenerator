@@ -1,159 +1,173 @@
-# Product Requirements Document – EuroJackpot Simulator
+# EuroJackpot Simulator - Product Requirements
 
-**Status:** In Review
-**Version:** 1.0
-**Last Updated:** 2025-08-10
-**Owner:** TBD
-**Approvers:** TBD
+## Overview
 
-## 1. Change Log _(Optional)_
+EuroJackpot Simulator is an educational web application that demonstrates lottery mathematics through realistic simulations. Users can explore EuroJackpot **system tickets** (5/50 + 2/12 format), run single mock draws, or execute large-scale Monte Carlo simulations to understand costs, potential winnings, ROI, and statistical distributions.
 
-| Version | Date       | Description                                  | Author |
-| ------: | ---------- | -------------------------------------------- | ------ |
-|     1.0 | 2025-08-10 | Consolidated final PRD from prior draft docs | —      |
+The application uses official win-class structures and optionally incorporates historically weighted number generation for educational authenticity. This is strictly an **educational tool** that does not predict real draws or encourage gambling.
 
-## 2. Overview
+## Problem Statement
 
-EuroJackpot Simulator is a web application that lets users explore EuroJackpot **system tickets** (5/50 + 2/12), run a **single mock draw**, or execute **large-scale Monte Carlo simulations**. It shows **costs, potential winnings, ROI, and distributions** using official win-class structures and (optionally) historically weighted number generation. It is an educational/entertainment tool and **does not predict real draws**.
+Most lottery players lack intuitive understanding of system ticket mathematics and long-term expected outcomes. Without hands-on simulation tools, it's difficult to grasp concepts like:
 
-## 3. Objectives
+- How system ticket coverage affects both costs and winning probabilities
+- The relationship between mathematical expectation and real-world variance
+- Why "lucky number" strategies perform similarly to random selection over time
+- The true cost-benefit analysis of different system sizes
 
-- Help users **understand costs and typical outcomes** of system tickets.
-- Enable **experimentation** via single-draw and mass simulations with clear summaries (ROI, win rate, distributions).
-- Provide a **fast, responsive** experience, resilient to external API hiccups (fallbacks, caching).
-- Promote **responsible play** with clear, on-page disclaimers.
+## Objectives
 
-## 4. Success Metrics
+- **Educate** users about lottery mathematics through interactive simulations
+- **Demonstrate** the relationship between system ticket size, cost, and expected outcomes
+- **Provide** fast, responsive Monte Carlo analysis with real-time progress
+- **Ensure** reliability through graceful fallbacks and comprehensive error handling
+- **Promote** responsible understanding with clear educational disclaimers
 
-- **Engagement:** Average session duration > 3 minutes.
-- **Feature Adoption:** ≥ 20% of users who generate tickets run a simulation (single or Monte Carlo).
-- **Performance:** P95 API latency for `/api/generate` and `/api/simulate` < 1500 ms.
-- **Reliability:** API error rate < 0.1% (with graceful fallbacks).
-- **Completion:** % of Monte Carlo runs started that finish successfully.
+## User Experience
 
-## 5. Timeline _(Optional)_
+### Target Users
 
-- **V1 (public):** System ticket generation, Single Draw, Monte Carlo with progress and final analytics, JSON export (when enabled), payout/statistics from public sources, fallbacks, disclaimer.
-- **Post-V1 (ideas):** Local "save my setup", i18n/currency options, deeper explainers. _(Ideas only; not committed.)_
+- **Statistics Students**: Exploring probability theory and Monte Carlo methods
+- **Curious Players**: Understanding system ticket costs and typical outcomes
+- **Data Enthusiasts**: Comparing strategies and observing statistical patterns
+- **Educators**: Demonstrating mathematical concepts with real-world examples
 
-## 6. Personas _(Optional)_
+### Key User Journeys
 
-- **Curious players:** Compare systems (e.g., 5/7 vs 6/3) and see costs.
-- **Strategy hobbyists:** Run **100–10,000** simulations to observe tendencies and variance.
-- **Budget-minded users:** Understand **€2.00/line** pricing and total run costs.
+1. **Quick Exploration**: Generate system tickets → Run single draw → See immediate ROI
+1. **Strategy Comparison**: Generate different system sizes → Compare costs and coverage
+1. **Statistical Analysis**: Run 1000+ simulations → Analyze distributions and percentiles
+1. **Reproducible Research**: Share specific configurations via URLs with seeds
 
-## 7. User Scenarios _(Optional)_
+### Core Scenarios
 
-1. **Generate & Single Draw:** User selects a system preset and ticket count (1–500); app shows total price; a single mock draw highlights matches and shows winnings and ROI.
-1. **Monte Carlo Run:** User configures **100–10,000** simulations; progress streams via NDJSON with partial stats; final report shows totals, ROI, distributions, and percentiles; optional JSON export when enabled; cancel stops after current batch.
+**Scenario 1: Understanding System Tickets**
+User selects different system presets (5/2 vs 7/3), generates tickets, and immediately sees total cost breakdown. A single mock draw highlights matches and calculates winnings with clear ROI display.
 
-## 8. Scope
+**Scenario 2: Monte Carlo Analysis**  
+User configures 100-10,000 simulations with real-time progress streaming. Final report shows comprehensive statistics: total costs, winnings, net results, win-class distributions, percentiles, and profitability rates.
 
-**In Scope**
+## Functional Requirements
 
-- System ticket generation (unique tickets per batch; **€2.00/line** pricing).
-- Single mock draw with highlights and winnings from win-class payouts (with fallbacks).
-- Monte Carlo simulation with real-time progress (NDJSON), final analytics, and optional result export.
-- Responsible-play disclaimer and accessible, responsive UI.
+### Core Features
 
-**Out of Scope**
+**Ticket Generation**
 
-- Real-money play, accounts, payments, or checkout.
-- Predicting actual future draws.
-- Historical draw lookup by date (beyond odds/frequency data used for simulation).
+- Support system presets with 5-16 main numbers and 2-12 Euro numbers
+- Generate 1-500 unique tickets per request with transparent €2.00/line pricing
+- Offer uniform random or historically-weighted generation methods
+- Provide immediate cost calculation and ticket display
 
-## 9. Non-Goals _(Optional)_
+**Single Draw Simulation**
 
-- Personalized number advice or guaranteed profit strategies.
-- Social features or cloud saves (beyond optional local export).
+- Generate realistic winning numbers (5 main + 2 Euro)
+- Highlight matches across all tickets with visual clarity
+- Calculate total winnings using official win-class payouts
+- Display net profit/loss and ROI percentage
 
-## 10. Requirements
+**Monte Carlo Simulation**
 
-- **FR-1: Ticket Generation**
-  - Users choose system presets (e.g., 5/2, 5/3… 7/3 or equivalent counts).
-  - Generate **1–500** unique tickets per request.
-  - Display **total price** immediately (lines × **€2.00**).
-  - Users can choose **Uniform** or **Weighted by previous-draw stats** for ticket generation (default weighted; falls back to uniform on data issues).
-  - Configuration immediately persisted to URL for zero state loss on page refresh.
+- Configure 100-10,000 simulations with customizable batch sizes
+- Stream real-time progress via NDJSON with partial statistics
+- Generate comprehensive final reports with distributions and percentiles
+- Support cancellation and optional detailed result export (JSON)
 
-- **FR-2: Single Draw Simulation**
-  - Draw and display **5 main + 2 Euro** numbers.
-  - Highlight matches on all tickets.
-  - Compute **total winnings**, **net**, and **ROI** via win-class payouts (use fallback payouts if live data is unavailable).
+### Configuration & Persistence
 
-- **FR-3: Monte Carlo Simulation**
-  - Configure **100–10,000** simulations and a **batch size**.
-  - Stream **progress** via NDJSON (completed/total, elapsed, ETA hint, current win rate/ROI, biggest win, class distribution).
-  - Provide **final report**: totals (cost, winnings, net), ROI%, EV, class distribution, mean/median/std, p25/p75/p95, % profitable simulations, best result.
-  - **Cancel** stops after current batch.
-  - **Export** detailed per-simulation results as JSON when enabled (disabled over 1,000 sims at the UI for memory).
+**State Management**
 
-- **FR-4: Configuration Sharing & Persistence**
-  - **Immediate persistence**: Form configuration automatically saved to URL with zero state loss.
-  - **Unified sharing format**: Single URL structure for both state persistence and exact reproduction.
-  - **Optional reproducibility**: Shareable links include seed for deterministic ticket generation.
-  - **Quality randomness**: Default unseeded generation for better distribution, seeded only when sharing.
+- Immediate URL synchronization for zero state loss on page refresh
+- Shareable URLs for exact configuration reproduction
+- Optional seed-based reproducibility for deterministic results
+- Default high-quality randomness for typical usage
 
-- **FR-5: Pricing & Transparency**
-  - **€2.00 per line** consistently applied; lines = C(m,5) × C(e,2).
+**Data Integration**
 
-- **NFR-1: Performance**
-  - API endpoints should return in < 2 s under typical load; Monte Carlo keeps UI responsive via streaming.
+- Fetch current win-class payouts from Lotto Bayern API
+- Cache statistics data with 10-minute expiration
+- Graceful fallbacks for external API failures
+- Historical frequency data for weighted number generation
 
-- **NFR-2: Reliability**
-  - Graceful handling of external API failures (timeouts, normalization quirks); fallbacks for payouts and statistics.
+## Non-Functional Requirements
 
-- **NFR-3: Usability & Accessibility**
-  - Clear labels, color-coding for wins/classes, keyboard navigation, mobile-friendly layout.
+### Performance
 
-- **NFR-4: Compatibility**
-  - Latest versions of major desktop browsers (Chrome, Firefox, Safari, Edge).
+- P95 API latency < 1500ms under typical load
+- Real-time Monte Carlo progress streaming to maintain UI responsiveness
+- Efficient batch processing to prevent event loop blocking
+- Global edge deployment for optimal performance
 
-- **NFR-5: State Management**
-  - **Configuration persistence:** Zero state loss on page refresh via immediate URL synchronisation
-  - **Type safety:** All state transitions validated with Zod schemas at runtime
-  - **SSR readiness:** Ephemeral state management compatible with future server-side rendering
-  - **Memory efficiency:** Simulation results cached intelligently with configurable expiration (10 minutes for odds)
-  - **Error boundaries:** Graceful fallbacks when stores unavailable or external APIs fail
+### Reliability
 
-## 11. Assumptions and Dependencies
+- < 0.1% API error rate with comprehensive fallback mechanisms
+- Graceful handling of external API timeouts and data inconsistencies
+- Robust error boundaries throughout the application stack
+- Comprehensive input validation using Zod schemas
 
-- **Rules:** EuroJackpot 5/50 + 2/12; win classes **1–12**.
-- **Pricing:** **€2.00 per line**.
-- **External Data:** Lotto Bayern public endpoints for payout odds (classes may appear as **101–112**, normalized to **1–12**) and frequency stats.
-- **Platform:** Nuxt 4 + Vue 3 frontend; Nitro serverless API on **Cloudflare Workers**.
+### Usability
 
-## 12. Open Questions
+- Responsive design optimized for desktop and mobile devices
+- Clear visual hierarchy with intuitive navigation
+- Accessibility support including keyboard navigation
+- Immediate feedback for all user actions
 
-- Offer a UI toggle to compare **uniform vs historically weighted** generation?
-- Soft warning/cap on large total spend per run?
-- Country-specific disclaimers where appropriate?
+### Security & Data
 
-## 13. Release Plan _(Optional)_
+- No real-money transactions or payment processing
+- No personal data collection or user accounts
+- Client-side export functionality only (user-initiated)
+- Secure server-side ticket generation to prevent manipulation
 
-- **Mode:** Public V1
-- **Criteria:** Functional requirements met; fallbacks verified; performance targets met; disclaimer present; basic analytics enabled.
-- **Notes:** Gradual iteration post-V1 for UX polish and optional features.
+## Scope
 
-## 14. Analytics & Telemetry _(Optional)_
+### In Scope
 
-- **Events/KPIs:** ticket generation, single-draw runs, Monte Carlo starts/completions, export usage, fallback usage, error counts.
-- **Review Cadence:** Weekly KPI review against Success Metrics.
-- **Data Considerations:** No PII stored; exports are user-initiated.
+- EuroJackpot system ticket simulation with official number ranges
+- Single draw and Monte Carlo simulation capabilities
+- Real-time progress streaming and comprehensive analytics
+- Educational disclaimer and responsible gaming messaging
+- Responsive web interface with mobile support
 
-## 15. Messaging _(Optional)_
+### Out of Scope
 
-- **Target audience:** Lottery enthusiasts and data-curious users.
-- **Key message:** "A safe, educational sandbox to explore EuroJackpot system tickets, costs, and typical outcomes — **not** a prediction tool."
+- Real-money gambling features or payment processing
+- User accounts, authentication, or personal data storage
+- Prediction algorithms or "guaranteed winning" strategies
+- Historical draw lookup or date-specific analysis
+- Social features or cloud-based result sharing
 
-## 16. Approvals _(Optional)_
+### Future Considerations
 
-- [ ] Product:
-- [ ] Engineering:
-- [ ] Design:
-- [ ] Legal/Compliance:
+- Multi-language support and currency localization
+- Additional lottery formats beyond EuroJackpot
+- Advanced statistical analysis tools and visualizations
+- Educational content and probability theory explanations
 
-## 17. Related Documents _(Optional)_
+## Success Metrics
+
+- **Engagement**: Average session duration > 3 minutes
+- **Feature Adoption**: ≥ 20% of ticket generators run simulations
+- **Completion Rate**: High percentage of Monte Carlo simulations finish successfully
+- **Performance**: Maintain P95 latency targets under load
+- **Reliability**: Achieve < 0.1% error rate with fallback utilization tracking
+
+## Technical Constraints
+
+### Platform Requirements
+
+- **Framework**: Nuxt 4 with Vue 3 Composition API
+- **Deployment**: Cloudflare Workers with Nitro serverless architecture
+- **Browser Support**: Latest versions of Chrome, Firefox, Safari, Edge
+- **External Dependencies**: Lotto Bayern public API for statistics and payouts
+
+### System Limitations
+
+- **Lottery Format**: EuroJackpot 5/50 + 2/12 exclusively
+- **Pricing Model**: Fixed €2.00 per line matching official rates
+- **Win Classes**: Support for official classes 1-12 with normalization
+- **Simulation Scale**: Practical limits for memory and performance optimization
+
+## Related Documentation
 
 - **[Architecture Guide](./ARCHITECTURE.md)** - Technical implementation details and system design
 - **[Development Guide](./COMMON_GUIDE.md)** - LLM integration guide and development workflows
