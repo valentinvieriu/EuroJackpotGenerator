@@ -152,54 +152,91 @@
                   >
                 </span>
               </label>
-              <label
-                class="flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-              >
-                <input
-                  v-model="selectionMethod"
-                  value="weighted"
-                  type="radio"
-                  name="selectionMethod"
-                  class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                />
-                <span class="text-sm text-gray-200">
-                  <strong>Weighted by past frequencies</strong><br />
-                  <span class="text-xs text-gray-400">
-                    Past draws don't affect future results.
-                    <a
-                      href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-casino-gold hover:text-casino-gold-light underline"
-                      @click.stop
-                    >
-                      Method details
-                    </a>
-                  </span>
-                </span>
-              </label>
-              <label
-                class="flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-              >
-                <input
-                  v-model="selectionMethod"
-                  value="favorites"
-                  type="radio"
-                  name="selectionMethod"
-                  class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                />
-                <span class="text-sm text-gray-200">
-                  <strong>Your favorite numbers</strong><br />
-                  <span class="text-xs text-gray-400">
-                    Prioritize up to 5 favorite numbers for each pool
-                  </span>
-                </span>
-              </label>
-            </div>
+              <div class="space-y-0">
+                <label
+                  class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+                >
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model="selectionMethod"
+                      value="weighted"
+                      type="radio"
+                      name="selectionMethod"
+                      class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
+                    />
+                    <span class="text-sm text-gray-200">
+                      <strong>Weighted by past frequencies</strong><br />
+                      <span class="text-xs text-gray-400">
+                        Past draws don't affect future results.
+                        <a
+                          href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-casino-gold hover:text-casino-gold-light underline"
+                          @click.stop
+                        >
+                          Method details
+                        </a>
+                      </span>
+                    </span>
+                  </div>
+                  <button
+                    v-if="selectionMethod === 'weighted'"
+                    type="button"
+                    class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
+                    :class="{ 'rotate-180': showFrequencyDetails }"
+                    @click.stop="toggleFrequencyDetails"
+                  >
+                    ▼
+                  </button>
+                </label>
 
-            <!-- Favorite Numbers Selection (shown when favorites method is selected) -->
-            <div v-if="selectionMethod === 'favorites'" class="mt-6">
-              <FavoriteNumbersSelector />
+                <!-- Frequency Details Accordion Content -->
+                <div
+                  v-if="selectionMethod === 'weighted' && showFrequencyDetails"
+                  class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
+                >
+                  <FrequencyDisplay />
+                </div>
+              </div>
+              <div class="space-y-0">
+                <label
+                  class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+                >
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model="selectionMethod"
+                      value="favorites"
+                      type="radio"
+                      name="selectionMethod"
+                      class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
+                    />
+                    <span class="text-sm text-gray-200">
+                      <strong>Your favorite numbers</strong><br />
+                      <span class="text-xs text-gray-400">
+                        Prioritize up to 5 favorite numbers for each pool
+                      </span>
+                    </span>
+                  </div>
+                  <button
+                    v-if="selectionMethod === 'favorites'"
+                    type="button"
+                    class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
+                    :class="{ 'rotate-180': showFavoritesDetails }"
+                    @click.stop="toggleFavoritesDetails"
+                  >
+                    ▼
+                  </button>
+                </label>
+
+                <!-- Favorites Details Accordion Content -->
+                <div
+                  v-if="selectionMethod === 'favorites' && showFavoritesDetails"
+                  class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
+                >
+                  <FavoriteNumbersSelector />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -416,7 +453,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { systemPrice } from '~/utils/pricing'
 import { useSimulationPanelState } from '~/composables/useAppState'
 import SingleDrawPanel from './SingleDrawPanel.vue'
@@ -424,6 +461,7 @@ import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
 import StepperInput from './StepperInput.vue'
 import FavoriteNumbersSelector from './FavoriteNumbersSelector.vue'
+import FrequencyDisplay from './FrequencyDisplay.vue'
 import { logger } from '~/utils/logger'
 import {
   formatTicketType,
@@ -526,6 +564,27 @@ const loading = computed(() => ticketsStore.isGenerating)
 
 // Error handling using centralized state
 const error = computed(() => ticketsStore.state.error || '')
+
+// Accordion state for frequency details
+const showFrequencyDetails = ref(false)
+const showFavoritesDetails = ref(false)
+
+const toggleFrequencyDetails = () => {
+  showFrequencyDetails.value = !showFrequencyDetails.value
+}
+
+const toggleFavoritesDetails = () => {
+  showFavoritesDetails.value = !showFavoritesDetails.value
+}
+
+// Auto-expand accordions when methods are selected
+watch(selectionMethod, (newMethod) => {
+  if (newMethod === 'weighted') {
+    showFrequencyDetails.value = true
+  } else if (newMethod === 'favorites') {
+    showFavoritesDetails.value = true
+  }
+})
 
 // UI mode (using shared simulation panel state)
 const { activeMode, setMode } = useSimulationPanelState()

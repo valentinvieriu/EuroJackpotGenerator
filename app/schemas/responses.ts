@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { ticketSchema } from './ticket'
 import { batchSimulationResultSchema } from './batchSimulation'
 import { eurojackpotHistoricOddsSchema } from './winning'
+import { statisticsDataSchema } from './statistics'
 import {
   MAIN_NUMBER_MIN,
   MAIN_NUMBER_MAX,
@@ -56,6 +57,8 @@ export const simulateResponseSchema = z.object({
 
 export const fetchWinningDataResponseSchema = eurojackpotHistoricOddsSchema
 
+export const fetchFrequenciesResponseSchema = statisticsDataSchema
+
 export const batchSimulateResponseSchema = batchSimulationResultSchema
 
 // Error response schema
@@ -78,6 +81,9 @@ export type GenerateResponse = z.infer<typeof generateResponseSchema>
 export type SimulateResponse = z.infer<typeof simulateResponseSchema>
 export type FetchWinningDataResponse = z.infer<
   typeof fetchWinningDataResponseSchema
+>
+export type FetchFrequenciesResponse = z.infer<
+  typeof fetchFrequenciesResponseSchema
 >
 export type BatchSimulateResponse = z.infer<typeof batchSimulateResponseSchema>
 export type ErrorResponse = z.infer<typeof errorResponseSchema>

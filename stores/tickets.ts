@@ -5,8 +5,8 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed, readonly } from 'vue'
-import type { Ticket } from '~/schemas'
+import { ref, computed, readonly, watch } from 'vue'
+import type { Ticket, StatisticsData } from '~/schemas'
 import type {
   AppConfig,
   SelectionMethod,
@@ -57,6 +57,9 @@ export interface TicketsState {
   luckyCode: string
   error: string | null
   lastGenerated: number
+  frequencyData: StatisticsData | null
+  isLoadingFrequencies: boolean
+  frequencyError: string | null
   _urlUpdateTimer?: ReturnType<typeof setTimeout>
 }
 
@@ -86,6 +89,9 @@ export const useTicketsStore = defineStore('tickets', () => {
     luckyCode: '',
     error: null,
     lastGenerated: 0,
+    frequencyData: null,
+    isLoadingFrequencies: false,
+    frequencyError: null,
     _urlUpdateTimer: undefined,
   })
 
@@ -117,6 +123,63 @@ export const useTicketsStore = defineStore('tickets', () => {
   const systemCost = computed(() => {
     const { mainCount, euroCount } = state.value.config
     return systemPrice(mainCount, euroCount)
+  })
+
+  // Frequency data computed getters
+  const hasFrequencyData = computed(() => !!state.value.frequencyData)
+  const hasFrequencyError = computed(() => !!state.value.frequencyError)
+  const shouldShowFrequencies = computed(
+    () => state.value.config.method === 'weighted'
+  )
+
+  const allMainNumbers = computed(() => {
+    if (!state.value.frequencyData) return []
+    return state.value.frequencyData.numbers
+      .slice()
+      .sort((a, b) => a.number - b.number) // Sort by number (1-50)
+  })
+
+  const allEuroNumbers = computed(() => {
+    if (!state.value.frequencyData) return []
+    return state.value.frequencyData.additionalNumbers
+      .slice()
+      .sort((a, b) => a.number - b.number) // Sort by number (1-12)
+  })
+
+  // Statistical analysis for frequency display
+  const frequencyStats = computed(() => {
+    if (!state.value.frequencyData) return null
+
+    const totalMainNumbers = state.value.frequencyData.numbers.length
+    const totalEuroNumbers = state.value.frequencyData.additionalNumbers.length
+
+    // Calculate total selections (sum of all frequencies)
+    const totalMainSelections = state.value.frequencyData.numbers.reduce(
+      (sum, n) => sum + n.value,
+      0
+    )
+    const totalEuroSelections =
+      state.value.frequencyData.additionalNumbers.reduce(
+        (sum, n) => sum + n.value,
+        0
+      )
+
+    // Calculate total draws from total selections
+    const totalDraws = totalMainSelections / MAIN_NUMBERS_COUNT
+
+    // Expected frequency for each individual number
+    const expectedMainFreq = totalMainSelections / totalMainNumbers
+    const expectedEuroFreq = totalEuroSelections / totalEuroNumbers
+
+    return {
+      totalDraws: Math.round(totalDraws),
+      expectedMainFreq: Math.round(expectedMainFreq),
+      expectedEuroFreq: Math.round(expectedEuroFreq),
+      mainNumberCount: totalMainNumbers,
+      euroNumberCount: totalEuroNumbers,
+      totalMainSelections,
+      totalEuroSelections,
+    }
   })
 
   // Dependencies
@@ -651,6 +714,85 @@ export const useTicketsStore = defineStore('tickets', () => {
       })
   }
 
+  /**
+   * Fetch frequency data for weighted number generation display
+   */
+  const fetchFrequencyData = async (): Promise<void> => {
+    if (state.value.isLoadingFrequencies) {
+      logger.warn('Frequency data fetch already in progress')
+      return
+    }
+
+    logger.debug('TicketsStore: Starting frequency data fetch')
+
+    // Set loading state
+    state.value.isLoadingFrequencies = true
+    state.value.frequencyError = null
+
+    try {
+      const runtimeConfig = useRuntimeConfig()
+      const apiBaseUrl = runtimeConfig.public.apiBase
+
+      const frequencyData = await $fetch<StatisticsData | null>(
+        `${apiBaseUrl}/frequencies`,
+        {
+          method: 'GET',
+        }
+      )
+
+      // Success - update state
+      state.value.frequencyData = frequencyData
+      state.value.isLoadingFrequencies = false
+
+      logger.debug('TicketsStore: Frequency data fetch successful', {
+        hasData: !!frequencyData,
+        mainNumbersCount: frequencyData?.numbers.length,
+        euroNumbersCount: frequencyData?.additionalNumbers.length,
+      })
+    } catch (err: unknown) {
+      logger.error('TicketsStore: Frequency data fetch failed:', err)
+
+      const errorMessage = extractErrorMessage(err)
+      state.value.frequencyError = errorMessage
+      state.value.isLoadingFrequencies = false
+
+      // Set display error for user
+      addTransientError(
+        'Failed to load frequency data. Using default weighting.',
+        TRANSIENT_ERROR_MS
+      )
+    }
+  }
+
+  // Watch for method changes to auto-fetch frequency data
+  watch(
+    () => state.value.config.method,
+    async (newMethod) => {
+      // Skip auto-fetch in test environment or when no runtime config available
+      if (
+        process.env.NODE_ENV === 'test' ||
+        typeof useRuntimeConfig === 'undefined'
+      ) {
+        return
+      }
+
+      if (
+        newMethod === 'weighted' &&
+        !state.value.frequencyData &&
+        !state.value.isLoadingFrequencies
+      ) {
+        logger.debug('Auto-fetching frequency data for weighted method')
+        try {
+          await fetchFrequencyData()
+        } catch (error) {
+          // Silently fail for auto-fetch to avoid disrupting user flow
+          logger.warn('Auto-fetch of frequency data failed:', error)
+        }
+      }
+    },
+    { immediate: false } // Don't run immediately to avoid test issues
+  )
+
   // Return store interface
   return {
     // State (readonly)
@@ -665,6 +807,12 @@ export const useTicketsStore = defineStore('tickets', () => {
     totalPrice,
     ticketTypeLabel,
     systemCost,
+    hasFrequencyData,
+    hasFrequencyError,
+    shouldShowFrequencies,
+    allMainNumbers,
+    allEuroNumbers,
+    frequencyStats,
 
     // Actions
     generate,
@@ -676,6 +824,7 @@ export const useTicketsStore = defineStore('tickets', () => {
     setLuckyCode,
     clearError,
     removeTicket,
+    fetchFrequencyData,
 
     // Favorite Numbers Actions
     addFavoriteNumber,
