@@ -230,6 +230,9 @@ const handleStartSimulation = () => {
 **Key Components**:
 
 - **TicketGenerator**: Orchestrates ticket configuration and generation through `TicketsStore`
+- **FavoriteNumbersSelector**: Visual interface for custom number selection with add/remove functionality
+- **FrequencyDisplay**: Comprehensive frequency visualization with bar charts and statistical analysis
+- **TicketItem**: Individual ticket display with deletion capability and visual highlight support
 - **SimulationPanels**: Handle single-draw and Monte Carlo simulation UIs via `SimulationStore`
 - **Progress Components**: Real-time NDJSON stream visualization with cancellation support
 
@@ -271,6 +274,13 @@ const handleStartSimulation = () => {
 - 8-second timeout with hardcoded fallback data
 - Handles API inconsistencies and network failures gracefully
 
+**`GET /api/frequencies`**: Historical frequency analysis endpoint
+
+- Provides comprehensive frequency data for all 62 numbers (50 main + 12 Euro)
+- Reuses existing statistics caching infrastructure (10-minute expiration)
+- Returns structured data with color-coded tier analysis
+- Supports visual frequency display and informed number selection
+
 ### External Integrations
 
 **Lotto Bayern API Integration**:
@@ -286,11 +296,12 @@ const handleStartSimulation = () => {
 
 ### Ticket Generation Flow
 
-1. **User Configuration**: Component captures system parameters (main/euro numbers)
-1. **Validation**: Zod schemas validate parameters before API call
-1. **Generation**: Server applies uniform or weighted algorithms based on configuration
-1. **State Update**: Store receives tickets, updates URL persistence, triggers UI refresh
+1. **User Configuration**: Component captures system parameters (main/euro numbers) and optional favorite numbers
+1. **Validation**: Zod schemas validate parameters including favorite number constraints before API call
+1. **Generation**: Server applies uniform, weighted, or favorite-enhanced algorithms based on configuration
+1. **State Update**: Store receives tickets, updates URL persistence including favorite numbers, triggers UI refresh
 1. **Cost Calculation**: Real-time price computation using official €2.00/line pricing
+1. **Individual Management**: Users can delete specific tickets with automatic state recalculation
 
 ### Simulation Execution Flow
 
@@ -304,9 +315,11 @@ const handleStartSimulation = () => {
 
 ### State Synchronization Patterns
 
-**URL ↔ Store Synchronization**: Bidirectional sync ensures configuration persistence
+**URL ↔ Store Synchronization**: Bidirectional sync ensures configuration persistence including favorite numbers
 **Store ↔ Component Reactivity**: Vue's reactive system propagates state changes automatically
 **API ↔ Store Integration**: Async actions handle loading states and error boundaries
+**Frequency Data Management**: Auto-fetching and caching of historical frequency data for visual analysis
+**Deletion State Handling**: Automatic cleanup and recalculation when individual tickets are removed
 
 ---
 
@@ -317,8 +330,8 @@ const handleStartSimulation = () => {
 **Layered Error Boundaries**: Each architectural layer implements appropriate error handling strategies:
 
 - **API Layer**: Input validation, timeout handling, fallback responses
-- **Store Layer**: Loading states, error state management, retry logic
-- **Component Layer**: User-friendly error messages, recovery actions
+- **Store Layer**: Loading states, error state management, retry logic, state cleanup on ticket deletion
+- **Component Layer**: User-friendly error messages, recovery actions, accordion UI patterns
 
 ### Performance Strategies
 

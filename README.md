@@ -24,7 +24,10 @@ Instead of guessing about lottery strategies, you can **see the data**. Run 10,0
 - Generate 1-500 unique tickets per batch
 - System combinations (5/50 + 2/12 format) from 5-16 main and 2-12 Euro numbers
 - Transparent €2.00 per line pricing with immediate cost calculation
-- Historically weighted number selection based on draw frequencies
+- Multiple generation methods: random, historically weighted, or custom favorite numbers
+- Visual favorite number selector for personalised ticket generation
+- Individual ticket deletion with automatic recalculation
+- Comprehensive frequency analysis with historical draw data visualisation
 - Efraimidis-Spirakis algorithm for exact weighted sampling without replacement
 
 ### 🎯 Single Draw Simulation
@@ -52,7 +55,7 @@ Instead of guessing about lottery strategies, you can **see the data**. Run 10,0
 
 ## How It Works
 
-The simulator uses the official EuroJackpot format (5 numbers from 1-50, plus 2 Euro numbers from 1-12) and real win-class payouts to provide accurate simulations. Choose your system size, generate tickets, and run either single draws or large-scale Monte Carlo simulations to see the mathematics in action.
+The simulator uses the official EuroJackpot format (5 numbers from 1-50, plus 2 Euro numbers from 1-12) and real win-class payouts to provide accurate simulations. Choose your system size, optionally select favorite numbers based on personal preference or frequency analysis, generate tickets, and run either single draws or large-scale Monte Carlo simulations to see the mathematics in action. Compare different strategies including random selection, weighted historical frequencies, and custom number preferences.
 
 ## Quick Start
 
@@ -71,6 +74,8 @@ This project demonstrates several interesting concepts:
 
 - **Probability Theory**: See how mathematical expectations play out in practice
 - **System Tickets**: Understand the trade-offs between coverage and cost
+- **Custom Strategies**: Compare random vs frequency-based vs favorite number approaches
+- **Historical Analysis**: Explore draw frequency patterns and their impact on outcomes
 - **Monte Carlo Methods**: Watch statistical patterns emerge from large samples
 - **Web Performance**: Real-time streaming of long-running calculations
 

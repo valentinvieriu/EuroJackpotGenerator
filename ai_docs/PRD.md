@@ -27,15 +27,17 @@ Most lottery players lack intuitive understanding of system ticket mathematics a
 
 ### Target Users
 
-- **Statistics Students**: Exploring probability theory and Monte Carlo methods
-- **Curious Players**: Understanding system ticket costs and typical outcomes
-- **Data Enthusiasts**: Comparing strategies and observing statistical patterns
-- **Educators**: Demonstrating mathematical concepts with real-world examples
+- **Statistics Students**: Exploring probability theory, Monte Carlo methods, and frequency analysis
+- **Curious Players**: Understanding system ticket costs, custom number strategies, and typical outcomes
+- **Data Enthusiasts**: Comparing random vs weighted vs favorite number strategies and observing statistical patterns
+- **Educators**: Demonstrating mathematical concepts with real-world examples and historical frequency data
 
 ### Key User Journeys
 
 1. **Quick Exploration**: Generate system tickets → Run single draw → See immediate ROI
 1. **Strategy Comparison**: Generate different system sizes → Compare costs and coverage
+1. **Custom Strategy Testing**: Select favorite numbers → Compare against random selection → Analyze performance differences
+1. **Frequency Analysis**: Examine historical draw patterns → Make informed number selections → Test strategies
 1. **Statistical Analysis**: Run 1000+ simulations → Analyze distributions and percentiles
 1. **Reproducible Research**: Share specific configurations via URLs with seeds
 
@@ -44,7 +46,10 @@ Most lottery players lack intuitive understanding of system ticket mathematics a
 **Scenario 1: Understanding System Tickets**
 User selects different system presets (5/2 vs 7/3), generates tickets, and immediately sees total cost breakdown. A single mock draw highlights matches and calculates winnings with clear ROI display.
 
-**Scenario 2: Monte Carlo Analysis**  
+**Scenario 2: Custom Number Strategy**
+User selects favorite numbers based on personal preference or frequency analysis, generates tickets incorporating these preferences, and compares outcomes against random selection through repeated simulations.
+
+**Scenario 3: Monte Carlo Analysis**  
 User configures 100-10,000 simulations with real-time progress streaming. Final report shows comprehensive statistics: total costs, winnings, net results, win-class distributions, percentiles, and profitability rates.
 
 ## Functional Requirements
@@ -55,7 +60,10 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 
 - Support system presets with 5-16 main numbers and 2-12 Euro numbers
 - Generate 1-500 unique tickets per request with transparent €2.00/line pricing
-- Offer uniform random or historically-weighted generation methods
+- Offer uniform random, historically-weighted, or custom favorite number generation methods
+- Allow users to specify favorite main numbers (1-50) and Euro numbers (1-12) for personalised ticket generation
+- Provide visual frequency analysis with historical draw data and color-coded tiers
+- Enable individual ticket deletion with automatic cost and simulation recalculation
 - Provide immediate cost calculation and ticket display
 
 **Single Draw Simulation**
@@ -86,7 +94,8 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 - Fetch current win-class payouts from Lotto Bayern API
 - Cache statistics data with 10-minute expiration
 - Graceful fallbacks for external API failures
-- Historical frequency data for weighted number generation
+- Historical frequency data for weighted number generation and visual analysis
+- Comprehensive frequency endpoint providing all number statistics with color-coded analysis
 
 ## Non-Functional Requirements
 
