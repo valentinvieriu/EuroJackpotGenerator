@@ -283,6 +283,7 @@ import {
 import { computed, reactive, watch } from 'vue'
 import type { BatchSimulationRequest, Ticket } from '~/schemas'
 import { calculateTheoreticalExpectedValue } from '~/utils/batchStatistics'
+import { calculateBreakEvenPercentage } from '~/utils/simulationMath'
 // useOddsStore is auto-imported via @pinia/nuxt configuration
 
 const props = defineProps({
@@ -322,7 +323,7 @@ const totalSimulationCost = computed(
 )
 
 const breakEvenPercentage = computed(() => {
-  if (props.costPerSimulation <= 0 || props.tickets.length === 0) return 0
+  if (props.tickets.length === 0) return 0
 
   // Get the first ticket to determine system parameters
   const firstTicket = props.tickets[0]
@@ -331,7 +332,7 @@ const breakEvenPercentage = computed(() => {
   const systemMain = firstTicket.mainNumbers.length
   const systemEuro = firstTicket.euroNumbers.length
 
-  // EV for ONE simulation across ALL tickets/lines
+  // Calculate theoretical expected value for all tickets
   const expectedValueTotal = calculateTheoreticalExpectedValue(
     props.ticketCount,
     systemMain,
@@ -339,10 +340,8 @@ const breakEvenPercentage = computed(() => {
     oddsStore.currentOdds
   )
 
-  if (expectedValueTotal <= 0) return 100 // If no expected value, need 100% win rate to break even
-
-  // Break-even percentage = cost per simulation / expected total EV per simulation * 100
-  return (props.costPerSimulation / expectedValueTotal) * 100
+  // Use utility function for break-even calculation
+  return calculateBreakEvenPercentage(props.tickets, expectedValueTotal)
 })
 
 const handleStartSimulation = () => {

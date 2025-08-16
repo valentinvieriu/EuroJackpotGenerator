@@ -2,6 +2,11 @@
  * SSR-safe composables for ephemeral application state
  * Uses Nuxt's useState for server-side rendering compatibility
  */
+import {
+  WELCOME_DISPLAY_MS,
+  TRANSIENT_ERROR_MS,
+  COPY_SUCCESS_MS,
+} from '~/utils/constants'
 
 /**
  * Audio preferences state
@@ -38,7 +43,7 @@ export const useTransientErrors = () => {
   const errors = useState<string[]>('transient-errors', () => [])
   const lastErrorId = useState('last-error-id', () => 0)
 
-  const addError = (message: string, duration = 5000): number => {
+  const addError = (message: string, duration = TRANSIENT_ERROR_MS): number => {
     const errorId = ++lastErrorId.value
     errors.value.push(message)
 
@@ -105,7 +110,7 @@ export const useUIState = () => {
     showGenerationForm.value = !showGenerationForm.value
   }
 
-  const showWelcome = (luckyCode: string, duration = 12000) => {
+  const showWelcome = (luckyCode: string, duration = WELCOME_DISPLAY_MS) => {
     welcomeLuckyCode.value = luckyCode
     showWelcomeMessage.value = true
 
@@ -133,7 +138,7 @@ export const useUIState = () => {
     copySuccess.value = false
   }
 
-  const setCopySuccess = (duration = 2000) => {
+  const setCopySuccess = (duration = COPY_SUCCESS_MS) => {
     copySuccess.value = true
 
     if (duration > 0 && import.meta.client) {

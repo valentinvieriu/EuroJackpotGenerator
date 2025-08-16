@@ -14,6 +14,7 @@ import {
   EURO_NUMBER_MAX,
   MAIN_NUMBERS_COUNT,
   EURO_NUMBERS_COUNT,
+  FALLBACK_SIMULATION_MAX,
 } from '~/utils/constants'
 import type {
   BatchSimulationResult,
@@ -91,7 +92,7 @@ export default defineEventHandler(
       const isFallbackOdds =
         winningData?.eurojackpotGameCycle?.key === 'fallback-odds-canonical'
       const effectiveSimulationCount = isFallbackOdds
-        ? Math.min(simulationCount, 3)
+        ? Math.min(simulationCount, FALLBACK_SIMULATION_MAX)
         : simulationCount
 
       // Calculate cost per simulation (assuming all tickets have same system price)

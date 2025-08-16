@@ -19,6 +19,13 @@ import {
 } from '~/utils/urlHash'
 import { systemPrice } from '~/utils/pricing'
 import { logger } from '~/utils/logger'
+import {
+  TICKET_COUNT_MIN,
+  TICKET_COUNT_MAX,
+  WELCOME_DISPLAY_MS,
+  TRANSIENT_ERROR_MS,
+  URL_DEBOUNCE_MS,
+} from '~/utils/constants'
 
 export type TicketPhase = 'fresh' | 'generating' | 'ready' | 'error'
 export type AppState = 'FRESH' | 'SHARED'
@@ -165,10 +172,10 @@ export const useTicketsStore = defineStore('tickets', () => {
     const { mainCount, euroCount, ticketCount, method } = state.value.config
     if (
       !Number.isInteger(ticketCount) ||
-      ticketCount < 1 ||
-      ticketCount > 500
+      ticketCount < TICKET_COUNT_MIN ||
+      ticketCount > TICKET_COUNT_MAX
     ) {
-      state.value.error = 'Please enter a valid number of tickets (1-500).'
+      state.value.error = `Please enter a valid number of tickets (${TICKET_COUNT_MIN}-${TICKET_COUNT_MAX}).`
       state.value.phase = 'error'
       return
     }
@@ -243,7 +250,10 @@ export const useTicketsStore = defineStore('tickets', () => {
       state.value.tickets = []
 
       // Also add to transient errors for user notification
-      addTransientError(`Generation failed: ${errorMessage}`, 5000)
+      addTransientError(
+        `Generation failed: ${errorMessage}`,
+        TRANSIENT_ERROR_MS
+      )
     } finally {
       uiState.setLoading(null)
     }
@@ -316,7 +326,11 @@ export const useTicketsStore = defineStore('tickets', () => {
       }
     }
 
-    if (config.tickets && config.tickets >= 1 && config.tickets <= 500) {
+    if (
+      config.tickets &&
+      config.tickets >= TICKET_COUNT_MIN &&
+      config.tickets <= TICKET_COUNT_MAX
+    ) {
       state.value.config.ticketCount = config.tickets
     }
 
@@ -330,7 +344,7 @@ export const useTicketsStore = defineStore('tickets', () => {
       state.value.luckyCode = config.lucky
 
       // Show welcome message
-      uiState.showWelcome(config.lucky, 12000)
+      uiState.showWelcome(config.lucky, WELCOME_DISPLAY_MS)
 
       // Automatically generate the tickets using the lucky code as seed
       await generate()
@@ -378,7 +392,7 @@ export const useTicketsStore = defineStore('tickets', () => {
       if (state.value.appState === 'FRESH') {
         updateBrowserUrl()
       }
-    }, 250)
+    }, URL_DEBOUNCE_MS)
   }
 
   /**

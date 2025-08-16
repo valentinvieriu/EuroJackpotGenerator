@@ -1,5 +1,6 @@
 // Define an enum for draw types for better type safety and readability
 import { logger } from '~/utils/logger'
+import { EUROJACKPOT_DRAW_DAYS } from '~/utils/constants'
 
 export enum EurojackpotDrawType {
   PREVIOUS = 'previous',
@@ -36,7 +37,6 @@ function getISOWeekNumber(date: Date): number {
  */
 function getDrawDate(referenceDate: Date, type: EurojackpotDrawType): Date {
   const dayOfWeek = referenceDate.getDay() // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
-  const DRAW_DAYS: readonly number[] = [2, 5] // Tuesday (2) and Friday (5)
 
   let daysToAddOrSubtract: number
 
@@ -46,7 +46,7 @@ function getDrawDate(referenceDate: Date, type: EurojackpotDrawType): Date {
     // Example: If today is Wednesday (3), previous draw was Tuesday (-1 day).
     // Example: If today is Tuesday (2), previous draw was *last* Friday (-4 days).
     let daysAgo = Infinity
-    for (const drawDay of DRAW_DAYS) {
+    for (const drawDay of EUROJACKPOT_DRAW_DAYS) {
       let diff = (dayOfWeek - drawDay + 7) % 7 // Days since the last occurrence of drawDay
       if (diff === 0) diff = 7 // If today is a draw day, we want the *previous* one (7 days ago)
       daysAgo = Math.min(daysAgo, diff)
@@ -60,7 +60,7 @@ function getDrawDate(referenceDate: Date, type: EurojackpotDrawType): Date {
     // Example: If today is Tuesday (2), next draw is Friday (+3 days).
     // Example: If today is Friday (5), next draw is *next* Tuesday (+4 days).
     let daysForward = Infinity
-    for (const drawDay of DRAW_DAYS) {
+    for (const drawDay of EUROJACKPOT_DRAW_DAYS) {
       let diff = (drawDay - dayOfWeek + 7) % 7 // Days until the next occurrence of drawDay
       if (diff === 0) {
         // If today is a draw day, find the *next* one

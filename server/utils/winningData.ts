@@ -8,6 +8,7 @@ import {
 } from './validation'
 import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
 import { logger } from '~/utils/logger'
+import { DEFAULT_FETCH_TIMEOUT_MS } from '~/utils/constants'
 
 /**
  * Options for fetchWinningData function
@@ -20,7 +21,7 @@ export interface FetchWinningDataOptions {
   validateOutput?: boolean
   /**
    * Request timeout in milliseconds
-   * @default 8000
+   * @default DEFAULT_FETCH_TIMEOUT_MS
    */
   timeout?: number
 }
@@ -35,8 +36,10 @@ export interface FetchWinningDataOptions {
 export async function fetchWinningData(
   options: FetchWinningDataOptions = {}
 ): Promise<EurojackpotHistoricOdds> {
-  const { validateOutput: shouldValidateOutput = false, timeout = 8000 } =
-    options
+  const {
+    validateOutput: shouldValidateOutput = false,
+    timeout = DEFAULT_FETCH_TIMEOUT_MS,
+  } = options
 
   try {
     // 1. Generate URL for external API

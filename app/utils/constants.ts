@@ -47,6 +47,25 @@ export const WIN_CLASS_TIER_2_MAX = 7 // Classes 4-7 (medium prizes)
 export const LARGE_SIMULATION_THRESHOLD = 1000 // Export disabled above this
 export const HIGH_SIMULATION_WARNING_THRESHOLD = 5000 // Show warning above this
 
+// UI Timing Constants (milliseconds)
+export const WELCOME_DISPLAY_MS = 12000 // Welcome message auto-hide duration
+export const TRANSIENT_ERROR_MS = 5000 // Transient error auto-hide duration
+export const COPY_SUCCESS_MS = 2000 // Copy success feedback duration
+export const URL_DEBOUNCE_MS = 250 // URL update debounce delay
+
+// Network Timeout Constants (milliseconds)
+export const DEFAULT_FETCH_TIMEOUT_MS = 8000 // Standard API timeout
+
+// EuroJackpot Draw Schedule
+export const EUROJACKPOT_DRAW_DAYS = [2, 5] as const // Tuesday = 2, Friday = 5
+
+// Simulation Thresholds for Highlighting
+export const SIGNIFICANT_WIN_FRACTION_LARGE = 0.15 // 15% of wins for large simulations
+export const SIGNIFICANT_WIN_ABS_MIN = 5 // Absolute minimum wins to highlight
+
+// Fallback Limits
+export const FALLBACK_SIMULATION_MAX = 3 // Maximum fallback simulations when external API fails
+
 // Logging configuration
 export const LOG_LEVELS = {
   DEBUG: 'debug',
@@ -64,3 +83,9 @@ export const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   info: 2,
   debug: 3,
 }
+
+// Derived Arrays for Components
+export const WIN_CLASSES = Array.from(
+  { length: WIN_CLASS_MAX - WIN_CLASS_MIN + 1 },
+  (_, i) => WIN_CLASS_MIN + i
+) as readonly number[]
