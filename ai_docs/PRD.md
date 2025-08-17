@@ -34,18 +34,18 @@ Most lottery players lack intuitive understanding of system ticket mathematics a
 
 ### Key User Journeys
 
-1. **Instant Quick Start**: Click "Generate Random Tickets" → Auto-generate 10 tickets → Auto-run single draw → See immediate results
-1. **Progressive Customisation**: Start with simple mode → Click customize to open overlay → Configure advanced settings in modal → Generate and compare strategies
-1. **Strategy Comparison**: Generate different system sizes → Compare costs and coverage → Test multiple approaches
-1. **Custom Strategy Testing**: Select favorite numbers or unpopular combinations → Compare against random selection → Analyze performance differences
-1. **Frequency Analysis**: Examine historical draw patterns → Make informed number selections → Test strategies
-1. **Statistical Analysis**: Run 1000+ simulations → Analyze distributions and percentiles
-1. **Reproducible Research**: Share specific configurations via URLs with seeds
+1. **Instant Quick Start**: Click "Generate Random Tickets" → Auto-generate 10 tickets → Auto-run single draw → See immediate results with visual animations and audio feedback
+1. **Progressive Customisation**: Start with simple mode → Click customize to open overlay → Configure advanced settings in modal → Generate and compare strategies with enhanced UI transitions
+1. **Strategy Comparison**: Generate different system sizes → Compare costs and coverage → Test multiple approaches with responsive visual feedback
+1. **Custom Strategy Testing**: Select favorite numbers or unpopular combinations → Compare against random selection → Analyze performance differences with audio-visual win indicators
+1. **Frequency Analysis**: Examine historical draw patterns → Make informed number selections → Test strategies with engaging background animations
+1. **Statistical Analysis**: Run 1000+ simulations → Analyze distributions and percentiles with real-time progress animations
+1. **Reproducible Research**: Share specific configurations via URLs with seeds in premium interactive environment
 
 ### Core Scenarios
 
 **Scenario 1: Instant Gratification (Simple Mode)**
-New users click "Generate Random Tickets" for immediate results. The system auto-generates 10 standard tickets and runs a single draw, showing matches and ROI instantly. Users can then explore customisation options or generate new tickets.
+New users click "Generate Random Tickets" for immediate results. The system auto-generates 10 standard tickets and runs a single draw, showing matches and ROI instantly with premium audio feedback and visual animations. Users can then explore customisation options or generate new tickets in an engaging interactive environment.
 
 **Scenario 2: Understanding System Tickets (Custom Mode)**
 User clicks customize to open the configuration overlay, selects different system presets (5/2 vs 7/3), generates tickets from the modal, and immediately sees total cost breakdown. A single mock draw highlights matches and calculates winnings with clear ROI display.
@@ -73,7 +73,9 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 - Allow users to specify favorite main numbers (1-50) and Euro numbers (1-12) for personalised ticket generation
 - Provide visual frequency analysis with historical draw data and color-coded tiers
 - Enable individual ticket deletion with automatic cost and simulation recalculation
-- Provide immediate cost calculation and ticket display
+- Provide immediate cost calculation and ticket display with smooth animations and transitions
+- **Premium Audio Feedback**: Musical scale-based win sounds with ROI-proportional audio feedback
+- **Interactive Background**: Bouncing balls canvas animation with physics-based user interaction
 
 **Single Draw Simulation**
 
@@ -125,9 +127,11 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 ### Usability
 
 - Responsive design optimized for desktop and mobile devices
-- Clear visual hierarchy with intuitive navigation
-- Accessibility support including keyboard navigation
-- Immediate feedback for all user actions
+- Clear visual hierarchy with intuitive navigation and smooth animations
+- Accessibility support including keyboard navigation and audio controls
+- Immediate feedback for all user actions with premium audio-visual responses
+- Performance-optimised animations with mobile-specific tuning
+- Interactive background elements that enhance engagement without distraction
 
 ### Security & Data
 

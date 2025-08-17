@@ -11,6 +11,7 @@
 **Frontend**: Nuxt 4, Vue 3 Composition API, TypeScript, Pinia state management  
 **Backend**: Cloudflare Workers with Nitro, NDJSON streaming  
 **Quality**: Zod validation, Vitest testing, ESLint/Prettier
+**UX Enhancement**: Web Audio API, Canvas animations, Web Workers
 
 ## Core Architectural Principles
 
@@ -46,7 +47,8 @@ npm run format   # Format code
 1. **Business Logic**: Located in `stores/` and `app/utils/` including custom number generation algorithms and popularity scoring
 1. **API Endpoints**: Server logic in `server/api/` including frequency analysis endpoints
 1. **Component Patterns**: Hero section with stepper, overlay modals, accordion UI, visual selectors, deletion handlers with state cleanup, mode transitions
-1. **Testing**: Focus on business logic, not UI rendering
+1. **Animation Systems**: Canvas-based background animations (`BouncingBallsCanvas.vue`) with Web Worker optimization and audio feedback (`audioUtils.ts`)
+1. **Testing**: Focus on business logic, not UI rendering or animation performance
 
 _For detailed patterns and examples, see [ARCHITECTURE.md](./ARCHITECTURE.md)_
 
@@ -61,7 +63,7 @@ _For detailed patterns and examples, see [ARCHITECTURE.md](./ARCHITECTURE.md)_
 ### Testing Philosophy
 
 - **Test**: Business logic in stores, utilities, server endpoints, Zod schemas, favorite number algorithms, deletion state handling
-- **Don't Test**: UI rendering, CSS, simple event handlers, accordion animations
+- **Don't Test**: UI rendering, CSS, simple event handlers, accordion animations, canvas animations, audio synthesis
 - **Requirement**: New features must include business logic tests including edge cases for state cleanup
 
 _For detailed testing strategies and examples, see testing sections in [ARCHITECTURE.md](./ARCHITECTURE.md)_
@@ -75,6 +77,7 @@ _For detailed testing strategies and examples, see testing sections in [ARCHITEC
 1. **Business Logic**: Implement in Pinia stores with tests (including state cleanup patterns and mode management)
 1. **API Layer**: Create server endpoints with validation
 1. **UI Components**: Thin presentation layer only (hero section with stepper, overlay modals, accordion patterns, deletion handlers, mode transitions)
+1. **Animation & Audio**: Add canvas animations and audio feedback without blocking core functionality (Web Workers for performance)
 1. **Quality Check**: Run tests, lint, and format before completion
 
 ### Debugging Approach

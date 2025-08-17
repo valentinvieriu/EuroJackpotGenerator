@@ -403,12 +403,38 @@ The application supports four distinct number generation methods, each serving d
 - **Store Layer**: Loading states, error state management, retry logic, state cleanup on ticket deletion
 - **Component Layer**: User-friendly error messages, recovery actions, accordion UI patterns
 
+### Animation & Audio Architecture
+
+**Premium User Experience Enhancement**: The application implements sophisticated animation and audio systems to create an engaging, premium casino-like experience whilst maintaining educational focus.
+
+**Audio Engine Architecture**:
+
+- **Musical Sound Design**: ROI-scaled audio feedback using C major scale progression (C4 → C5 → C6) for intuitive win-size recognition
+- **Premium Audio Processing**: Multi-stage audio pipeline with reverb, chorus, compression, and stereo panning effects
+- **Performance Optimisation**: Web Audio API with efficient context management and automatic cleanup
+- **Accessibility**: Volume controls and respectful audio behaviour (user-initiated only)
+
+**Canvas Animation System**:
+
+- **Web Worker Architecture**: Bouncing balls animation runs in dedicated worker thread to prevent main thread blocking
+- **Fallback Strategy**: Graceful degradation to main-thread rendering when OffscreenCanvas unsupported
+- **Performance Tuned**: Optimised collision detection, reduced particle count, and efficient sprite rendering
+- **Interactive Elements**: User scroll and wheel events influence ball physics for engaging background motion
+
+**Component Animation Patterns**:
+
+- **Micro-interactions**: Subtle transitions and state changes enhance user feedback
+- **Progressive Enhancement**: Animations enhance but don't block core functionality
+- **Mobile Optimisation**: Reduced animation complexity and particle counts for mobile performance
+
 ### Performance Strategies
 
 **Streaming Architecture**: NDJSON streaming prevents UI blocking during long simulations
 **Edge Deployment**: Cloudflare Workers global distribution minimizes latency
 **Intelligent Caching**: Strategic caching of external data balances freshness with performance
 **Batch Processing**: Server-side batching prevents event loop blocking
+**Animation Optimisation**: Web Worker-based canvas rendering and efficient particle systems
+**Audio Context Management**: Lazy audio context creation and automatic resource cleanup
 
 ### Testing Architecture
 
@@ -440,6 +466,7 @@ The application supports four distinct number generation methods, each serving d
 **Store Composition**: Each store handles a specific domain with clear boundaries
 **Action Patterns**: Async actions handle loading states and error conditions consistently
 **Computed Properties**: Derived state computed reactively rather than stored redundantly
+**SSR Compatibility**: Pinia stores avoid readonly() wrappers to prevent hydration conflicts during server-side rendering
 
 ---
 
