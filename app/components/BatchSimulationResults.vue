@@ -82,9 +82,7 @@
 
       <!-- Expected Value Analysis -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div
-          class="p-4 bg-gradient-to-r from-surface-primary to-surface-secondary rounded-lg border border-casino-blue-light/30"
-        >
+        <div class="p-4 casino-card rounded-lg">
           <h3 class="text-lg font-semibold text-brand-gold-light mb-2">
             Expected Value Analysis
           </h3>
@@ -118,9 +116,7 @@
           </div>
         </div>
 
-        <div
-          class="p-4 bg-gradient-to-r from-surface-primary to-surface-secondary rounded-lg border border-casino-blue-light/30"
-        >
+        <div class="p-4 casino-card rounded-lg">
           <h3 class="text-lg font-semibold text-brand-gold-light mb-2">
             Win Statistics
           </h3>
@@ -284,9 +280,7 @@
             Key Insights
           </h4>
           <div class="space-y-3">
-            <div
-              class="p-3 bg-gradient-to-r from-success-dark/50 to-success/50 rounded-lg border border-success/30"
-            >
+            <div class="p-3 casino-card rounded-lg border border-success/30">
               <div class="text-sm font-medium text-success-light">
                 Best Performing Class
               </div>
@@ -295,9 +289,7 @@
                 {{ bestPerformingClass.count }} wins
               </div>
             </div>
-            <div
-              class="p-3 bg-gradient-to-r from-warning-dark/50 to-warning/50 rounded-lg border border-warning/30"
-            >
+            <div class="p-3 casino-card rounded-lg border border-warning/30">
               <div class="text-sm font-medium text-warning-light">
                 Hit Rate vs Expected
               </div>
@@ -307,9 +299,7 @@
                 expectation
               </div>
             </div>
-            <div
-              class="p-3 bg-gradient-to-r from-surface-primary to-surface-secondary rounded-lg border border-casino-blue-light/30"
-            >
+            <div class="p-3 casino-card rounded-lg">
               <div class="text-sm font-medium text-brand-gold-light">
                 Recommendation
               </div>
@@ -333,7 +323,7 @@
         Export Detailed Results
       </button>
       <button
-        class="bg-gradient-to-r from-interactive-primary to-interactive-primary-light text-content-primary px-4 py-2 rounded-md font-medium hover:from-interactive-primary-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-interactive-primary focus:ring-offset-2 focus:ring-offset-surface-primary transition duration-150"
+        class="btn-casino-gold px-4 py-2 rounded-md font-cta focus-gold"
         @click="$emit('reset')"
       >
         Run New Simulation

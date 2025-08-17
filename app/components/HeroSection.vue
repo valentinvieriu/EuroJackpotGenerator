@@ -4,12 +4,10 @@
     <BouncingBallsCanvas />
 
     <div class="relative z-10 max-w-4xl mx-auto">
-      <h1
-        class="text-3xl md:text-4xl font-bold text-casino-gold tracking-wider font-serif text-premium-glow mb-4"
+      <h1 class="text-3xl md:text-4xl text-hero mb-4">EuroJackpot Simulator</h1>
+      <p
+        class="text-luxury-subtitle text-base md:text-lg mb-8 max-w-2xl mx-auto"
       >
-        EuroJackpot Simulator
-      </h1>
-      <p class="text-content-muted text-base md:text-lg mb-8 max-w-2xl mx-auto">
         Understand lottery mathematics through realistic simulations. Generate
         tickets, run draws, and explore statistical outcomes.
       </p>
@@ -54,7 +52,7 @@
         <div class="space-y-4">
           <button
             :disabled="isGenerating"
-            class="btn-casino-gold px-8 py-4 rounded-lg font-bold text-xl focus-gold disabled:opacity-50 disabled:cursor-wait glow-gold"
+            class="btn-casino-gold px-8 py-4 rounded-lg font-cta-bold text-xl focus-gold disabled:opacity-50 disabled:cursor-wait glow-gold"
             @click="handleQuickStart"
           >
             {{

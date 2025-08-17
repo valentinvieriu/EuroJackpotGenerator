@@ -1,9 +1,7 @@
 <template>
   <div class="casino-card-premium rounded-lg p-6 hover-lift">
     <div class="mb-6">
-      <h2
-        class="text-2xl font-semibold text-casino-gold text-premium-glow mb-2"
-      >
+      <h2 class="text-2xl text-section-title mb-2">
         Mass Simulation Configuration
       </h2>
       <p class="text-content-muted text-sm">
@@ -62,10 +60,7 @@
     </div>
 
     <!-- Key Performance Indicators -->
-    <div
-      v-if="ticketCount > 0"
-      class="mb-6 p-5 bg-gradient-to-r from-surface-primary/40 to-surface-secondary/20 rounded-lg border border-border-primary/20 backdrop-blur-sm"
-    >
+    <div v-if="ticketCount > 0" class="mb-6 p-5 casino-card rounded-lg">
       <h3
         class="text-lg font-semibold text-content-secondary mb-4 flex items-center gap-2"
       >
@@ -213,7 +208,7 @@
 
         <button
           :disabled="disabled || ticketCount === 0"
-          class="bg-gradient-to-r from-interactive-primary to-interactive-primary-light text-content-primary px-5 py-2 rounded-md font-semibold hover:from-interactive-primary-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-interactive-primary focus:ring-offset-2 focus:ring-offset-surface-primary disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+          class="btn-casino-gold px-5 py-2 rounded-md font-cta focus-gold disabled:opacity-50 disabled:cursor-not-allowed"
           @click="handleStartSimulation"
         >
           <svg

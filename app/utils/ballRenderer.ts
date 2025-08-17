@@ -13,11 +13,26 @@
 
 export const BALL_PALETTE = {
   midnight: '#0A192F',
-  gold: { light: '#FFF1A8', base: '#FFD700', dark: '#B8860B' },
+  // Premium casino gold - matches our theme CSS gold colors
+  gold: {
+    light: '#F5E6A3', // oklch(0.92 0.08 85) - premium gold light
+    base: '#D4B356', // oklch(0.85 0.12 85) - our brand gold
+    dark: '#A68B2E', // oklch(0.65 0.15 85) - rich gold dark
+  },
   ivory: '#FFFFF0',
-  mutedNavy: '#2C3E50',
-  star: { light: '#FFE08A', base: '#FFC107', dark: '#B8860B' },
-  steel: { light: '#3B4B60', mid: '#2C3E50', dark: '#1B2734' },
+  // Updated to match our casino blue theme
+  mutedNavy: '#1B2A3D', // closer to our surface colors
+  star: {
+    light: '#F5E6A3',
+    base: '#D4B356',
+    dark: '#A68B2E',
+  },
+  // Premium casino blue - optimised for maximum text readability
+  steel: {
+    light: '#B8C5D9', // oklch(0.78 0.04 229) - very bright casino blue light
+    mid: '#7A92B8', // oklch(0.58 0.06 229) - bright casino blue mid
+    dark: '#4A5F7A', // oklch(0.38 0.06 229) - rich casino blue dark
+  },
 } as const
 
 export function clamp(v: number, min: number, max: number): number {
@@ -265,14 +280,7 @@ function getTextOverlay(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tctx.drawImage(shadeCanvas as any, 0, 0)
 
-  // Subtle light-edge stroke
-  tctx.save()
-  tctx.globalCompositeOperation = 'screen'
-  tctx.lineJoin = 'round'
-  tctx.lineWidth = Math.max(1, quantR * 0.04)
-  tctx.strokeStyle = 'rgba(255,255,255,0.35)'
-  tctx.strokeText(text, pad - quantR * 0.02, baseline - quantR * 0.02)
-  tctx.restore()
+  // No text stroke for cleanest readability on bright backgrounds
 
   const overlay: TextOverlay = { canvas: textCanvas, tw, ascent, descent, pad }
   _textOverlayCache.set(key, overlay)
@@ -324,7 +332,7 @@ export function renderBall(
   const baseLight =
     isWinner || isGolden ? BALL_PALETTE.gold.light : BALL_PALETTE.steel.light
   const baseMid =
-    isWinner || isGolden ? BALL_PALETTE.gold.base : BALL_PALETTE.mutedNavy
+    isWinner || isGolden ? BALL_PALETTE.gold.base : BALL_PALETTE.steel.mid
   const baseDark =
     isWinner || isGolden ? BALL_PALETTE.gold.dark : BALL_PALETTE.steel.dark
 
@@ -405,9 +413,9 @@ export function renderBall(
   // 6) Embedded/printed text with lighting via cached overlay
   const fontSize = r * 0.6
   const text = String(number)
-  const font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, sans-serif`
+  const font = `700 ${fontSize}px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
   const baseText =
-    isWinner || isGolden ? BALL_PALETTE.midnight : BALL_PALETTE.ivory
+    isWinner || isGolden ? BALL_PALETTE.midnight : BALL_PALETTE.midnight
 
   const overlay = getTextOverlay(text, r, baseText, font)
 
@@ -527,8 +535,8 @@ export function renderStar(
   // Text (cached overlay)
   const text = String(number)
   const fontSize = outerR * 0.6
-  const font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, sans-serif`
-  const baseText = isWinner ? BALL_PALETTE.midnight : BALL_PALETTE.ivory
+  const font = `700 ${fontSize}px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
+  const baseText = isWinner ? BALL_PALETTE.midnight : BALL_PALETTE.midnight
   const overlay = getTextOverlay(text, outerR, baseText, font)
 
   const y = cy + (overlay.ascent - (overlay.ascent + overlay.descent) / 2)
@@ -576,7 +584,7 @@ function spriteCacheKey(
   offscreen: boolean
 ): string {
   // bump version when changing rendering that affects cache validity
-  const VERSION = 'v2'
+  const VERSION = 'v6' // clean approach: very bright balls with dark text for maximum readability
   return `${VERSION}|n=${number}|r=${rQ}|dpr=${dprQ}|g=${isGolden ? 1 : 0}|off=${offscreen ? 1 : 0}`
 }
 

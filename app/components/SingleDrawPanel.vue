@@ -48,7 +48,7 @@
       <button
         :disabled="loading || tickets.length === 0"
         type="submit"
-        class="bg-gradient-to-r from-interactive-primary to-interactive-primary-light text-content-primary px-5 py-2 rounded-md font-semibold hover:from-interactive-primary-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-interactive-primary focus:ring-offset-2 focus:ring-offset-surface-primary disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+        class="btn-casino-gold px-5 py-2 rounded-md font-cta focus-gold disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {{ loading ? 'Simulating...' : 'Run Single Draw Simulation' }}
       </button>

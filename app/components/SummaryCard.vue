@@ -1,30 +1,24 @@
 <template>
   <div class="casino-card-premium rounded-lg p-6 sticky top-4 hover-lift">
     <div class="mb-6">
-      <h3 class="text-lg font-semibold text-casino-gold text-premium-glow mb-4">
-        Summary
-      </h3>
+      <h3 class="text-lg text-section-title mb-4">Summary</h3>
 
       <div class="space-y-3 mb-6">
         <div class="flex justify-between items-center">
           <span class="text-content-muted text-sm">Price per ticket:</span>
-          <span class="text-content-secondary font-medium"
-            >€{{ pricePerTicket.toFixed(2) }}</span
-          >
+          <span class="text-money">€{{ pricePerTicket.toFixed(2) }}</span>
         </div>
 
         <div class="flex justify-between items-center">
           <span class="text-content-muted text-sm">Quantity:</span>
-          <span class="text-content-secondary font-medium">{{
-            ticketCount
-          }}</span>
+          <span class="font-numbers">{{ ticketCount }}</span>
         </div>
 
         <div class="border-t border-border-secondary/30 pt-3">
           <div class="flex justify-between items-center">
             <span class="text-content-muted text-sm">Total:</span>
             <div class="text-right">
-              <div class="text-2xl font-bold text-brand-gold-light">
+              <div class="text-2xl text-money">
                 €{{ totalPrice.toFixed(2) }}
               </div>
               <div class="text-xs text-content-muted">
