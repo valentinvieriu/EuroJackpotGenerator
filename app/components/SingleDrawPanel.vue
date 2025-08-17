@@ -2,7 +2,7 @@
   <div>
     <div
       v-if="error"
-      class="text-center text-red-400 bg-red-900/50 border border-red-500 p-3 rounded-md mb-4"
+      class="text-center text-error bg-error-dark/50 border border-error p-3 rounded-md mb-4"
     >
       {{ error }}
     </div>
@@ -13,7 +13,7 @@
 
     <div
       v-if="simulationResult"
-      class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-surface-primary/50 rounded-lg border border-casino-blue-light/20"
+      class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 casino-card rounded-lg"
     >
       <div class="text-center">
         <div class="text-sm text-content-muted">Total Winnings</div>
@@ -26,7 +26,7 @@
         <div
           :class="[
             'text-xl font-semibold',
-            winLossRate >= 0 ? 'text-green-400' : 'text-red-400',
+            winLossRate >= 0 ? 'text-premium-emerald-400' : 'text-error',
           ]"
         >
           {{ winLossRate >= 0 ? '+' : '' }}€{{
@@ -48,7 +48,7 @@
       <button
         :disabled="loading || tickets.length === 0"
         type="submit"
-        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-content-primary px-5 py-2 rounded-md font-semibold hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+        class="bg-gradient-to-r from-interactive-primary to-interactive-primary-light text-content-primary px-5 py-2 rounded-md font-semibold hover:from-interactive-primary-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-interactive-primary focus:ring-offset-2 focus:ring-offset-surface-primary disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
       >
         {{ loading ? 'Simulating...' : 'Run Single Draw Simulation' }}
       </button>

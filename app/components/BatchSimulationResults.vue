@@ -1,19 +1,19 @@
 <template>
   <div class="space-y-6">
-    <div
-      class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
-    >
-      <h2 class="text-2xl font-semibold text-content-secondary mb-6">
+    <div class="casino-card-premium rounded-lg p-6">
+      <h2
+        class="text-2xl font-semibold text-casino-gold text-premium-glow mb-6"
+      >
         Mass Simulation Results
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         <div
-          class="text-center p-4 bg-surface-primary/50 rounded-lg border border-casino-blue-light/20 min-h-[120px] flex flex-col justify-center"
+          class="text-center p-4 casino-card rounded-lg min-h-[120px] flex flex-col justify-center"
         >
           <div class="text-sm text-content-muted mb-1">Total Investment</div>
           <div
-            class="text-lg lg:text-xl font-bold text-red-400 break-words leading-tight"
+            class="text-lg lg:text-xl font-bold text-error break-words leading-tight"
           >
             €{{
               results.totalCost.toLocaleString('en-GB', {
@@ -27,11 +27,11 @@
         </div>
 
         <div
-          class="text-center p-4 bg-surface-primary/50 rounded-lg border border-casino-blue-light/20 min-h-[120px] flex flex-col justify-center"
+          class="text-center p-4 casino-card rounded-lg min-h-[120px] flex flex-col justify-center"
         >
           <div class="text-sm text-content-muted mb-1">Total Winnings</div>
           <div
-            class="text-lg lg:text-xl font-bold text-green-400 break-words leading-tight"
+            class="text-lg lg:text-xl font-bold text-premium-emerald-400 break-words leading-tight"
           >
             €{{
               results.totalWinnings.toLocaleString('en-GB', {
@@ -39,11 +39,13 @@
               })
             }}
           </div>
-          <div class="text-xs text-content-muted mt-1">Across all simulations</div>
+          <div class="text-xs text-content-muted mt-1">
+            Across all simulations
+          </div>
         </div>
 
         <div
-          class="text-center p-4 bg-surface-primary/50 rounded-lg border border-casino-blue-light/20 min-h-[120px] flex flex-col justify-center"
+          class="text-center p-4 casino-card rounded-lg min-h-[120px] flex flex-col justify-center"
         >
           <div class="text-sm text-content-muted mb-1">Net Result</div>
           <div
@@ -62,9 +64,11 @@
         </div>
 
         <div
-          class="text-center p-4 bg-surface-primary/50 rounded-lg border border-casino-blue-light/20 min-h-[120px] flex flex-col justify-center"
+          class="text-center p-4 casino-card rounded-lg min-h-[120px] flex flex-col justify-center"
         >
-          <div class="text-sm text-content-muted mb-1">Return on Investment</div>
+          <div class="text-sm text-content-muted mb-1">
+            Return on Investment
+          </div>
           <div
             class="text-lg lg:text-xl font-bold break-words leading-tight"
             :class="roiColor"
@@ -79,7 +83,7 @@
       <!-- Expected Value Analysis -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div
-          class="p-4 bg-gradient-to-r from-casino-blue to-casino-blue-light rounded-lg border border-casino-blue-light/30"
+          class="p-4 bg-gradient-to-r from-surface-primary to-surface-secondary rounded-lg border border-casino-blue-light/30"
         >
           <h3 class="text-lg font-semibold text-brand-gold-light mb-2">
             Expected Value Analysis
@@ -95,14 +99,16 @@
             </div>
             <div class="flex justify-between">
               <span class="text-content-secondary">Cost per simulation:</span>
-              <span class="font-medium text-red-300"
+              <span class="font-medium text-error-light"
                 >€{{ costPerSimulation.toFixed(2) }}</span
               >
             </div>
             <div
               class="flex justify-between border-t border-casino-blue-light/30 pt-2"
             >
-              <span class="text-content-secondary">Expected profit per sim:</span>
+              <span class="text-content-secondary"
+                >Expected profit per sim:</span
+              >
               <span class="font-medium" :class="expectedProfitColor">
                 {{ expectedProfitPerSim >= 0 ? '+' : '' }}€{{
                   expectedProfitPerSim.toFixed(2)
@@ -113,7 +119,7 @@
         </div>
 
         <div
-          class="p-4 bg-gradient-to-r from-casino-blue to-casino-blue-light rounded-lg border border-casino-blue-light/30"
+          class="p-4 bg-gradient-to-r from-surface-primary to-surface-secondary rounded-lg border border-casino-blue-light/30"
         >
           <h3 class="text-lg font-semibold text-brand-gold-light mb-2">
             Win Statistics
@@ -133,7 +139,7 @@
             </div>
             <div class="flex justify-between">
               <span class="text-content-secondary">Losing simulations:</span>
-              <span class="font-medium text-red-300">{{
+              <span class="font-medium text-error-light">{{
                 results.winDistribution.totalLosses.toLocaleString()
               }}</span>
             </div>
@@ -143,10 +149,8 @@
     </div>
 
     <!-- Detailed Statistics -->
-    <div
-      class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
-    >
-      <h3 class="text-xl font-semibold text-content-secondary mb-4">
+    <div class="casino-card-premium rounded-lg p-6">
+      <h3 class="text-xl font-semibold text-casino-gold text-premium-glow mb-4">
         Statistical Analysis
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -177,7 +181,9 @@
         </div>
 
         <div class="p-4 bg-surface-primary/30 rounded-lg">
-          <h4 class="text-lg font-medium text-content-secondary mb-3">Percentiles</h4>
+          <h4 class="text-lg font-medium text-content-secondary mb-3">
+            Percentiles
+          </h4>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
               <span class="text-content-muted">25th:</span
@@ -201,11 +207,13 @@
         </div>
 
         <div class="p-4 bg-surface-primary/30 rounded-lg">
-          <h4 class="text-lg font-medium text-content-secondary mb-3">Profitability</h4>
+          <h4 class="text-lg font-medium text-content-secondary mb-3">
+            Profitability
+          </h4>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
               <span class="text-content-muted">Profitable sims:</span
-              ><span class="text-green-400">{{
+              ><span class="text-premium-emerald-400">{{
                 results.statistics.profitableSimulations.toLocaleString()
               }}</span>
             </div>
@@ -227,15 +235,15 @@
     </div>
 
     <!-- Win Class Distribution -->
-    <div
-      class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
-    >
-      <h3 class="text-xl font-semibold text-content-secondary mb-4">
+    <div class="casino-card-premium rounded-lg p-6">
+      <h3 class="text-xl font-semibold text-casino-gold text-premium-glow mb-4">
         Win Class Distribution
       </h3>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
-          <h4 class="text-lg font-medium text-content-secondary mb-3">Wins by Class</h4>
+          <h4 class="text-lg font-medium text-content-secondary mb-3">
+            Wins by Class
+          </h4>
           <div class="space-y-2">
             <div
               v-for="classNum in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]"
@@ -272,38 +280,42 @@
         </div>
 
         <div>
-          <h4 class="text-lg font-medium text-content-secondary mb-3">Key Insights</h4>
+          <h4 class="text-lg font-medium text-content-secondary mb-3">
+            Key Insights
+          </h4>
           <div class="space-y-3">
             <div
-              class="p-3 bg-gradient-to-r from-green-900/50 to-green-800/50 rounded-lg border border-green-500/30"
+              class="p-3 bg-gradient-to-r from-success-dark/50 to-success/50 rounded-lg border border-success/30"
             >
-              <div class="text-sm font-medium text-green-200">
+              <div class="text-sm font-medium text-success-light">
                 Best Performing Class
               </div>
-              <div class="text-xs text-green-300">
+              <div class="text-xs text-success-light">
                 Class {{ bestPerformingClass.classNum }} with
                 {{ bestPerformingClass.count }} wins
               </div>
             </div>
             <div
-              class="p-3 bg-gradient-to-r from-yellow-900/50 to-yellow-800/50 rounded-lg border border-yellow-500/30"
+              class="p-3 bg-gradient-to-r from-warning-dark/50 to-warning/50 rounded-lg border border-warning/30"
             >
-              <div class="text-sm font-medium text-yellow-200">
+              <div class="text-sm font-medium text-warning-light">
                 Hit Rate vs Expected
               </div>
-              <div class="text-xs text-yellow-300">
+              <div class="text-xs text-warning-light">
                 {{ winRateVsExpected }}%
                 {{ winRateVsExpected > 0 ? 'above' : 'below' }} statistical
                 expectation
               </div>
             </div>
             <div
-              class="p-3 bg-gradient-to-r from-casino-blue to-casino-blue-light rounded-lg border border-casino-blue-light/30"
+              class="p-3 bg-gradient-to-r from-surface-primary to-surface-secondary rounded-lg border border-casino-blue-light/30"
             >
               <div class="text-sm font-medium text-brand-gold-light">
                 Recommendation
               </div>
-              <div class="text-xs text-content-secondary">{{ getRecommendation() }}</div>
+              <div class="text-xs text-content-secondary">
+                {{ getRecommendation() }}
+              </div>
             </div>
           </div>
         </div>
@@ -311,17 +323,17 @@
     </div>
 
     <div
-      class="flex flex-col sm:flex-row justify-end gap-3 bg-surface-primary-dark rounded-lg shadow-xl p-4 border border-casino-blue-light/30"
+      class="flex flex-col sm:flex-row justify-end gap-3 casino-card rounded-lg p-4"
     >
       <button
         v-if="results.individualResults"
-        class="px-2 py-1 text-sm text-brand-gold hover:text-brand-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold rounded"
+        class="px-2 py-1 text-sm text-brand-gold hover:text-brand-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 rounded"
         @click="exportResults"
       >
         Export Detailed Results
       </button>
       <button
-        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-content-primary px-4 py-2 rounded-md font-medium hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+        class="bg-gradient-to-r from-interactive-primary to-interactive-primary-light text-content-primary px-4 py-2 rounded-md font-medium hover:from-interactive-primary-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-interactive-primary focus:ring-offset-2 focus:ring-offset-surface-primary transition duration-150"
         @click="$emit('reset')"
       >
         Run New Simulation
@@ -378,28 +390,28 @@ const expectedProfitPerSim = computed(
 )
 
 const netProfitColor = computed(() =>
-  props.results.netProfit >= 0 ? 'text-green-400' : 'text-red-400'
+  props.results.netProfit >= 0 ? 'text-premium-emerald-400' : 'text-error'
 )
 const roiColor = computed(() => {
   const roi = props.results.roiPercentage
-  if (roi > 0) return 'text-green-400'
-  if (roi > -25) return 'text-yellow-400'
-  return 'text-red-400'
+  if (roi > 0) return 'text-premium-emerald-400'
+  if (roi > -25) return 'text-brand-gold-400'
+  return 'text-error'
 })
 const expectedProfitColor = computed(() =>
-  expectedProfitPerSim.value >= 0 ? 'text-green-300' : 'text-red-300'
+  expectedProfitPerSim.value >= 0 ? 'text-success-light' : 'text-error-light'
 )
 const winRateColor = computed(() => {
   const rate = props.results.winDistribution.winPercentage
-  if (rate > WIN_RATE_EXCELLENT_THRESHOLD) return 'text-green-400'
-  if (rate > WIN_RATE_GOOD_THRESHOLD) return 'text-yellow-400'
-  return 'text-red-400'
+  if (rate > WIN_RATE_EXCELLENT_THRESHOLD) return 'text-premium-emerald-400'
+  if (rate > WIN_RATE_GOOD_THRESHOLD) return 'text-brand-gold-400'
+  return 'text-error'
 })
 const profitRateColor = computed(() => {
   const rate = props.results.statistics.profitablePercentage
-  if (rate > PROFIT_RATE_EXCELLENT_THRESHOLD) return 'text-green-400'
-  if (rate > PROFIT_RATE_GOOD_THRESHOLD) return 'text-yellow-400'
-  return 'text-red-400'
+  if (rate > PROFIT_RATE_EXCELLENT_THRESHOLD) return 'text-premium-emerald-400'
+  if (rate > PROFIT_RATE_GOOD_THRESHOLD) return 'text-brand-gold-400'
+  return 'text-error'
 })
 
 const bestPerformingClass = computed(() => {
@@ -467,22 +479,22 @@ const getClassDescription = (classNum: number): string => {
 
 const getClassBarColor = (classNum: number): string => {
   const count = props.results.winDistribution.winsByClass[classNum] || 0
-  if (count === 0) return 'bg-gray-600'
+  if (count === 0) return 'bg-surface-tertiary'
   switch (classNum) {
     case 1:
     case 2:
     case 3:
-      return 'bg-yellow-400'
+      return 'bg-brand-gold-400'
     case 4:
     case 5:
     case 6:
-      return 'bg-green-400'
+      return 'bg-premium-emerald-400'
     case 7:
     case 8:
     case 9:
-      return 'bg-blue-400'
+      return 'bg-premium-sapphire-400'
     default:
-      return 'bg-gray-400'
+      return 'bg-surface-elevated-2'
   }
 }
 

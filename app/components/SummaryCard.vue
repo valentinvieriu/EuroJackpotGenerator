@@ -1,9 +1,9 @@
 <template>
-  <div
-    class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30 sticky top-4"
-  >
+  <div class="casino-card-premium rounded-lg p-6 sticky top-4 hover-lift">
     <div class="mb-6">
-      <h3 class="text-lg font-semibold text-brand-gold-light mb-4">Summary</h3>
+      <h3 class="text-lg font-semibold text-casino-gold text-premium-glow mb-4">
+        Summary
+      </h3>
 
       <div class="space-y-3 mb-6">
         <div class="flex justify-between items-center">
@@ -15,10 +15,12 @@
 
         <div class="flex justify-between items-center">
           <span class="text-content-muted text-sm">Quantity:</span>
-          <span class="text-content-secondary font-medium">{{ ticketCount }}</span>
+          <span class="text-content-secondary font-medium">{{
+            ticketCount
+          }}</span>
         </div>
 
-        <div class="border-t border-casino-blue-light/30 pt-3">
+        <div class="border-t border-border-secondary/30 pt-3">
           <div class="flex justify-between items-center">
             <span class="text-content-muted text-sm">Total:</span>
             <div class="text-right">
@@ -42,7 +44,7 @@
     <button
       :disabled="props.disabled"
       type="submit"
-      class="w-full bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-6 py-3 rounded-md font-bold hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition-all duration-150 text-lg shadow-lg"
+      class="w-full btn-casino-gold px-6 py-3 rounded-md font-bold focus-gold disabled:opacity-50 disabled:cursor-wait text-lg"
     >
       {{ props.buttonText }}
     </button>
@@ -61,7 +63,7 @@
         class="inline-flex items-center px-2 py-1 bg-surface-primary/40 rounded-full"
       >
         <svg
-          class="w-3 h-3 text-green-400 mr-1"
+          class="w-3 h-3 text-premium-emerald-400 mr-1"
           fill="currentColor"
           viewBox="0 0 20 20"
         >

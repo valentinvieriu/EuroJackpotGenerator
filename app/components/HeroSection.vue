@@ -5,7 +5,7 @@
 
     <div class="relative z-10 max-w-4xl mx-auto">
       <h1
-        class="text-3xl md:text-4xl font-bold text-brand-gold-light tracking-wider font-serif shadow-sm mb-4"
+        class="text-3xl md:text-4xl font-bold text-casino-gold tracking-wider font-serif text-premium-glow mb-4"
       >
         EuroJackpot Simulator
       </h1>
@@ -17,7 +17,7 @@
       <!-- Simple Mode CTA -->
       <div
         v-if="!hasTickets"
-        class="bg-gradient-to-br from-casino-blue-dark/90 to-casino-blue/90 backdrop-blur-sm rounded-xl shadow-2xl p-8 mb-8 border border-casino-blue-light/30"
+        class="casino-card rounded-xl p-8 mb-8 card-interactive hover-lift"
       >
         <div class="mb-6">
           <div class="text-4xl mb-3">🎰</div>
@@ -27,7 +27,9 @@
 
           <!-- Ticket Count Selector -->
           <div class="flex items-center justify-center gap-4 mb-6">
-            <label class="text-content-muted text-sm font-medium"> Tickets: </label>
+            <label class="text-content-muted text-sm font-medium">
+              Tickets:
+            </label>
             <StepperInput v-model="ticketCount" :min="1" :max="50" />
           </div>
 
@@ -52,7 +54,7 @@
         <div class="space-y-4">
           <button
             :disabled="isGenerating"
-            class="bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-8 py-4 rounded-lg font-bold text-xl hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-4 focus:ring-casino-gold/50 disabled:opacity-50 disabled:cursor-wait transition-all duration-200 shadow-lg transform hover:scale-105"
+            class="btn-casino-gold px-8 py-4 rounded-lg font-bold text-xl focus-gold disabled:opacity-50 disabled:cursor-wait glow-gold"
             @click="handleQuickStart"
           >
             {{
@@ -81,10 +83,10 @@
 
       <!-- Educational disclaimer -->
       <div
-        class="inline-flex items-center px-4 py-2 bg-surface-primary/60 backdrop-blur-sm rounded-full mb-4"
+        class="inline-flex items-center px-4 py-2 glass-luxury rounded-full mb-4"
       >
         <svg
-          class="w-4 h-4 text-green-400 mr-2"
+          class="w-4 h-4 text-premium-emerald-400 mr-2"
           fill="currentColor"
           viewBox="0 0 20 20"
         >

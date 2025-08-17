@@ -39,17 +39,21 @@
         <div v-if="mainNumbers.length < FAVORITE_NUMBERS_MAX" class="relative">
           <select
             :value="''"
-            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-border-primary text-content-secondary appearance-none cursor-pointer"
+            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary appearance-none cursor-pointer"
             @change="addMainNumber($event)"
           >
-            <option value="" disabled class="bg-surface-primary-dark text-content-muted">
+            <option
+              value=""
+              disabled
+              class="bg-surface-secondary text-content-muted"
+            >
               Select a main number to add...
             </option>
             <option
               v-for="number in availableMainNumbers"
               :key="`main-option-${number}`"
               :value="number"
-              class="bg-surface-primary-dark text-content-secondary"
+              class="bg-surface-secondary text-content-secondary"
             >
               {{ number }}
             </option>
@@ -115,17 +119,21 @@
         <div v-if="euroNumbers.length < FAVORITE_NUMBERS_MAX" class="relative">
           <select
             :value="''"
-            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-border-primary text-content-secondary appearance-none cursor-pointer"
+            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary appearance-none cursor-pointer"
             @change="addEuroNumber($event)"
           >
-            <option value="" disabled class="bg-surface-primary-dark text-content-muted">
+            <option
+              value=""
+              disabled
+              class="bg-surface-secondary text-content-muted"
+            >
               Select a Euro number to add...
             </option>
             <option
               v-for="number in availableEuroNumbers"
               :key="`euro-option-${number}`"
               :value="number"
-              class="bg-surface-primary-dark text-content-secondary"
+              class="bg-surface-secondary text-content-secondary"
             >
               {{ number }}
             </option>

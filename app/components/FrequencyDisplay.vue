@@ -10,7 +10,7 @@
       Loading frequency data...
     </div>
 
-    <div v-else-if="hasFrequencyError" class="text-red-400 text-sm">
+    <div v-else-if="hasFrequencyError" class="text-error text-sm">
       Unable to load frequency data. Using default weighting.
     </div>
 
@@ -49,7 +49,7 @@
             <div class="text-sm font-medium text-brand-gold-light mb-1">
               {{ number.number }}
             </div>
-            <div class="w-full bg-gray-700 rounded-full h-1.5 mb-1">
+            <div class="w-full bg-surface-tertiary rounded-full h-1.5 mb-1">
               <div
                 class="h-1.5 rounded-full transition-all duration-300"
                 :class="
@@ -87,10 +87,10 @@
               )
             "
           >
-            <div class="text-sm font-medium text-blue-400 mb-1">
+            <div class="text-sm font-medium text-premium-sapphire-400 mb-1">
               {{ number.number }}
             </div>
-            <div class="w-full bg-gray-700 rounded-full h-1.5 mb-1">
+            <div class="w-full bg-surface-tertiary rounded-full h-1.5 mb-1">
               <div
                 class="h-1.5 rounded-full transition-all duration-300"
                 :class="
@@ -175,7 +175,7 @@ const getFrequencyBarColor = (value: number, expected: number): string => {
     return 'bg-brand-gold/70'
   } else if (ratio <= 0.85) {
     // Low frequency (15%+ below expected)
-    return 'bg-gray-500'
+    return 'bg-surface-elevated-2'
   } else {
     // Normal frequency
     return 'bg-brand-gold/40'

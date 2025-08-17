@@ -1,15 +1,15 @@
 <template>
   <div
     v-if="isOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center overlay-premium"
     @click.self="closeOverlay"
   >
     <div
-      class="bg-surface-primary-dark rounded-xl shadow-2xl border border-casino-blue-light/30 max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
+      class="casino-card-premium rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
     >
       <!-- Header -->
       <div class="flex justify-between items-center p-6 pb-4">
-        <h2 class="text-2xl font-bold text-brand-gold-light">
+        <h2 class="text-2xl font-bold text-casino-gold text-premium-glow">
           Customize Your Tickets
         </h2>
         <button
@@ -49,14 +49,14 @@
               <select
                 id="ticketType"
                 v-model="selectedTicketType"
-                class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-border-primary text-content-secondary"
+                class="w-full px-3 py-2 border border-border-secondary/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary"
                 aria-label="Select Ticket System Type"
               >
                 <option
                   v-for="type in ticketTypes"
                   :key="type.label"
                   :value="type"
-                  class="bg-surface-primary-dark text-content-secondary"
+                  class="bg-surface-secondary text-content-secondary"
                 >
                   {{ type.label }} (€{{ type.price.toFixed(2) }})
                 </option>
@@ -89,27 +89,30 @@
             <select
               id="selectionMethodDropdown"
               v-model="selectionMethod"
-              class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-border-primary text-content-secondary mb-4"
+              class="w-full px-3 py-2 border border-border-secondary/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary mb-4"
             >
-              <option value="random" class="bg-surface-primary-dark text-content-secondary">
+              <option
+                value="random"
+                class="bg-surface-secondary text-content-secondary"
+              >
                 Random (recommended) - Pure random number selection
               </option>
               <option
                 value="unpopular"
-                class="bg-surface-primary-dark text-content-secondary"
+                class="bg-surface-secondary text-content-secondary"
               >
                 Random (unpopular) - Avoids common patterns to minimise prize
                 sharing
               </option>
               <option
                 value="favorites"
-                class="bg-surface-primary-dark text-content-secondary"
+                class="bg-surface-secondary text-content-secondary"
               >
                 Your favorite numbers - Prioritise your chosen numbers
               </option>
               <option
                 value="weighted"
-                class="bg-surface-primary-dark text-content-secondary"
+                class="bg-surface-secondary text-content-secondary"
               >
                 Weighted by past frequencies - Uses historical draw data
               </option>
@@ -117,7 +120,7 @@
 
             <!-- Dynamic Content Area -->
             <div
-              class="mt-4 p-6 bg-surface-primary/20 rounded-lg border border-casino-blue-light/20 transition-all duration-200 text-left"
+              class="mt-4 p-6 bg-surface-primary/20 rounded-lg border border-border-secondary/20 transition-all duration-200 text-left"
             >
               <!-- Random Method Content -->
               <div v-if="selectionMethod === 'random'">
@@ -176,7 +179,7 @@
 
       <!-- Fixed Footer -->
       <div
-        class="bg-surface-primary-dark border-t border-casino-blue-light/30 p-6 rounded-b-xl"
+        class="bg-surface-secondary border-t border-border-secondary/30 p-6 rounded-b-xl"
       >
         <div
           class="flex flex-col sm:flex-row justify-between items-center gap-4"
@@ -195,7 +198,7 @@
           <div class="flex flex-col sm:flex-row gap-3">
             <button
               type="button"
-              class="px-5 py-2 rounded-md font-semibold border border-border-secondary text-content-primary bg-transparent hover:bg-surface-primary-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+              class="px-5 py-2 rounded-md font-semibold btn-casino-blue focus-casino transition duration-150"
               @click="closeOverlay"
             >
               Cancel
@@ -204,7 +207,7 @@
             <button
               :disabled="loading"
               type="submit"
-              class="bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-6 py-3 rounded-md font-bold hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition-all duration-150 text-lg shadow-lg"
+              class="btn-casino-gold px-6 py-3 rounded-md font-bold focus-gold disabled:opacity-50 disabled:cursor-wait text-lg"
               @click="handleGenerate"
             >
               {{

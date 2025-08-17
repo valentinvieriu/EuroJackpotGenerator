@@ -18,7 +18,7 @@
       </div>
       <div class="grid grid-cols-1 gap-2 text-xs">
         <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-red-400 mt-0.5">🎂</span>
+          <span class="text-error mt-0.5">🎂</span>
           <div>
             <div class="text-content-secondary font-medium">Birthday Bias</div>
             <div class="text-content-muted">
@@ -28,7 +28,7 @@
         </div>
 
         <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-yellow-400 mt-0.5">🍀</span>
+          <span class="text-brand-gold-400 mt-0.5">🍀</span>
           <div>
             <div class="text-content-secondary font-medium">Lucky Numbers</div>
             <div class="text-content-muted">
@@ -38,9 +38,11 @@
         </div>
 
         <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-blue-400 mt-0.5">📈</span>
+          <span class="text-premium-sapphire-400 mt-0.5">📈</span>
           <div>
-            <div class="text-content-secondary font-medium">Sequences & Patterns</div>
+            <div class="text-content-secondary font-medium">
+              Sequences & Patterns
+            </div>
             <div class="text-content-muted">
               Consecutive numbers (1,2,3,4,5) or arithmetic sequences
             </div>
@@ -48,9 +50,11 @@
         </div>
 
         <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-green-400 mt-0.5">🎯</span>
+          <span class="text-premium-emerald-400 mt-0.5">🎯</span>
           <div>
-            <div class="text-content-secondary font-medium">Visual Patterns</div>
+            <div class="text-content-secondary font-medium">
+              Visual Patterns
+            </div>
             <div class="text-content-muted">
               Same last digits (7,17,27) or tight number clustering
             </div>
@@ -58,9 +62,11 @@
         </div>
 
         <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-purple-400 mt-0.5">📅</span>
+          <span class="text-premium-pearl-400 mt-0.5">📅</span>
           <div>
-            <div class="text-content-secondary font-medium">Month-like Euro Numbers</div>
+            <div class="text-content-secondary font-medium">
+              Month-like Euro Numbers
+            </div>
             <div class="text-content-muted">
               Euro numbers close together (like 7,8 or 11,12)
             </div>
@@ -74,10 +80,10 @@
       <div class="text-xs text-content-muted mb-3 font-medium">Examples:</div>
       <div class="space-y-2">
         <!-- Popular Example -->
-        <div class="p-3 bg-red-900/20 border border-red-500/30 rounded">
+        <div class="p-3 bg-error-dark/20 border border-error/30 rounded">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-red-400 text-lg">😰</span>
-            <span class="text-xs font-medium text-red-300"
+            <span class="text-error text-lg">😰</span>
+            <span class="text-xs font-medium text-error-light"
               >Popular (avoid):</span
             >
           </div>
@@ -91,10 +97,10 @@
         </div>
 
         <!-- Unpopular Example -->
-        <div class="p-3 bg-green-900/20 border border-green-500/30 rounded">
+        <div class="p-3 bg-success-dark/20 border border-success/30 rounded">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-green-400 text-lg">😊</span>
-            <span class="text-xs font-medium text-green-300"
+            <span class="text-premium-emerald-400 text-lg">😊</span>
+            <span class="text-xs font-medium text-success-light"
               >Unpopular (preferred):</span
             >
           </div>
@@ -111,7 +117,9 @@
 
     <!-- Scoring Details -->
     <div>
-      <div class="text-xs text-content-muted mb-3 font-medium">Scoring Factors:</div>
+      <div class="text-xs text-content-muted mb-3 font-medium">
+        Scoring Factors:
+      </div>
       <div class="space-y-1 text-xs text-content-muted">
         <div class="flex items-start gap-2">
           <span class="text-brand-gold">•</span>
@@ -159,13 +167,15 @@
 
     <!-- More Examples -->
     <div>
-      <div class="text-xs text-content-muted mb-3 font-medium">More Examples:</div>
+      <div class="text-xs text-content-muted mb-3 font-medium">
+        More Examples:
+      </div>
       <div class="space-y-2">
         <!-- Medium popularity example -->
-        <div class="p-3 bg-yellow-900/20 border border-yellow-500/30 rounded">
+        <div class="p-3 bg-warning-dark/20 border border-warning/30 rounded">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-yellow-400 text-lg">😐</span>
-            <span class="text-xs font-medium text-yellow-300"
+            <span class="text-brand-gold-400 text-lg">😐</span>
+            <span class="text-xs font-medium text-warning-light"
               >Medium popularity:</span
             >
           </div>
@@ -179,10 +189,10 @@
         </div>
 
         <!-- Very unpopular example -->
-        <div class="p-3 bg-green-900/30 border border-green-400/40 rounded">
+        <div class="p-3 bg-success-dark/30 border border-success/40 rounded">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-green-400 text-lg">🎯</span>
-            <span class="text-xs font-medium text-green-300"
+            <span class="text-premium-emerald-400 text-lg">🎯</span>
+            <span class="text-xs font-medium text-success-light"
               >Very unpopular:</span
             >
           </div>
@@ -229,7 +239,7 @@
 
     <!-- Important Disclaimer -->
     <div
-      class="text-xs text-amber-200 bg-amber-900/20 border border-amber-500/30 rounded p-2"
+      class="text-xs text-warning-light bg-warning-dark/20 border border-warning/30 rounded p-2"
     >
       <div class="font-medium mb-1">⚠️ Educational Purpose</div>
       <div>

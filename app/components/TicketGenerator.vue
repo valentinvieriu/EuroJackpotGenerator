@@ -16,7 +16,7 @@
       <!-- Welcome message for shared Lucky Numbers -->
       <div
         v-if="showWelcomeMessage"
-        class="col-span-full bg-gradient-to-r from-casino-gold/20 to-casino-gold-light/20 border border-border-primary/50 rounded-lg p-4 mb-6 relative"
+        class="col-span-full casino-card rounded-lg p-4 mb-6 relative glow-gold"
       >
         <div class="flex items-start gap-3">
           <div class="text-2xl">🎯</div>
@@ -49,7 +49,7 @@
         <!-- Lucky Numbers Sharing Dialog -->
         <div
           v-if="showSharingDialog"
-          class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-border-primary/50"
+          class="casino-card-premium rounded-lg p-6"
         >
           <div class="flex justify-between items-start mb-4">
             <div>
@@ -78,11 +78,11 @@
                 <input
                   :value="shareableUrl"
                   readonly
-                  class="flex-1 px-3 py-2 bg-surface-primary border border-casino-blue-light/50 rounded-md text-content-secondary text-sm font-mono focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                  class="flex-1 px-3 py-2 bg-surface-primary border border-casino-blue-light/50 rounded-md text-content-secondary text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-gold-400"
                 />
                 <button
                   :class="[
-                    'px-4 py-2 text-sm font-medium rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold',
+                    'px-4 py-2 text-sm font-medium rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400',
                     copySuccess
                       ? 'bg-green-600 text-content-primary'
                       : 'bg-brand-gold text-casino-blue-dark hover:bg-brand-gold-light',
@@ -94,7 +94,9 @@
               </div>
             </div>
 
-            <div class="text-xs text-content-muted bg-surface-primary/40 p-3 rounded-md">
+            <div
+              class="text-xs text-content-muted bg-surface-primary/40 p-3 rounded-md"
+            >
               <strong>💡 How it works:</strong> Anyone with this link can
               recreate your exact ticket configuration and numbers. The lucky
               code "{{ sharingLuckyCode }}" ensures the same results every time.
@@ -110,16 +112,16 @@
             (!showGenerationForm || !ticketsStore.isCustomMode)
           "
         >
-          <div
-            class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
-          >
+          <div class="casino-card-premium rounded-lg p-6">
             <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-semibold text-brand-gold-light">
+              <h2
+                class="text-xl font-semibold text-casino-gold text-premium-glow"
+              >
                 Generated Tickets ({{ tickets.length }})
               </h2>
               <div class="flex gap-2">
                 <button
-                  class="px-2 py-1 text-sm text-brand-gold hover:text-brand-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold rounded"
+                  class="px-2 py-1 text-sm text-brand-gold hover:text-brand-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 rounded"
                   title="Create shareable link for these numbers"
                   @click="ticketsStore.share"
                 >
@@ -127,20 +129,20 @@
                 </button>
                 <button
                   v-if="ticketsStore.isCustomMode"
-                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-[#3B4B60] text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-surface-card-hover text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400"
                   @click="toggleGenerationForm()"
                 >
                   Modify
                 </button>
                 <button
                   v-else
-                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-[#3B4B60] text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-surface-card-hover text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400"
                   @click="handleCustomizeFromSimpleMode()"
                 >
                   Customize
                 </button>
                 <button
-                  class="px-3 py-1 text-sm border border-border-primary text-brand-gold rounded-md transition duration-150 hover:bg-brand-gold hover:text-casino-blue-dark focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                  class="px-3 py-1 text-sm border border-border-primary text-brand-gold rounded-md transition duration-150 hover:bg-brand-gold hover:text-casino-blue-dark focus:outline-none focus:ring-2 focus:ring-brand-gold-400"
                   @click="resetTickets"
                 >
                   Reset
@@ -165,9 +167,7 @@
         v-if="tickets.length > 0"
         :class="['transition-all duration-500', 'lg:col-span-3']"
       >
-        <div
-          class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
-        >
+        <div class="casino-card-premium rounded-lg p-6">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-semibold text-brand-gold-light">
               Simulation
@@ -227,7 +227,7 @@
 
           <div
             v-else-if="error"
-            class="text-center text-red-400 bg-red-900/50 border border-red-500 p-4 rounded-md"
+            class="text-center text-error bg-red-900/50 border border-red-500 p-4 rounded-md"
             role="alert"
           >
             {{ error }}

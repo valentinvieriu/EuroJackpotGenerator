@@ -1,14 +1,14 @@
 <template>
-  <div class="p-4 border border-border-primary/30 rounded-lg bg-surface-primary/30">
+  <div class="p-4 casino-card-premium rounded-lg">
     <h3
-      class="text-xl font-semibold mb-4 text-center text-brand-gold-light tracking-wide"
+      class="text-xl font-semibold mb-4 text-center text-casino-gold text-premium-glow tracking-wide"
     >
       Simulated Extraction
     </h3>
     <div class="flex flex-col md:flex-row justify-around items-center gap-6">
       <div class="text-center">
         <h4
-          class="font-semibold text-lg mb-3 text-content-secondary uppercase tracking-wider"
+          class="font-semibold text-lg mb-3 text-content-primary uppercase tracking-wider"
         >
           Main Numbers
         </h4>
@@ -23,7 +23,7 @@
       </div>
       <div class="text-center">
         <h4
-          class="font-semibold text-lg mb-3 text-content-secondary uppercase tracking-wider"
+          class="font-semibold text-lg mb-3 text-content-primary uppercase tracking-wider"
         >
           Euro Numbers
         </h4>

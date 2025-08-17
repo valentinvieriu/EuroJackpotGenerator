@@ -2,14 +2,14 @@
   <!-- TicketItem component - renamed to meet multi-word requirement -->
   <div
     :class="[
-      'rounded-lg p-4 shadow-lg transition-all duration-300',
+      'rounded-lg p-4 transition-all duration-300 card-interactive',
       isWinner
-        ? 'bg-surface-primary-light border-2 border-border-primary ring-2 ring-casino-gold-light/50 shadow-casino-gold/30'
-        : 'bg-surface-primary-dark border border-casino-blue-light/30',
+        ? 'casino-card-premium border-2 border-border-primary ring-2 ring-brand-gold-400/50 glow-gold'
+        : 'casino-card hover-lift',
     ]"
   >
     <div class="flex justify-between items-start mb-3">
-      <h3 class="font-semibold text-content-secondary">
+      <h3 class="font-semibold text-content-primary">
         Ticket #{{ ticketNumber }}
         <span v-if="ticket.linesCount" class="ml-2 text-sm text-content-muted">
           ({{ ticket.linesCount }} lines)
@@ -22,7 +22,7 @@
         </span>
       </h3>
       <button
-        class="text-content-muted hover:text-red-400 hover:bg-red-900/20 rounded-full p-1 transition-colors duration-200 flex-shrink-0"
+        class="text-content-muted hover:text-error hover:bg-red-900/20 rounded-full p-1 transition-colors duration-200 flex-shrink-0"
         title="Delete this ticket"
         @click="emit('delete', ticket.id)"
       >

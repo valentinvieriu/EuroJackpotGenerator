@@ -26,15 +26,15 @@ export function getWinClassColor(
     case 1:
     case 2:
     case 3:
-      return 'text-yellow-400' // Major wins - gold/yellow
+      return 'text-brand-gold-400' // Major wins - gold
     case 4:
     case 5:
     case 6:
-      return 'text-green-400' // Moderate wins - green
+      return 'text-premium-emerald-400' // Moderate wins - emerald
     case 7:
     case 8:
     case 9:
-      return 'text-blue-400' // Minor wins - blue
+      return 'text-premium-sapphire-400' // Minor wins - sapphire
     default:
       return 'text-content-secondary' // Minimal wins - light gray
   }

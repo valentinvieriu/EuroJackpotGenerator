@@ -10,6 +10,7 @@ import path from 'node:path'
 import { glob } from 'glob'
 
 // Color mapping from old classes to new semantic tokens
+/* eslint-disable no-restricted-syntax */
 const COLOR_MAPPINGS = {
   // Background colors
   'bg-casino-blue': 'bg-surface-primary',
@@ -46,20 +47,55 @@ const COLOR_MAPPINGS = {
   'bg-gray-200': 'bg-surface-card',
   'bg-gray-800': 'bg-surface-primary',
   'bg-gray-900': 'bg-surface-tertiary',
+  'bg-gray-600': 'bg-surface-tertiary',
+  'bg-gray-700': 'bg-surface-tertiary',
+  'bg-gray-400': 'bg-surface-elevated-2',
+  'bg-gray-500': 'bg-surface-elevated-2',
   'text-gray-100': 'text-content-primary',
   'text-gray-200': 'text-content-secondary',
   'text-gray-300': 'text-content-secondary',
   'text-gray-400': 'text-content-muted',
   'text-gray-500': 'text-content-muted',
   'text-white': 'text-content-primary',
+  'text-yellow-400': 'text-brand-gold-400',
+  'text-green-400': 'text-premium-emerald-400',
+  'text-blue-400': 'text-premium-sapphire-400',
+  'text-red-400': 'text-error',
+  'text-red-300': 'text-error-light',
+  'text-green-300': 'text-success-light',
+  'text-yellow-300': 'text-warning-light',
   'border-gray-200': 'border-border-secondary',
   'border-gray-300': 'border-border-muted',
+
+  // Gradient colors
+  'from-casino-blue': 'from-surface-primary',
+  'to-casino-blue': 'to-surface-primary',
+  'from-casino-blue-light': 'from-surface-secondary',
+  'to-casino-blue-light': 'to-surface-secondary',
+  'from-casino-gold': 'from-brand-gold-400',
+  'to-casino-gold': 'to-brand-gold-400',
+  'from-casino-gold/20': 'from-brand-gold-400/20',
+  'to-casino-gold-light/20': 'to-brand-gold-200/20',
+  'from-vip-orange': 'from-interactive-primary',
+  'to-vip-orange': 'to-interactive-primary',
+  'from-vip-orange-light': 'from-interactive-primary-light',
+  'to-vip-orange-light': 'to-interactive-primary-light',
 
   // Hover states
   'hover:bg-casino-blue-light': 'hover:bg-surface-card-hover',
   'hover:bg-casino-gold': 'hover:bg-brand-gold-400',
   'hover:bg-vip-orange-dark': 'hover:bg-interactive-primary-hover',
   'hover:text-casino-gold': 'hover:text-brand-gold-400',
+  'hover:from-vip-orange-light': 'hover:from-interactive-primary-light',
+
+  // Focus and ring colors
+  'ring-vip-orange': 'ring-interactive-primary',
+  'ring-casino-gold': 'ring-brand-gold-400',
+  'ring-offset-casino-blue-dark': 'ring-offset-surface-primary',
+
+  // Missing surface variants
+  'to-surface-primary-light': 'to-surface-secondary',
+  'from-surface-primary-light': 'from-surface-secondary',
 }
 
 // File patterns to search

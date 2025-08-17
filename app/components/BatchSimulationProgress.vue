@@ -1,10 +1,8 @@
 <template>
-  <div
-    class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
-  >
+  <div class="casino-card-premium rounded-lg p-6">
     <div class="mb-6">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xl font-semibold text-content-secondary">
+        <h3 class="text-xl font-semibold text-casino-gold text-premium-glow">
           Mass Simulation in Progress
         </h3>
         <div class="text-sm text-content-muted">
@@ -12,9 +10,9 @@
         </div>
       </div>
 
-      <div class="w-full bg-surface-primary rounded-full h-3 mb-3">
+      <div class="w-full bg-surface-secondary rounded-full h-3 mb-3">
         <div
-          class="bg-gradient-to-r from-vip-orange to-vip-orange-light h-3 rounded-full transition-all duration-300 ease-out"
+          class="bg-gradient-to-r from-interactive-primary to-interactive-primary-light h-3 rounded-full transition-all duration-300 ease-out"
           :style="{ width: `${progressPercentage}%` }"
         />
       </div>
@@ -76,7 +74,9 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div class="text-center p-3 bg-surface-primary/30 rounded-lg">
-        <div class="text-sm text-content-muted mb-1">Estimated Time Remaining</div>
+        <div class="text-sm text-content-muted mb-1">
+          Estimated Time Remaining
+        </div>
         <div class="text-lg font-medium text-content-secondary">
           {{ estimatedTimeRemaining || '---' }}
         </div>
@@ -117,7 +117,7 @@
 
     <div v-if="canCancel" class="text-center">
       <button
-        class="bg-red-600 text-content-primary px-4 py-2 rounded-md font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+        class="bg-red-600 text-content-primary px-4 py-2 rounded-md font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-surface-primary transition duration-150"
         @click="$emit('cancel')"
       >
         Cancel Simulation
@@ -173,17 +173,17 @@ const processingSpeed = computed(() => {
 const winRateColor = computed(() => {
   if (!props.partialResults) return 'text-content-muted'
   const rate = props.partialResults.winPercentage
-  if (rate > WIN_RATE_EXCELLENT_THRESHOLD) return 'text-green-400'
-  if (rate > WIN_RATE_GOOD_THRESHOLD) return 'text-yellow-400'
-  return 'text-red-400'
+  if (rate > WIN_RATE_EXCELLENT_THRESHOLD) return 'text-premium-emerald-400'
+  if (rate > WIN_RATE_GOOD_THRESHOLD) return 'text-brand-gold-400'
+  return 'text-error'
 })
 
 const roiColor = computed(() => {
   if (!props.partialResults) return 'text-content-muted'
   const roi = props.partialResults.currentROI
-  if (roi > 0) return 'text-green-400'
-  if (roi > -50) return 'text-yellow-400'
-  return 'text-red-400'
+  if (roi > 0) return 'text-premium-emerald-400'
+  if (roi > -50) return 'text-brand-gold-400'
+  return 'text-error'
 })
 
 const formatElapsedTime = formatTime

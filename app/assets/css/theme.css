@@ -1,197 +1,249 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Remove all default Tailwind colors */
-  --color-*: initial;
-
   /* ============================================
-     🎲 MODERN CASINO THEME - SEMANTIC COLORS
+     🎲 MODERN CASINO THEME - SEMANTIC TOKENS
+     Tailwind v4 tokens → usable as classes like:
+     bg-surface-primary, text-content-muted, border-casino-blue-light, etc.
      ============================================ */
 
-  /* SURFACE COLORS - Sophisticated Hierarchy */
-  /* Base Surfaces */
-  --color-surface-primary: oklch(0.13 0.02 229); /* Deep casino navy #0A192F */
-  --color-surface-secondary: oklch(0.2 0.03 229); /* Elevated panels #2C3E50 */
-  --color-surface-tertiary: oklch(
-    0.08 0.02 229
-  ); /* Deepest backgrounds #06121F */
+  /* ---------- SURFACE COLORS (Depth & Hierarchy) ---------- */
+  /* Core navies (deep premium blue) */
+  --color-surface-primary: oklch(0.18 0.02 229); /* App background */
+  --color-surface-primary-light: oklch(0.22 0.025 229); /* Slightly lifted */
+  --color-surface-primary-dark: oklch(
+    0.11 0.02 229
+  ); /* Deeper overlay-friendly */
+  --color-surface-secondary: oklch(0.25 0.03 229); /* Panels / cards */
+  --color-surface-tertiary: oklch(0.12 0.02 229); /* Deepest sections */
 
-  /* Interactive Surfaces */
-  --color-surface-card: oklch(0.16 0.025 229); /* Card backgrounds */
-  --color-surface-card-hover: oklch(0.18 0.03 229); /* Card hover state */
-  --color-surface-floating: oklch(0.22 0.035 229); /* Floating elements */
+  /* Interactive surfaces */
+  --color-surface-card: oklch(0.22 0.025 229);
+  --color-surface-card-hover: oklch(0.28 0.03 229);
+  --color-surface-floating: oklch(0.3 0.035 229);
 
-  /* Overlay Surfaces */
-  --color-surface-overlay: oklch(0.1 0.02 229); /* Modal overlays */
-  --color-surface-overlay-backdrop: oklch(
-    0.05 0.01 229 / 0.8
-  ); /* Modal backdrop */
-  --color-surface-glass: oklch(0.15 0.02 229 / 0.7); /* Glass morphism */
+  /* Overlays */
+  --color-surface-overlay: oklch(0.1 0.02 229);
+  --color-surface-overlay-backdrop: oklch(0.05 0.01 229 / 0.8);
+  --color-surface-glass: oklch(0.15 0.02 229 / 0.7);
 
-  /* Premium Surfaces */
-  --color-surface-premium: oklch(0.18 0.025 229); /* Premium sections */
-  --color-surface-vip: oklch(0.12 0.02 15); /* VIP areas (burgundy tint) */
-  --color-surface-jackpot: oklch(
-    0.14 0.02 160
-  ); /* Jackpot sections (emerald tint) */
+  /* Premium contexts */
+  --color-surface-premium: oklch(0.18 0.025 229);
+  --color-surface-vip: oklch(0.12 0.02 15); /* Burgundy tint */
+  --color-surface-jackpot: oklch(0.14 0.02 160); /* Emerald tint */
 
-  /* Elevation Scale */
-  --color-surface-elevated-1: oklch(0.17 0.025 229); /* 1dp elevation */
-  --color-surface-elevated-2: oklch(0.19 0.03 229); /* 2dp elevation */
-  --color-surface-elevated-3: oklch(0.21 0.035 229); /* 3dp elevation */
-  --color-surface-elevated-4: oklch(0.23 0.04 229); /* 4dp elevation */
+  /* Elevation scale */
+  --color-surface-elevated-1: oklch(0.24 0.025 229);
+  --color-surface-elevated-2: oklch(0.28 0.03 229);
+  --color-surface-elevated-3: oklch(0.32 0.035 229);
+  --color-surface-elevated-4: oklch(0.36 0.04 229);
 
-  /* CONTENT COLORS - Text & Icons */
-  --color-content-primary: oklch(
-    0.98 0.003 80
-  ); /* Primary text (ivory) #FFFFF0 */
-  --color-content-secondary: oklch(0.75 0.01 229); /* Secondary text */
-  --color-content-muted: oklch(0.55 0.02 229); /* Muted text */
-  --color-content-inverse: oklch(
-    0.13 0.02 229
-  ); /* Dark text on light backgrounds */
+  /* ---------- CONTENT (Text & Icons) ---------- */
+  --color-content-primary: oklch(0.98 0.003 80); /* Ivory */
+  --color-content-secondary: oklch(0.75 0.01 229);
+  --color-content-muted: oklch(0.55 0.02 229);
+  --color-content-inverse: oklch(0.13 0.02 229);
 
-  /* BRAND COLORS - Premium Casino Identity */
-  /* Luxury Gold Scale - 7 sophisticated variants */
-  --color-brand-gold-50: oklch(0.98 0.02 85); /* Champagne highlights */
-  --color-brand-gold-100: oklch(0.95 0.05 85); /* Light champagne */
-  --color-brand-gold-200: oklch(0.92 0.08 85); /* Soft gold accents */
-  --color-brand-gold-300: oklch(0.88 0.1 85); /* Medium gold */
-  --color-brand-gold-400: oklch(0.85 0.12 85); /* Classic gold #FFD700 */
-  --color-brand-gold-500: oklch(0.8 0.14 85); /* Rich gold */
-  --color-brand-gold-600: oklch(0.65 0.15 85); /* Deep gold shadows */
+  /* ---------- BRAND GOLD & METALLICS ---------- */
+  --color-brand-gold-50: oklch(0.98 0.02 85);
+  --color-brand-gold-100: oklch(0.95 0.05 85);
+  --color-brand-gold-200: oklch(0.92 0.08 85);
+  --color-brand-gold-300: oklch(0.88 0.1 85);
+  --color-brand-gold-400: oklch(0.85 0.12 85); /* Default */
+  --color-brand-gold-500: oklch(0.8 0.14 85);
+  --color-brand-gold-600: oklch(0.65 0.15 85);
 
-  /* Rose Gold Variants */
-  --color-brand-rose-gold-300: oklch(0.85 0.1 45); /* Light rose gold */
-  --color-brand-rose-gold-400: oklch(0.78 0.12 45); /* Classic rose gold */
-  --color-brand-rose-gold-500: oklch(0.7 0.14 45); /* Deep rose gold */
+  --color-brand-rose-gold-300: oklch(0.85 0.1 45);
+  --color-brand-rose-gold-400: oklch(0.78 0.12 45);
+  --color-brand-rose-gold-500: oklch(0.7 0.14 45);
 
-  /* Platinum Scale */
-  --color-brand-platinum-300: oklch(0.88 0.02 220); /* Light platinum */
-  --color-brand-platinum-400: oklch(0.82 0.03 220); /* Classic platinum */
-  --color-brand-platinum-500: oklch(0.75 0.04 220); /* Deep platinum */
+  --color-brand-platinum-300: oklch(0.88 0.02 220);
+  --color-brand-platinum-400: oklch(0.82 0.03 220);
+  --color-brand-platinum-500: oklch(0.75 0.04 220);
 
-  /* Legacy Brand Colors (maintained for compatibility) */
-  --color-brand-gold: var(--color-brand-gold-400); /* Maps to classic gold */
-  --color-brand-gold-light: var(--color-brand-gold-200); /* Maps to soft gold */
-  --color-brand-gold-dark: var(--color-brand-gold-600); /* Maps to deep gold */
-  --color-brand-navy: oklch(0.13 0.02 229); /* Brand navy */
+  /* Friendly aliases used heavily in components */
+  --color-brand-gold: var(--color-brand-gold-400);
+  --color-brand-gold-light: var(--color-brand-gold-200);
+  --color-brand-gold-dark: var(--color-brand-gold-600);
+  --color-brand-navy: oklch(0.13 0.02 229);
 
-  /* PREMIUM ACCENT COLORS - High-Value Elements */
-  /* Emerald - Jackpot & High Value */
-  --color-premium-emerald-300: oklch(0.75 0.12 160); /* Light emerald */
-  --color-premium-emerald-400: oklch(0.65 0.15 160); /* Classic emerald */
-  --color-premium-emerald-500: oklch(0.55 0.18 160); /* Deep emerald */
+  /* ---------- CASINO BLUE FAMILY (used by components) ---------- */
+  /* These fix classes like border-casino-blue-light/50 & text-casino-blue-dark */
+  --color-casino-blue-light: oklch(0.62 0.05 229);
+  --color-casino-blue: oklch(0.45 0.04 229);
+  --color-casino-blue-dark: oklch(0.3 0.03 229);
 
-  /* Burgundy - VIP & Exclusive */
-  --color-premium-burgundy-300: oklch(0.45 0.15 15); /* Light burgundy */
-  --color-premium-burgundy-400: oklch(0.35 0.18 15); /* Classic burgundy */
-  --color-premium-burgundy-500: oklch(0.25 0.2 15); /* Deep burgundy */
+  /* ---------- PREMIUM ACCENTS ---------- */
+  /* Emerald - money/success */
+  --color-premium-emerald-300: oklch(0.75 0.12 160);
+  --color-premium-emerald-400: oklch(0.65 0.15 160);
+  --color-premium-emerald-500: oklch(0.55 0.18 160);
 
-  /* Pearl - Iridescent Effects */
-  --color-premium-pearl-300: oklch(0.92 0.02 280); /* Light pearl */
-  --color-premium-pearl-400: oklch(0.88 0.03 280); /* Classic pearl */
-  --color-premium-pearl-500: oklch(0.82 0.04 280); /* Deep pearl */
+  /* Burgundy - VIP/alerts */
+  --color-premium-burgundy-300: oklch(0.45 0.15 15);
+  --color-premium-burgundy-400: oklch(0.35 0.18 15);
+  --color-premium-burgundy-500: oklch(0.25 0.2 15);
 
-  /* Sapphire - Premium Interactive */
-  --color-premium-sapphire-300: oklch(0.65 0.15 250); /* Light sapphire */
-  --color-premium-sapphire-400: oklch(0.55 0.18 250); /* Classic sapphire */
-  --color-premium-sapphire-500: oklch(0.45 0.2 250); /* Deep sapphire */
+  /* Pearl */
+  --color-premium-pearl-300: oklch(0.92 0.02 280);
+  --color-premium-pearl-400: oklch(0.88 0.03 280);
+  --color-premium-pearl-500: oklch(0.82 0.04 280);
 
-  /* INTERACTIVE COLORS - Enhanced States */
-  /* Primary Interactive (VIP Orange) */
-  --color-interactive-primary: oklch(0.6 0.2 25); /* Base VIP orange #FF4500 */
-  --color-interactive-primary-hover: oklch(0.55 0.22 25); /* Hover state */
-  --color-interactive-primary-active: oklch(0.5 0.24 25); /* Active/pressed */
-  --color-interactive-primary-disabled: oklch(0.35 0.1 25); /* Disabled state */
-  --color-interactive-primary-light: oklch(0.68 0.18 25); /* Light variant */
-  --color-interactive-primary-glow: oklch(0.6 0.2 25 / 0.4); /* Glow effect */
+  /* Sapphire */
+  --color-premium-sapphire-300: oklch(0.65 0.15 250);
+  --color-premium-sapphire-400: oklch(0.55 0.18 250);
+  --color-premium-sapphire-500: oklch(0.45 0.2 250);
 
-  /* Secondary Interactive (Gold) */
-  --color-interactive-secondary: oklch(0.85 0.12 85); /* Base gold */
-  --color-interactive-secondary-hover: oklch(0.75 0.15 85); /* Hover state */
-  --color-interactive-secondary-active: oklch(0.7 0.16 85); /* Active/pressed */
-  --color-interactive-secondary-disabled: oklch(
-    0.5 0.06 85
-  ); /* Disabled state */
-  --color-interactive-secondary-glow: oklch(
-    0.85 0.12 85 / 0.3
-  ); /* Glow effect */
+  /* ---------- CASINO LUXURY GRADIENTS ---------- */
+  --gradient-premium-gold: linear-gradient(
+    135deg,
+    oklch(0.95 0.08 85) 0%,
+    oklch(0.88 0.12 85) 25%,
+    oklch(0.85 0.14 85) 50%,
+    oklch(0.78 0.16 85) 75%,
+    oklch(0.72 0.18 85) 100%
+  );
 
-  /* Tertiary Interactive (Platinum) */
-  --color-interactive-tertiary: oklch(0.82 0.03 220); /* Base platinum */
-  --color-interactive-tertiary-hover: oklch(0.75 0.04 220); /* Hover state */
-  --color-interactive-tertiary-active: oklch(0.7 0.05 220); /* Active/pressed */
-  --color-interactive-tertiary-disabled: oklch(
-    0.5 0.02 220
-  ); /* Disabled state */
+  --gradient-premium-gold-vertical: linear-gradient(
+    180deg,
+    oklch(0.92 0.08 85) 0%,
+    oklch(0.85 0.12 85) 30%,
+    oklch(0.78 0.15 85) 70%,
+    oklch(0.7 0.18 85) 100%
+  );
 
-  /* Success Interactive (Emerald) */
-  --color-interactive-success: oklch(0.65 0.15 160); /* Base emerald */
-  --color-interactive-success-hover: oklch(0.55 0.18 160); /* Hover state */
-  --color-interactive-success-active: oklch(0.5 0.2 160); /* Active/pressed */
-  --color-interactive-success-glow: oklch(
-    0.65 0.15 160 / 0.3
-  ); /* Glow effect */
+  --gradient-casino-blue: linear-gradient(
+    135deg,
+    oklch(0.32 0.04 229) 0%,
+    oklch(0.25 0.03 229) 25%,
+    oklch(0.18 0.025 229) 50%,
+    oklch(0.15 0.02 229) 75%,
+    oklch(0.12 0.02 229) 100%
+  );
 
-  /* Danger Interactive (Burgundy) */
-  --color-interactive-danger: oklch(0.35 0.18 15); /* Base burgundy */
-  --color-interactive-danger-hover: oklch(0.25 0.2 15); /* Hover state */
-  --color-interactive-danger-active: oklch(0.2 0.22 15); /* Active/pressed */
+  --gradient-royal-blue: linear-gradient(
+    135deg,
+    oklch(0.45 0.05 229) 0%,
+    oklch(0.35 0.04 229) 25%,
+    oklch(0.25 0.03 229) 50%,
+    oklch(0.18 0.025 229) 75%,
+    oklch(0.12 0.02 229) 100%
+  );
 
-  /* ACCENT COLORS - Highlights & Borders */
-  --color-accent-gold: oklch(0.78 0.13 80); /* Warm gold accents #FFC107 */
-  --color-accent-gold-light: oklch(
-    0.88 0.1 80
-  ); /* Light gold borders #FFE08A */
-  --color-accent-gold-shadow: oklch(0.45 0.15 80); /* Gold shadows #8B6508 */
-  --color-accent-glow: oklch(0.85 0.12 85); /* Glow effects */
+  --gradient-glass-luxury: linear-gradient(
+    135deg,
+    oklch(0.3 0.035 229 / 0.95) 0%,
+    oklch(0.25 0.03 229 / 0.85) 25%,
+    oklch(0.2 0.025 229 / 0.75) 50%,
+    oklch(0.15 0.02 229 / 0.65) 75%,
+    oklch(0.12 0.02 229 / 0.55) 100%
+  );
 
-  /* GAME ELEMENT COLORS - Balls & Numbers */
-  --color-ball-primary: oklch(0.85 0.12 85); /* Main ball color (gold) */
-  --color-ball-highlight: oklch(0.95 0.08 85); /* Ball highlights */
-  --color-ball-shadow: oklch(0.65 0.15 85); /* Ball shadows */
-  --color-ball-winner: oklch(0.88 0.15 25); /* Winning ball (orange-gold) */
+  --gradient-casino-accent: radial-gradient(
+    ellipse at center,
+    oklch(0.88 0.15 85 / 0.15) 0%,
+    oklch(0.75 0.12 85 / 0.08) 35%,
+    oklch(0.22 0.025 229 / 0.02) 70%,
+    transparent 100%
+  );
 
-  --color-star-primary: oklch(0.78 0.13 80); /* Star elements */
-  --color-star-highlight: oklch(0.88 0.1 80); /* Star highlights */
-  --color-star-shadow: oklch(0.45 0.15 80); /* Star shadows */
-  --color-star-winner: oklch(0.85 0.15 85); /* Winning stars */
+  /* ---------- METALLIC TEXTURES ---------- */
+  --texture-gold-metallic:
+    linear-gradient(
+      45deg,
+      transparent 30%,
+      oklch(0.98 0.05 85 / 0.1) 50%,
+      transparent 70%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 30%,
+      oklch(0.95 0.08 85 / 0.05) 50%,
+      transparent 70%
+    );
 
-  /* STATUS COLORS - Feedback & States */
-  --color-success: oklch(0.65 0.15 145); /* Success green */
-  --color-success-light: oklch(0.85 0.1 145); /* Light success */
-  --color-success-dark: oklch(0.45 0.18 145); /* Dark success */
+  --texture-blue-metallic:
+    linear-gradient(
+      45deg,
+      transparent 30%,
+      oklch(0.4 0.04 229 / 0.1) 50%,
+      transparent 70%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 30%,
+      oklch(0.35 0.035 229 / 0.05) 50%,
+      transparent 70%
+    );
 
-  --color-warning: oklch(0.75 0.15 65); /* Warning amber */
-  --color-warning-light: oklch(0.9 0.1 65); /* Light warning */
-  --color-warning-dark: oklch(0.55 0.18 65); /* Dark warning */
+  /* ---------- CASINO ATMOSPHERIC EFFECTS ---------- */
+  --blur-casino-light: blur(20px);
+  --blur-casino-medium: blur(40px);
+  --blur-casino-heavy: blur(60px);
 
-  --color-error: oklch(0.6 0.2 15); /* Error red */
-  --color-error-light: oklch(0.8 0.15 15); /* Light error */
-  --color-error-dark: oklch(0.4 0.22 15); /* Dark error */
+  /* ---------- INTERACTIVE (Buttons/CTAs) ---------- */
+  --color-interactive-primary: oklch(0.6 0.2 25); /* VIP orange */
+  --color-interactive-primary-hover: oklch(0.55 0.22 25);
+  --color-interactive-primary-active: oklch(0.5 0.24 25);
+  --color-interactive-primary-disabled: oklch(0.35 0.1 25);
+  --color-interactive-primary-light: oklch(0.68 0.18 25);
+  --color-interactive-primary-glow: oklch(0.6 0.2 25 / 0.4);
 
-  --color-info: oklch(0.65 0.15 250); /* Info blue */
-  --color-info-light: oklch(0.85 0.1 250); /* Light info */
-  --color-info-dark: oklch(0.45 0.18 250); /* Dark info */
+  --color-interactive-secondary: oklch(0.85 0.12 85); /* Gold */
+  --color-interactive-secondary-hover: oklch(0.75 0.15 85);
+  --color-interactive-secondary-active: oklch(0.7 0.16 85);
+  --color-interactive-secondary-disabled: oklch(0.5 0.06 85);
+  --color-interactive-secondary-glow: oklch(0.85 0.12 85 / 0.3);
 
-  /* BORDER COLORS - Subtle Separators */
-  --color-border-primary: oklch(0.85 0.12 85); /* Gold borders */
-  --color-border-secondary: oklch(0.25 0.03 229); /* Subtle navy borders */
-  --color-border-muted: oklch(0.2 0.02 229); /* Very subtle borders */
-  --color-border-focus: oklch(0.88 0.15 25); /* Focus ring (orange) */
+  --color-interactive-tertiary: oklch(0.82 0.03 220); /* Platinum */
+  --color-interactive-tertiary-hover: oklch(0.75 0.04 220);
+  --color-interactive-tertiary-active: oklch(0.7 0.05 220);
+  --color-interactive-tertiary-disabled: oklch(0.5 0.02 220);
 
-  /* UTILITY COLORS - Special Use Cases */
-  --color-white: oklch(1 0 0); /* Pure white */
-  --color-black: oklch(0 0 0); /* Pure black */
-  --color-transparent: transparent; /* Transparent */
-  --color-current: currentColor; /* Current color */
+  --color-interactive-success: oklch(0.65 0.15 160);
+  --color-interactive-success-hover: oklch(0.55 0.18 160);
+  --color-interactive-success-active: oklch(0.5 0.2 160);
+  --color-interactive-success-glow: oklch(0.65 0.15 160 / 0.3);
 
-  /* ============================================
-     🎰 PREMIUM SHADOW SYSTEM
-     ============================================ */
+  --color-interactive-danger: oklch(0.35 0.18 15);
+  --color-interactive-danger-hover: oklch(0.25 0.2 15);
+  --color-interactive-danger-active: oklch(0.2 0.22 15);
 
-  /* Game Element Shadows (Preserved) */
+  /* ---------- STATUS ---------- */
+  --color-success: oklch(0.65 0.15 145);
+  --color-success-light: oklch(0.85 0.1 145);
+  --color-success-dark: oklch(0.45 0.18 145);
+
+  --color-warning: oklch(0.75 0.15 65);
+  --color-warning-light: oklch(0.9 0.1 65);
+  --color-warning-dark: oklch(0.55 0.18 65);
+
+  --color-error: oklch(0.6 0.2 15);
+  --color-error-light: oklch(0.8 0.15 15);
+  --color-error-dark: oklch(0.4 0.22 15);
+
+  --color-info: oklch(0.65 0.15 250);
+  --color-info-light: oklch(0.85 0.1 250);
+  --color-info-dark: oklch(0.45 0.18 250);
+
+  /* ---------- BORDERS ---------- */
+  --color-border-primary: oklch(0.85 0.12 85); /* Gold accents */
+  --color-border-secondary: oklch(0.25 0.03 229); /* Subtle navy lines */
+  --color-border-muted: oklch(0.2 0.02 229);
+  --color-border-focus: oklch(0.88 0.15 25);
+
+  /* ---------- GAME ELEMENTS (Balls/Stars) ---------- */
+  --color-ball-primary: oklch(0.85 0.12 85);
+  --color-ball-highlight: oklch(0.95 0.08 85);
+  --color-ball-shadow: oklch(0.65 0.15 85);
+  --color-ball-winner: oklch(0.88 0.15 25);
+
+  --color-star-primary: oklch(0.78 0.13 80);
+  --color-star-highlight: oklch(0.88 0.1 80);
+  --color-star-shadow: oklch(0.45 0.15 80);
+  --color-star-winner: oklch(0.85 0.15 85);
+
+  /* ---------- SHADOWS & RINGS ---------- */
   --shadow-ball:
     inset -3px -5px 10px rgba(0, 0, 0, 0.35),
     inset 3px 4px 6px rgba(255, 255, 255, 0.35), 0 2px 10px rgba(0, 0, 0, 0.25);
@@ -203,7 +255,6 @@
   --shadow-star-winner:
     0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 6px rgba(255, 255, 255, 0.35);
 
-  /* Elevation Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -211,15 +262,13 @@
   --shadow-2xl:
     0 24px 48px rgba(0, 0, 0, 0.18), 0 12px 24px rgba(0, 0, 0, 0.12);
 
-  /* Premium Effects */
   --shadow-premium: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-floating:
     0 12px 40px rgba(0, 0, 0, 0.25), 0 6px 20px rgba(0, 0, 0, 0.15);
   --shadow-glass:
     0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
-  /* Glow Effects */
-  --shadow-glow: 0 0 20px var(--color-accent-glow);
+  --shadow-glow: 0 0 20px oklch(0.85 0.12 85);
   --shadow-glow-gold:
     0 0 24px var(--color-brand-gold-400), 0 0 48px var(--color-brand-gold-300);
   --shadow-glow-emerald:
@@ -229,7 +278,33 @@
     0 0 24px var(--color-interactive-primary),
     0 0 48px var(--color-interactive-primary-light);
 
-  /* Focus Rings - Sophisticated */
+  /* Casino-Style Enhanced Shadows */
+  --shadow-casino-card:
+    0 8px 32px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px oklch(0.85 0.12 85 / 0.2);
+
+  --shadow-casino-card-hover:
+    0 12px 48px rgba(0, 0, 0, 0.4), 0 6px 24px rgba(0, 0, 0, 0.25),
+    0 0 32px oklch(0.85 0.12 85 / 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 0 0 1px oklch(0.85 0.12 85 / 0.3);
+
+  --shadow-casino-premium:
+    0 16px 64px rgba(0, 0, 0, 0.5), 0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 48px oklch(0.85 0.12 85 / 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.15),
+    0 0 0 2px oklch(0.85 0.12 85 / 0.4);
+
+  --shadow-casino-button:
+    0 4px 16px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  --shadow-casino-button-hover:
+    0 6px 24px rgba(0, 0, 0, 0.3), 0 3px 12px rgba(0, 0, 0, 0.2),
+    0 0 24px oklch(0.85 0.12 85 / 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+
+  --shadow-casino-floating:
+    0 20px 80px rgba(0, 0, 0, 0.6), 0 10px 40px rgba(0, 0, 0, 0.4),
+    0 0 60px oklch(0.85 0.12 85 / 0.25), inset 0 2px 0 rgba(255, 255, 255, 0.2);
+
   --ring-focus-primary:
     0 0 0 2px var(--color-interactive-primary-glow),
     0 0 0 4px var(--color-border-focus);
@@ -242,12 +317,29 @@
   --ring-focus-danger:
     0 0 0 2px rgba(220, 38, 38, 0.3),
     0 0 0 4px var(--color-premium-burgundy-300);
+
+  /* ---------- FONTS (Tailwind v4 font tokens) ---------- */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
+    Cantarell, Noto Sans, Arial, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol';
+  --font-serif:
+    'Playfair Display', ui-serif, Georgia, Cambria, 'Times New Roman', Times,
+    serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+
+  /* ---------- UTILITY COLORS ---------- */
+  --color-white: oklch(1 0 0);
+  --color-black: oklch(0 0 0);
+  --color-transparent: transparent;
+  --color-current: currentColor;
 }
 
 /* ============================================
-   🎨 BASE STYLES - Updated for Semantic Tokens
+   🎨 BASE STYLES
    ============================================ */
-
 @layer base {
   html {
     background-color: var(--color-surface-primary);
@@ -259,6 +351,17 @@
     min-height: 100vh;
     margin: 0;
     padding: 0;
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    letter-spacing: 0.01em;
   }
 
   #__nuxt {
@@ -269,11 +372,9 @@
 }
 
 /* ============================================
-   🌙 DARK MODE VARIANTS (Optional Enhancement)
+   🌙 OPTIONAL DARKER VARIANT
    ============================================ */
-
 [data-theme='dark'] {
-  /* Enhanced contrast for dark mode */
   --color-surface-primary: oklch(0.08 0.02 229);
   --color-surface-secondary: oklch(0.12 0.03 229);
   --color-content-primary: oklch(0.98 0.003 80);
@@ -281,11 +382,9 @@
 }
 
 /* ============================================
-   🎯 ACCESSIBILITY IMPROVEMENTS
+   ♿ ACCESSIBILITY & PREFERENCES
    ============================================ */
-
 @media (prefers-reduced-motion: reduce) {
-  /* Disable animations if user prefers reduced motion */
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -294,10 +393,251 @@
 }
 
 @media (prefers-contrast: high) {
-  /* Enhanced contrast for accessibility */
   :root {
     --color-content-primary: oklch(1 0 0);
     --color-content-secondary: oklch(0.85 0.01 229);
     --color-border-primary: oklch(0.95 0.15 85);
+  }
+}
+
+/* ============================================
+   🏆 PREMIUM CASINO UTILITY CLASSES
+   ============================================ */
+@layer utilities {
+  /* Premium Card Styles */
+  .casino-card {
+    background: var(--gradient-glass-luxury);
+    border: 1px solid oklch(0.85 0.12 85 / 0.3);
+    box-shadow: var(--shadow-casino-card);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .casino-card:hover {
+    box-shadow: var(--shadow-casino-card-hover);
+    transform: translateY(-2px);
+    border-color: oklch(0.88 0.15 85 / 0.5);
+  }
+
+  .casino-card-premium {
+    background: var(--gradient-royal-blue);
+    box-shadow: var(--shadow-casino-premium);
+    border: 2px solid oklch(0.85 0.12 85 / 0.4);
+  }
+
+  /* Premium Button Enhancements */
+  .btn-casino-gold {
+    background: var(--gradient-premium-gold);
+    color: var(--color-content-inverse);
+    box-shadow: var(--shadow-casino-button);
+    border: 1px solid oklch(0.78 0.16 85 / 0.6);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-casino-gold::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--texture-gold-metallic);
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-casino-gold:hover::before {
+    left: 100%;
+  }
+
+  .btn-casino-gold:hover {
+    box-shadow: var(--shadow-casino-button-hover);
+    transform: translateY(-1px) scale(1.02);
+    background: var(--gradient-premium-gold-vertical);
+  }
+
+  .btn-casino-blue {
+    background: var(--gradient-royal-blue);
+    color: var(--color-content-primary);
+    box-shadow: var(--shadow-casino-button);
+    border: 1px solid oklch(0.45 0.05 229 / 0.6);
+  }
+
+  .btn-casino-blue:hover {
+    box-shadow: var(--shadow-casino-button-hover);
+    transform: translateY(-1px);
+    filter: brightness(1.1);
+  }
+
+  /* Glow Effects */
+  .glow-gold {
+    box-shadow: var(--shadow-glow-gold);
+    animation: pulse-gold 2s ease-in-out infinite;
+  }
+
+  .glow-emerald {
+    box-shadow: var(--shadow-glow-emerald);
+    animation: pulse-emerald 2s ease-in-out infinite;
+  }
+
+  .glow-orange {
+    box-shadow: var(--shadow-glow-orange);
+    animation: pulse-orange 2s ease-in-out infinite;
+  }
+
+  /* Glass Morphism */
+  .glass-luxury {
+    background: var(--gradient-glass-luxury);
+    backdrop-filter: var(--blur-casino-light);
+    border: 1px solid oklch(0.85 0.12 85 / 0.2);
+    box-shadow: var(--shadow-glass);
+  }
+
+  /* Premium Text Styling */
+  .text-casino-gold {
+    background: var(--gradient-premium-gold);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .text-premium-glow {
+    text-shadow:
+      0 0 10px oklch(0.85 0.12 85 / 0.5),
+      0 0 20px oklch(0.85 0.12 85 / 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Floating Elements */
+  .floating {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .floating-delayed {
+    animation: float 3s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+
+  /* Premium Overlays */
+  .overlay-casino {
+    background: var(--gradient-casino-accent);
+    backdrop-filter: var(--blur-casino-medium);
+  }
+
+  .overlay-premium {
+    background: radial-gradient(
+      ellipse at center,
+      oklch(0.12 0.02 229 / 0.9) 0%,
+      oklch(0.08 0.02 229 / 0.95) 100%
+    );
+    backdrop-filter: var(--blur-casino-heavy);
+  }
+}
+
+/* ============================================
+   🎬 PREMIUM ANIMATIONS
+   ============================================ */
+@keyframes pulse-gold {
+  0%,
+  100% {
+    box-shadow: var(--shadow-glow-gold);
+  }
+  50% {
+    box-shadow:
+      0 0 32px var(--color-brand-gold-400),
+      0 0 64px var(--color-brand-gold-300),
+      0 0 96px var(--color-brand-gold-200);
+  }
+}
+
+@keyframes pulse-emerald {
+  0%,
+  100% {
+    box-shadow: var(--shadow-glow-emerald);
+  }
+  50% {
+    box-shadow:
+      0 0 32px var(--color-premium-emerald-400),
+      0 0 64px var(--color-premium-emerald-300);
+  }
+}
+
+@keyframes pulse-orange {
+  0%,
+  100% {
+    box-shadow: var(--shadow-glow-orange);
+  }
+  50% {
+    box-shadow:
+      0 0 32px var(--color-interactive-primary),
+      0 0 64px var(--color-interactive-primary-light);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ============================================
+   🎯 ENHANCED INTERACTIVE STATES
+   ============================================ */
+@layer components {
+  /* Enhanced focus states for accessibility */
+  .focus-casino:focus {
+    outline: none;
+    box-shadow: var(--ring-focus-primary);
+    transform: scale(1.02);
+  }
+
+  .focus-gold:focus {
+    outline: none;
+    box-shadow: var(--ring-focus-secondary);
+    transform: scale(1.02);
+  }
+
+  /* Premium hover states */
+  .hover-lift:hover {
+    transform: translateY(-4px) scale(1.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-glow:hover {
+    filter: brightness(1.1) saturate(1.1);
+    box-shadow: var(--shadow-glow-gold);
+    transition: all 0.3s ease;
+  }
+
+  /* Interactive card states */
+  .card-interactive {
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: var(--shadow-casino-card-hover);
+  }
+
+  .card-interactive:active {
+    transform: translateY(-1px) scale(0.99);
+    transition: all 0.1s ease;
   }
 }
