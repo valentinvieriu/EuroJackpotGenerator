@@ -543,7 +543,96 @@ export function renderStar(
    =========== */
 
 /**
- * Creates a ball sprite canvas for use in animations (main thread)
+ * Lightweight LRU cache for pre-rendered sprites.
+ * Keyed by: version|n|rQ|dprQ|gold|off (off = 1 if OffscreenCanvas)
+ */
+const SPRITE_CACHE_MAX = 160
+const _spriteCache = new Map<string, AnyCanvas>()
+
+function lruSet<K, V>(map: Map<K, V>, key: K, value: V, max: number) {
+  map.set(key, value)
+  if (map.size > max) {
+    const oldest = map.keys().next().value
+    map.delete(oldest)
+  }
+}
+
+function quantizeRadius(r: number): number {
+  // Integer px quantization to maximize reuse while keeping crisp edges
+  return Math.max(1, Math.round(r))
+}
+
+function quantizeDpr(dpr: number): number {
+  // Clamp to [1,2] and quantize to quarter steps (1.00, 1.25, 1.5, 1.75, 2.00)
+  const clamped = clamp(Number.isFinite(dpr) && dpr > 0 ? dpr : 1, 1, 2)
+  return Math.round(clamped * 4) / 4
+}
+
+function spriteCacheKey(
+  number: number,
+  rQ: number,
+  dprQ: number,
+  isGolden: boolean,
+  offscreen: boolean
+): string {
+  // bump version when changing rendering that affects cache validity
+  const VERSION = 'v2'
+  return `${VERSION}|n=${number}|r=${rQ}|dpr=${dprQ}|g=${isGolden ? 1 : 0}|off=${offscreen ? 1 : 0}`
+}
+
+/**
+ * Clear the in-memory sprite cache (both on main thread and in workers).
+ * Safe to call any time; next render will repopulate as needed.
+ */
+export function clearBallSpriteCache(): void {
+  _spriteCache.clear()
+}
+
+function getOrCreateSpriteCanvas(
+  number: number,
+  radius: number,
+  devicePixelRatio: number,
+  isGolden: boolean | undefined,
+  offscreen: boolean
+): AnyCanvas {
+  const rQ = quantizeRadius(radius)
+  const dprQ = quantizeDpr(devicePixelRatio || 1)
+  const gold = isGolden ?? number % 3 === 0
+  const key = spriteCacheKey(number, rQ, dprQ, gold, offscreen)
+  const cached = _spriteCache.get(key)
+  if (cached) return cached
+
+  // Create appropriate canvas type
+  const pxSize = Math.round(rQ * 2 * dprQ)
+  const canvas: AnyCanvas = offscreen
+    ? new OffscreenCanvas(pxSize, pxSize)
+    : (() => {
+        const c = document.createElement('canvas')
+        c.width = pxSize
+        c.height = pxSize
+        return c
+      })()
+
+  const ctx = get2D(canvas, { alpha: true, colorSpace: 'display-p3' })
+  // Render in CSS-space with DPR transform so our drawing math stays in CSS px
+  // @ts-expect-error setTransform is on both CanvasRenderingContext2D types
+  ctx.setTransform(dprQ, 0, 0, dprQ, 0, 0)
+  const cx = rQ
+  const cy = rQ
+
+  renderBall(ctx as Ctx2D, cx, cy, {
+    number,
+    radius: rQ,
+    isGolden: gold,
+  })
+
+  lruSet(_spriteCache, key, canvas, SPRITE_CACHE_MAX)
+  return canvas
+}
+
+/**
+ * Creates (and caches) a ball sprite canvas for use in animations (main thread).
+ * Reuses sprites across similar radii/DPR for big perf wins on resize.
  */
 export function createBallSprite(
   number: number,
@@ -551,30 +640,18 @@ export function createBallSprite(
   devicePixelRatio: number = 1,
   isGolden?: boolean
 ): HTMLCanvasElement {
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.round(radius * 2 * devicePixelRatio)
-  canvas.height = Math.round(radius * 2 * devicePixelRatio)
-
-  const ctx = canvas.getContext('2d', {
-    alpha: true,
-    colorSpace: 'display-p3',
-  })!
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0)
-
-  const cx = radius
-  const cy = radius
-
-  renderBall(ctx as Ctx2D, cx, cy, {
+  return getOrCreateSpriteCanvas(
     number,
     radius,
-    isGolden: isGolden ?? number % 3 === 0,
-  })
-
-  return canvas
+    devicePixelRatio,
+    isGolden,
+    /* offscreen */ false
+  ) as HTMLCanvasElement
 }
 
 /**
- * Creates a ball sprite as OffscreenCanvas for Web Workers
+ * Creates (and caches) a ball sprite as OffscreenCanvas for Web Workers.
+ * The worker can then convert to ImageBitmap without re-rendering the ball.
  */
 export function createBallSpriteOffscreen(
   number: number,
@@ -582,25 +659,11 @@ export function createBallSpriteOffscreen(
   devicePixelRatio: number = 1,
   isGolden?: boolean
 ): OffscreenCanvas {
-  const canvas = new OffscreenCanvas(
-    Math.round(radius * 2 * devicePixelRatio),
-    Math.round(radius * 2 * devicePixelRatio)
-  )
-
-  const ctx = canvas.getContext('2d', {
-    alpha: true,
-    colorSpace: 'display-p3',
-  })!
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0)
-
-  const cx = radius
-  const cy = radius
-
-  renderBall(ctx as Ctx2D, cx, cy, {
+  return getOrCreateSpriteCanvas(
     number,
     radius,
-    isGolden: isGolden ?? number % 3 === 0,
-  })
-
-  return canvas
+    devicePixelRatio,
+    isGolden,
+    /* offscreen */ true
+  ) as OffscreenCanvas
 }

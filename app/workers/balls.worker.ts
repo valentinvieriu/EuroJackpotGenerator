@@ -1,7 +1,10 @@
 // Module Worker for bouncing balls background
 // Reuses shared sprite rendering from app/utils/ballRenderer
 
-import { createBallSpriteOffscreen } from '@/utils/ballRenderer'
+import {
+  createBallSpriteOffscreen,
+  clearBallSpriteCache,
+} from '@/utils/ballRenderer'
 
 type Params = {
   BALL_COUNT: number
@@ -349,6 +352,13 @@ self.onmessage = async (
       }
     }
     sprites = []
+    // Drop any cached sprite canvases to free memory
+    try {
+      clearBallSpriteCache()
+    } catch {
+      // Intentionally ignore cache clear errors in worker cleanup
+      void 0
+    }
     // In worker context, self.close() ends the worker
     self.close()
   }
