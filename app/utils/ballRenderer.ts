@@ -3,6 +3,12 @@
  * - Optional soft ground shadow for depth (good for static tokens).
  * - Subtle dithering to reduce gradient banding (cheap pattern overlay).
  * - Prefers wide-gamut color when supported (display-p3), falls back to sRGB.
+ *
+ * Performance upgrades in this revision:
+ * - Caches the text overlay (number glyph with lighting) per (text, radius, color, font).
+ * - Quantizes radius in cache key to boost reuse.
+ * - Safe OffscreenCanvas fallback helpers (works on main thread & Safari).
+ * - Centralized quality hints for all internal canvases/contexts.
  */
 
 export const BALL_PALETTE = {
@@ -17,6 +23,10 @@ export const BALL_PALETTE = {
 export function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v))
 }
+
+// (Removed) Previously used color parsing and luminance helpers; no longer needed here.
+
+// (Removed) Unused helper for luminance-based lightness check to satisfy linting.
 
 export interface BallRenderOptions {
   number: number
@@ -36,18 +46,57 @@ export interface StarRenderOptions {
 }
 
 /* ===========
+   Environment helpers
+   =========== */
+
+type AnyCanvas = HTMLCanvasElement | OffscreenCanvas
+type Ctx2D = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+
+function hasOffscreen(): boolean {
+  return typeof OffscreenCanvas !== 'undefined'
+}
+
+function createCanvas(width: number, height: number): AnyCanvas {
+  if (hasOffscreen()) {
+    return new OffscreenCanvas(width, height)
+  }
+  if (typeof document !== 'undefined') {
+    const c = document.createElement('canvas')
+    c.width = width
+    c.height = height
+    return c
+  }
+  // Last resort
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new (globalThis as any).OffscreenCanvas(width, height)
+}
+
+function get2D(
+  canvas: AnyCanvas,
+  opts: CanvasRenderingContext2DSettings = {
+    alpha: true,
+    colorSpace: 'display-p3',
+  }
+): Ctx2D {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ctx = (canvas as any).getContext('2d', opts) as Ctx2D
+  if (!ctx) throw new Error('Failed to get 2D context')
+  setQualityHints(ctx)
+  return ctx
+}
+
+/* ===========
    Dither (noise) pattern to reduce gradient banding
    Created once-per-module and reused via createPattern.
    =========== */
 
-let _ditherTile: HTMLCanvasElement | OffscreenCanvas | null = null
+let _ditherTile: AnyCanvas | null = null
 
-function getDitherTile(): HTMLCanvasElement | OffscreenCanvas {
+function getDitherTile(): AnyCanvas {
   if (_ditherTile) return _ditherTile
   const size = 64
-  const tile = new OffscreenCanvas(size, size)
-  const g = tile.getContext('2d')
-  if (!g) throw new Error('Failed to get 2D context')
+  const tile = createCanvas(size, size)
+  const g = get2D(tile)
 
   // Low-contrast monochrome noise
   const img = g.createImageData(size, size)
@@ -70,21 +119,176 @@ function getDitherTile(): HTMLCanvasElement | OffscreenCanvas {
    Context helpers
    =========== */
 
-function setQualityHints(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
-) {
+function setQualityHints(ctx: Ctx2D) {
   ctx.imageSmoothingEnabled = true
+  // @ts-expect-error - not on OffscreenCanvasRenderingContext2D in older TS lib
   if ('imageSmoothingQuality' in ctx) {
+    // @ts-expect-error -- imageSmoothingQuality exists in browsers but not in older lib types
     ctx.imageSmoothingQuality = 'high'
   }
 }
+
+/* ===========
+   Text overlay cache (number glyph with lighting & inner shadow)
+   =========== */
+
+type TextOverlay = {
+  canvas: AnyCanvas
+  tw: number
+  ascent: number
+  descent: number
+  pad: number
+}
+
+/**
+ * Creates (or returns cached) overlay of the number text with its own AO/specular/rim and inner shadow.
+ * Cache key is quantized by radius to maximize reuse.
+ */
+const _textOverlayCache = new Map<string, TextOverlay>()
+
+function getTextOverlay(
+  text: string,
+  r: number,
+  baseTextColor: string,
+  font: string
+): TextOverlay {
+  const quantR = Math.max(1, Math.round(r)) // quantize radius
+  const key = `${text}|r=${quantR}|c=${baseTextColor}|f=${font}`
+  const hit = _textOverlayCache.get(key)
+  if (hit) return hit
+
+  // Measure on a tiny scratch canvas
+  const scratch = createCanvas(2, 2)
+  const mctx = get2D(scratch)
+  mctx.font = font
+  mctx.textAlign = 'left'
+  mctx.textBaseline = 'alphabetic'
+  const m = mctx.measureText(text)
+  const fontSize = Number.parseFloat(
+    font.match(/(\d+(?:\.\d+)?)px/)?.[1] || '16'
+  )
+  const ascent = m.actualBoundingBoxAscent || fontSize * 0.8
+  const descent = m.actualBoundingBoxDescent || fontSize * 0.2
+  const tw = Math.ceil(m.width)
+  const th = Math.ceil(ascent + descent)
+  const pad = Math.max(2, Math.round(quantR * 0.12))
+  const offW = tw + pad * 2
+  const offH = th + pad * 2
+
+  // Base text
+  const textCanvas = createCanvas(offW, offH)
+  const tctx = get2D(textCanvas)
+  tctx.font = font
+  tctx.textAlign = 'left'
+  tctx.textBaseline = 'alphabetic'
+  tctx.fillStyle = baseTextColor
+  const baseline = pad + ascent
+  tctx.fillText(text, pad, baseline)
+
+  // Shade layers (AO, specular, rim, inner shadow) built relative to overlay center
+  const shadeCanvas = createCanvas(offW, offH)
+  const sctx = get2D(shadeCanvas)
+
+  // Overlay center equals ball center relative to overlay:
+  const gcx = tw / 2 + pad
+  const gcy = th / 2 + pad
+
+  // AO (multiply)
+  sctx.globalCompositeOperation = 'source-over'
+  const textAO = sctx.createRadialGradient(
+    gcx + quantR * 0.35,
+    gcy + quantR * 0.35,
+    quantR * 0.2,
+    gcx + quantR * 0.35,
+    gcy + quantR * 0.35,
+    quantR
+  )
+  textAO.addColorStop(0, 'rgba(0,0,0,0.35)')
+  textAO.addColorStop(1, 'rgba(0,0,0,0)')
+  sctx.fillStyle = textAO
+  sctx.fillRect(0, 0, offW, offH)
+
+  // Specular + Fresnel (screen)
+  sctx.globalCompositeOperation = 'screen'
+  const textSpec = sctx.createRadialGradient(
+    gcx - quantR * 0.38,
+    gcy - quantR * 0.4,
+    0,
+    gcx - quantR * 0.38,
+    gcy - quantR * 0.4,
+    quantR * 0.42
+  )
+  textSpec.addColorStop(0, 'rgba(255,255,255,0.95)')
+  textSpec.addColorStop(0.35, 'rgba(255,255,255,0.25)')
+  textSpec.addColorStop(1, 'rgba(255,255,255,0)')
+  sctx.fillStyle = textSpec
+  sctx.fillRect(0, 0, offW, offH)
+
+  const textRim = sctx.createRadialGradient(
+    gcx,
+    gcy,
+    quantR * 0.7,
+    gcx,
+    gcy,
+    quantR
+  )
+  textRim.addColorStop(0, 'rgba(255,255,255,0)')
+  textRim.addColorStop(1, 'rgba(255,255,255,0.18)')
+  sctx.fillStyle = textRim
+  sctx.fillRect(0, 0, offW, offH)
+
+  // Inner shadow
+  try {
+    sctx.save()
+    // @ts-expect-error - filter not always typed
+    sctx.filter = `blur(${Math.max(1, quantR * 0.06)}px)`
+    sctx.globalCompositeOperation = 'source-over'
+    sctx.fillStyle = 'rgba(0,0,0,0.55)'
+    const shx = quantR * 0.06
+    const shy = quantR * 0.06
+    sctx.font = tctx.font
+    sctx.textAlign = 'left'
+    sctx.textBaseline = 'alphabetic'
+    sctx.fillText(text, pad + shx, baseline + shy)
+    sctx.globalCompositeOperation = 'destination-in'
+    // @ts-expect-error -- filter property not always present in older TS lib definitions
+    sctx.filter = 'none'
+    sctx.fillStyle = '#000'
+    sctx.fillText(text, pad, baseline)
+    sctx.restore()
+  } catch {
+    // Optional
+  }
+
+  // Merge shade into base text
+  tctx.globalCompositeOperation = 'source-atop'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tctx.drawImage(shadeCanvas as any, 0, 0)
+
+  // Subtle light-edge stroke
+  tctx.save()
+  tctx.globalCompositeOperation = 'screen'
+  tctx.lineJoin = 'round'
+  tctx.lineWidth = Math.max(1, quantR * 0.04)
+  tctx.strokeStyle = 'rgba(255,255,255,0.35)'
+  tctx.strokeText(text, pad - quantR * 0.02, baseline - quantR * 0.02)
+  tctx.restore()
+
+  const overlay: TextOverlay = { canvas: textCanvas, tw, ascent, descent, pad }
+  _textOverlayCache.set(key, overlay)
+  return overlay
+}
+
+/* ===========
+   Ball rendering
+   =========== */
 
 /**
  * Renders a 3D sphere ball with gradients, shadows, and text.
  * Backwards compatible API; `withShadow` is optional and off by default.
  */
 export function renderBall(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  ctx: Ctx2D,
   cx: number,
   cy: number,
   options: BallRenderOptions
@@ -195,131 +399,24 @@ export function renderBall(
   ctx.arc(cx, cy, r - ctx.lineWidth * 0.6, -0.15 * Math.PI, 0.35 * Math.PI)
   ctx.stroke()
 
-  // 5) Winner ring (gold)
-  if (isWinner) {
-    const ringGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
-    ringGrad.addColorStop(0, BALL_PALETTE.gold.light)
-    ringGrad.addColorStop(0.5, BALL_PALETTE.gold.base)
-    ringGrad.addColorStop(1, BALL_PALETTE.gold.dark)
-    ctx.strokeStyle = ringGrad
-    ctx.lineWidth = clamp(r * 0.14, 6, 10)
-    ctx.beginPath()
-    ctx.arc(cx, cy, r - ctx.lineWidth * 0.5, 0, Math.PI * 2)
-    ctx.stroke()
-  }
+  // (Removed) Winner ring: keeping surface shading uninterrupted for stronger 3D appearance.
+  // if (isWinner) { ... }
 
-  // 6) Embedded/printed text with lighting
+  // 6) Embedded/printed text with lighting via cached overlay
   const fontSize = r * 0.6
   const text = String(number)
-  ctx.font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, sans-serif`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'alphabetic'
-  const m = ctx.measureText(text)
-  const ascent = m.actualBoundingBoxAscent || fontSize * 0.8
-  const descent = m.actualBoundingBoxDescent || fontSize * 0.2
-  const y = cy + (ascent - (ascent + descent) / 2)
-
-  const pad = Math.max(2, Math.round(r * 0.12))
-  const tw = Math.ceil(m.width)
-  const th = Math.ceil(ascent + descent)
-  const offW = tw + pad * 2
-  const offH = th + pad * 2
-
-  const textCanvas = new OffscreenCanvas(offW, offH)
-  const tctx = textCanvas.getContext('2d')!
-  if (!tctx) throw new Error('Failed to get 2D context')
-
-  // Base ink
+  const font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, sans-serif`
   const baseText =
     isWinner || isGolden ? BALL_PALETTE.midnight : BALL_PALETTE.ivory
-  tctx.font = ctx.font
-  tctx.textAlign = 'left'
-  tctx.textBaseline = 'alphabetic'
-  tctx.fillStyle = baseText
-  const baseline = pad + ascent
-  tctx.fillText(text, pad, baseline)
 
-  // Shade layer
-  const shadeCanvas = new OffscreenCanvas(offW, offH)
-  const sctx = shadeCanvas.getContext('2d')!
-  if (!sctx) throw new Error('Failed to get 2D context')
+  const overlay = getTextOverlay(text, r, baseText, font)
 
-  const destX = Math.round(cx - tw / 2 - pad)
-  const destY = Math.round(y - ascent - pad)
-  const gcx = cx - destX
-  const gcy = cy - destY
-
-  sctx.globalCompositeOperation = 'source-over'
-  const textAO = sctx.createRadialGradient(
-    gcx + r * 0.35,
-    gcy + r * 0.35,
-    r * 0.2,
-    gcx + r * 0.35,
-    gcy + r * 0.35,
-    r
-  )
-  textAO.addColorStop(0, 'rgba(0,0,0,0.35)')
-  textAO.addColorStop(1, 'rgba(0,0,0,0)')
-  sctx.fillStyle = textAO
-  sctx.fillRect(0, 0, offW, offH)
-
-  sctx.globalCompositeOperation = 'screen'
-  const textSpec = sctx.createRadialGradient(
-    gcx - r * 0.38,
-    gcy - r * 0.4,
-    0,
-    gcx - r * 0.38,
-    gcy - r * 0.4,
-    r * 0.42
-  )
-  textSpec.addColorStop(0, 'rgba(255,255,255,0.95)')
-  textSpec.addColorStop(0.35, 'rgba(255,255,255,0.25)')
-  textSpec.addColorStop(1, 'rgba(255,255,255,0)')
-  sctx.fillStyle = textSpec
-  sctx.fillRect(0, 0, offW, offH)
-
-  const textRim = sctx.createRadialGradient(gcx, gcy, r * 0.7, gcx, gcy, r)
-  textRim.addColorStop(0, 'rgba(255,255,255,0)')
-  textRim.addColorStop(1, 'rgba(255,255,255,0.18)')
-  sctx.fillStyle = textRim
-  sctx.fillRect(0, 0, offW, offH)
-
-  // Inner shadow (cheap — prefer small radius)
-  try {
-    sctx.save()
-    sctx.filter = `blur(${Math.max(1, r * 0.06)}px)`
-    sctx.globalCompositeOperation = 'source-over'
-    sctx.fillStyle = 'rgba(0,0,0,0.55)'
-    const shx = r * 0.06
-    const shy = r * 0.06
-    sctx.font = tctx.font
-    sctx.textAlign = 'left'
-    sctx.textBaseline = 'alphabetic'
-    sctx.fillText(text, pad + shx, baseline + shy)
-    sctx.globalCompositeOperation = 'destination-in'
-    sctx.filter = 'none'
-    sctx.fillStyle = '#000'
-    sctx.fillText(text, pad, baseline)
-    sctx.restore()
-  } catch {
-    // Dithering is optional - silently fail
-  }
-
-  // Merge shade into base text
-  tctx.globalCompositeOperation = 'source-atop'
-  tctx.drawImage(shadeCanvas, 0, 0)
-
-  // Subtle light-edge stroke
-  tctx.save()
-  tctx.globalCompositeOperation = 'screen'
-  tctx.lineJoin = 'round'
-  tctx.lineWidth = Math.max(1, r * 0.04)
-  tctx.strokeStyle = 'rgba(255,255,255,0.35)'
-  tctx.strokeText(text, pad - r * 0.02, baseline - r * 0.02)
-  tctx.restore()
-
-  // Composite onto main
-  ctx.drawImage(textCanvas, destX, destY)
+  // Compute placement to center the overlay on the ball
+  const y = cy + (overlay.ascent - (overlay.ascent + overlay.descent) / 2)
+  const destX = Math.round(cx - overlay.tw / 2 - overlay.pad)
+  const destY = Math.round(y - overlay.ascent - overlay.pad)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ctx.drawImage(overlay.canvas as any, destX, destY)
 
   // 7) VERY subtle dithering overlay (reduces banding)
   try {
@@ -336,16 +433,20 @@ export function renderBall(
       ctx.restore()
     }
   } catch {
-    // Dithering is optional - silently fail
+    // Optional
   }
 }
 
+/* ===========
+   Star rendering
+   =========== */
+
 /**
- * Renders a 3D star with gradients, shadows, and text
- * (unchanged visually; benefits from dither tile reuse if desired later)
+ * Renders a 3D star with gradients, shadows, and text.
+ * Uses the same cached text-overlay mechanism as balls for performance.
  */
 export function renderStar(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  ctx: Ctx2D,
   cx: number,
   cy: number,
   options: StarRenderOptions
@@ -423,120 +524,23 @@ export function renderStar(
     ctx.stroke()
   }
 
-  // Text
-  const fontSize = outerR * 0.6
+  // Text (cached overlay)
   const text = String(number)
-  ctx.font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, sans-serif`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'alphabetic'
-  const m = ctx.measureText(text)
-  const ascent = m.actualBoundingBoxAscent || fontSize * 0.8
-  const descent = m.actualBoundingBoxDescent || fontSize * 0.2
-  const y = cy + (ascent - (ascent + descent) / 2)
-
+  const fontSize = outerR * 0.6
+  const font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, sans-serif`
   const baseText = isWinner ? BALL_PALETTE.midnight : BALL_PALETTE.ivory
+  const overlay = getTextOverlay(text, outerR, baseText, font)
 
-  const pad = Math.max(2, Math.round(outerR * 0.12))
-  const tw = Math.ceil(m.width)
-  const th = Math.ceil(ascent + descent)
-  const offW = tw + pad * 2
-  const offH = th + pad * 2
-  const textCanvas = new OffscreenCanvas(offW, offH)
-  const tctx = textCanvas.getContext('2d')!
-  if (!tctx) throw new Error('Failed to get 2D context')
-
-  tctx.font = ctx.font
-  tctx.textAlign = 'left'
-  tctx.textBaseline = 'alphabetic'
-  tctx.fillStyle = baseText
-  const baseline = pad + ascent
-  tctx.fillText(text, pad, baseline)
-
-  const shadeCanvas = new OffscreenCanvas(offW, offH)
-  const sctx = shadeCanvas.getContext('2d')!
-  if (!sctx) throw new Error('Failed to get 2D context')
-
-  const destX = Math.round(cx - tw / 2 - pad)
-  const destY = Math.round(y - ascent - pad)
-  const gcx = cx - destX
-  const gcy = cy - destY
-
-  // AO (multiply)
-  sctx.globalCompositeOperation = 'source-over'
-  const ao2 = sctx.createRadialGradient(
-    gcx + outerR * 0.35,
-    gcy + outerR * 0.35,
-    outerR * 0.2,
-    gcx + outerR * 0.35,
-    gcy + outerR * 0.35,
-    outerR
-  )
-  ao2.addColorStop(0, 'rgba(0,0,0,0.35)')
-  ao2.addColorStop(1, 'rgba(0,0,0,0)')
-  sctx.fillStyle = ao2
-  sctx.fillRect(0, 0, offW, offH)
-  sctx.globalCompositeOperation = 'multiply'
-
-  // Specular + Fresnel (screen)
-  sctx.globalCompositeOperation = 'screen'
-  const spec2 = sctx.createRadialGradient(
-    gcx - outerR * 0.38,
-    gcy - outerR * 0.4,
-    0,
-    gcx - outerR * 0.38,
-    gcy - outerR * 0.4,
-    outerR * 0.42
-  )
-  spec2.addColorStop(0, 'rgba(255,255,255,0.95)')
-  spec2.addColorStop(0.35, 'rgba(255,255,255,0.25)')
-  spec2.addColorStop(1, 'rgba(255,255,255,0)')
-  sctx.fillStyle = spec2
-  sctx.fillRect(0, 0, offW, offH)
-
-  const rim2 = sctx.createRadialGradient(
-    gcx,
-    gcy,
-    outerR * 0.7,
-    gcx,
-    gcy,
-    outerR
-  )
-  rim2.addColorStop(0, 'rgba(255,255,255,0)')
-  rim2.addColorStop(1, 'rgba(255,255,255,0.18)')
-  sctx.fillStyle = rim2
-  sctx.fillRect(0, 0, offW, offH)
-
-  // Inner shadow
-  try {
-    sctx.save()
-    sctx.filter = `blur(${Math.max(1, outerR * 0.06)}px)`
-    sctx.globalCompositeOperation = 'source-over'
-    sctx.fillStyle = 'rgba(0,0,0,0.55)'
-    const shx = outerR * 0.06
-    const shy = outerR * 0.06
-    sctx.fillText(text, pad + shx, baseline + shy)
-    sctx.globalCompositeOperation = 'destination-in'
-    sctx.filter = 'none'
-    sctx.fillStyle = '#000'
-    sctx.fillText(text, pad, baseline)
-    sctx.restore()
-  } catch {
-    // Dithering is optional - silently fail
-  }
-
-  tctx.globalCompositeOperation = 'source-atop'
-  tctx.drawImage(shadeCanvas, 0, 0)
-
-  tctx.save()
-  tctx.globalCompositeOperation = 'screen'
-  tctx.lineJoin = 'round'
-  tctx.lineWidth = Math.max(1, outerR * 0.04)
-  tctx.strokeStyle = 'rgba(255,255,255,0.35)'
-  tctx.strokeText(text, pad - outerR * 0.02, baseline - outerR * 0.02)
-  tctx.restore()
-
-  ctx.drawImage(textCanvas, destX, destY)
+  const y = cy + (overlay.ascent - (overlay.ascent + overlay.descent) / 2)
+  const destX = Math.round(cx - overlay.tw / 2 - overlay.pad)
+  const destY = Math.round(y - overlay.ascent - overlay.pad)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ctx.drawImage(overlay.canvas as any, destX, destY)
 }
+
+/* ===========
+   Sprite helpers
+   =========== */
 
 /**
  * Creates a ball sprite canvas for use in animations (main thread)
@@ -560,7 +564,7 @@ export function createBallSprite(
   const cx = radius
   const cy = radius
 
-  renderBall(ctx, cx, cy, {
+  renderBall(ctx as Ctx2D, cx, cy, {
     number,
     radius,
     isGolden: isGolden ?? number % 3 === 0,
@@ -592,7 +596,7 @@ export function createBallSpriteOffscreen(
   const cx = radius
   const cy = radius
 
-  renderBall(ctx, cx, cy, {
+  renderBall(ctx as Ctx2D, cx, cy, {
     number,
     radius,
     isGolden: isGolden ?? number % 3 === 0,
