@@ -70,44 +70,6 @@
         </div>
       </div>
 
-      <!-- Results Summary (shown after generation) -->
-      <div
-        v-else-if="hasTickets && ticketsStore.isSimpleMode"
-        class="bg-gradient-to-br from-casino-blue-dark to-casino-blue rounded-xl shadow-2xl p-6 mb-8 border border-casino-blue-light/30"
-      >
-        <div class="flex items-center justify-center gap-4 mb-4">
-          <div class="text-2xl">🎯</div>
-          <div class="text-center">
-            <h2 class="text-xl font-bold text-casino-gold-light">
-              Your {{ tickets.length }} Tickets Generated!
-            </h2>
-            <p class="text-gray-300 text-sm">
-              Total cost: €{{ totalPrice.toFixed(2) }} •
-              {{
-                simulationStore.hasSingleDrawResults
-                  ? 'Results ready below'
-                  : 'Running simulation...'
-              }}
-            </p>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap justify-center gap-3">
-          <button
-            class="px-4 py-2 bg-casino-gold text-casino-blue-dark rounded-md font-medium hover:bg-casino-gold-light transition-colors duration-200"
-            @click="handleNewTickets"
-          >
-            🎲 Try New Tickets
-          </button>
-          <button
-            class="px-4 py-2 border border-casino-gold text-casino-gold rounded-md font-medium hover:bg-casino-gold hover:text-casino-blue-dark transition-all duration-200"
-            @click="handleShowCustom"
-          >
-            ⚙️ Customize Settings
-          </button>
-        </div>
-      </div>
-
       <!-- Customization Overlay -->
       <CustomizationOverlay
         :is-open="showCustomizationOverlay"
@@ -138,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import {
   SIMPLE_MODE_SYSTEM_MAIN,
   SIMPLE_MODE_SYSTEM_EURO,
@@ -148,7 +110,6 @@ import StepperInput from './StepperInput.vue'
 import CustomizationOverlay from './CustomizationOverlay.vue'
 
 const ticketsStore = useTicketsStore()
-const simulationStore = useSimulationStore()
 
 // Overlay state
 const showCustomizationOverlay = ref(false)
@@ -162,8 +123,6 @@ const ticketCount = computed({
 // Computed properties
 const hasTickets = computed(() => ticketsStore.hasTickets)
 const isGenerating = computed(() => ticketsStore.isGenerating)
-const tickets = computed(() => ticketsStore.state.tickets)
-const totalPrice = computed(() => ticketsStore.totalPrice)
 
 const simpleModeCost = computed(() => {
   const systemCost = systemPrice(
@@ -179,12 +138,27 @@ const handleQuickStart = async () => {
   await ticketsStore.generateSimpleTickets()
 }
 
-const handleNewTickets = async () => {
-  // ticketCount is already bound to store config, so just generate
-  await ticketsStore.generateSimpleTickets()
-}
-
 const handleShowCustom = () => {
   showCustomizationOverlay.value = true
 }
+
+// Global Enter key listener for better UX
+const handleGlobalKeydown = (event: KeyboardEvent) => {
+  // Only trigger if Enter is pressed, not generating, and we're showing the hero section
+  if (event.key === 'Enter' && !isGenerating.value && !hasTickets.value) {
+    // Don't trigger if user is typing in an input field
+    const target = event.target as HTMLElement
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
+
+    handleQuickStart()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleGlobalKeydown)
+})
 </script>

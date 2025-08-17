@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Hero Section for Simple Mode or Empty State -->
-    <HeroSection v-if="!ticketsStore.hasTickets || ticketsStore.isSimpleMode" />
+    <HeroSection v-if="!ticketsStore.hasTickets" />
 
     <!-- Main Content Grid -->
     <div
