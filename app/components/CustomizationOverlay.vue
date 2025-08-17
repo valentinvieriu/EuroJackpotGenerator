@@ -5,10 +5,10 @@
     @click.self="closeOverlay"
   >
     <div
-      class="bg-casino-blue-dark rounded-xl shadow-2xl p-6 border border-casino-blue-light/30 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+      class="bg-casino-blue-dark rounded-xl shadow-2xl border border-casino-blue-light/30 max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
     >
       <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center p-6 pb-4">
         <h2 class="text-2xl font-bold text-casino-gold-light">
           Customize Your Tickets
         </h2>
@@ -33,40 +33,41 @@
         </button>
       </div>
 
-      <!-- Customization Form -->
-      <form @submit.prevent="handleGenerate">
-        <div class="grid gap-4 mb-6 grid-cols-1 lg:grid-cols-3 items-end">
-          <!-- Ticket Type -->
-          <div>
-            <label
-              for="ticketType"
-              class="mb-2 block text-gray-400 text-sm font-medium"
-            >
-              Pick Format:
-            </label>
-            <select
-              id="ticketType"
-              v-model="selectedTicketType"
-              class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
-              aria-label="Select Ticket System Type"
-            >
-              <option
-                v-for="type in ticketTypes"
-                :key="type.label"
-                :value="type"
-                class="bg-casino-blue-dark text-gray-200"
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto px-6 text-left">
+        <!-- Customization Form -->
+        <form @submit.prevent="handleGenerate">
+          <div class="flex flex-col sm:flex-row gap-4 mb-6 items-end">
+            <!-- Ticket Type -->
+            <div class="flex-1">
+              <label
+                for="ticketType"
+                class="mb-2 block text-gray-400 text-sm font-medium"
               >
-                {{ type.label }} (€{{ type.price.toFixed(2) }})
-              </option>
-            </select>
-          </div>
+                Pick Format:
+              </label>
+              <select
+                id="ticketType"
+                v-model="selectedTicketType"
+                class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
+                aria-label="Select Ticket System Type"
+              >
+                <option
+                  v-for="type in ticketTypes"
+                  :key="type.label"
+                  :value="type"
+                  class="bg-casino-blue-dark text-gray-200"
+                >
+                  {{ type.label }} (€{{ type.price.toFixed(2) }})
+                </option>
+              </select>
+            </div>
 
-          <!-- Quantity -->
-          <div>
-            <label class="mb-2 block text-gray-400 text-sm font-medium">
-              Quantity:
-            </label>
-            <div class="flex flex-col items-start gap-3">
+            <!-- Quantity -->
+            <div class="flex-shrink-0 w-full sm:w-auto">
+              <label class="mb-2 block text-gray-400 text-sm font-medium">
+                Quantity:
+              </label>
               <StepperInput
                 v-model="ticketCount"
                 :min="1"
@@ -75,211 +76,154 @@
             </div>
           </div>
 
-          <!-- Total -->
-          <div class="text-right sm:text-left">
-            <label class="mb-2 block text-gray-400 text-sm font-medium">
-              Total:
-            </label>
-            <div
-              class="flex flex-col items-end sm:items-start justify-center h-10"
-            >
-              <span class="text-2xl font-bold text-casino-gold-light">
-                €{{ totalPrice.toFixed(2) }}
-              </span>
-              <span class="text-xs text-gray-400 -mt-1">
-                €{{ ticketsStore.systemCost.toFixed(2) }} × {{ ticketCount }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Selection Method -->
-        <div class="mt-8">
-          <label class="mb-3 block text-gray-400 text-sm font-medium">
-            Selection Method:
-          </label>
-          <div class="space-y-3">
-            <!-- Random Method -->
+          <!-- Selection Method -->
+          <div class="mt-8 pb-20">
             <label
-              class="flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+              for="selectionMethodDropdown"
+              class="mb-3 block text-gray-400 text-sm font-medium"
             >
-              <input
-                v-model="selectionMethod"
-                value="random"
-                type="radio"
-                name="selectionMethod"
-                class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-              />
-              <span class="text-sm text-gray-200">
-                <strong>Random (recommended)</strong><br />
-                <span class="text-xs text-gray-400">
-                  Pure random number selection
-                </span>
-              </span>
+              Selection Method:
             </label>
 
-            <!-- Weighted Method -->
-            <div class="space-y-0">
-              <label
-                class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
+            <!-- Dropdown Selector -->
+            <select
+              id="selectionMethodDropdown"
+              v-model="selectionMethod"
+              class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200 mb-4"
+            >
+              <option value="random" class="bg-casino-blue-dark text-gray-200">
+                Random (recommended) - Pure random number selection
+              </option>
+              <option
+                value="unpopular"
+                class="bg-casino-blue-dark text-gray-200"
               >
-                <div class="flex items-center gap-3">
-                  <input
-                    v-model="selectionMethod"
-                    value="weighted"
-                    type="radio"
-                    name="selectionMethod"
-                    class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                  />
-                  <span class="text-sm text-gray-200">
-                    <strong>Weighted by past frequencies</strong><br />
-                    <span class="text-xs text-gray-400">
-                      Past draws don't affect future results.
-                      <a
-                        href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-casino-gold hover:text-casino-gold-light underline"
-                        @click.stop
-                      >
-                        Method details
-                      </a>
-                    </span>
-                  </span>
-                </div>
-                <button
-                  v-if="selectionMethod === 'weighted'"
-                  type="button"
-                  class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
-                  :class="{ 'rotate-180': showFrequencyDetails }"
-                  @click.stop="toggleFrequencyDetails"
-                >
-                  ▼
-                </button>
-              </label>
+                Random (unpopular) - Avoids common patterns to minimise prize
+                sharing
+              </option>
+              <option
+                value="favorites"
+                class="bg-casino-blue-dark text-gray-200"
+              >
+                Your favorite numbers - Prioritise your chosen numbers
+              </option>
+              <option
+                value="weighted"
+                class="bg-casino-blue-dark text-gray-200"
+              >
+                Weighted by past frequencies - Uses historical draw data
+              </option>
+            </select>
 
-              <!-- Frequency Details Accordion -->
-              <div
-                v-if="selectionMethod === 'weighted' && showFrequencyDetails"
-                class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
-              >
+            <!-- Dynamic Content Area -->
+            <div
+              class="mt-4 p-6 bg-casino-blue/20 rounded-lg border border-casino-blue-light/20 transition-all duration-200 text-left"
+            >
+              <!-- Random Method Content -->
+              <div v-if="selectionMethod === 'random'">
+                <p class="text-gray-300 mb-3 text-sm leading-relaxed">
+                  Uses cryptographically secure random number generation for
+                  completely unbiased selection, giving every combination equal
+                  probability.
+                </p>
+                <div
+                  class="text-xs text-gray-400 bg-casino-blue/30 p-3 rounded-md"
+                >
+                  <strong>🔒 Technical:</strong> Built on Web Crypto API. Future
+                  versions may include quantum random number generation.
+                </div>
+              </div>
+
+              <!-- Unpopular Method Content -->
+              <div v-if="selectionMethod === 'unpopular'">
+                <p class="text-gray-300 mb-3 text-sm leading-relaxed">
+                  Generates multiple combinations and selects the one with
+                  patterns least commonly chosen by other players, potentially
+                  reducing prize sharing.
+                </p>
+                <UnpopularityDisplay />
+              </div>
+
+              <!-- Favorites Method Content -->
+              <div v-if="selectionMethod === 'favorites'">
+                <p class="text-gray-300 mb-3 text-sm leading-relaxed">
+                  Prioritises your chosen numbers during generation, combined
+                  with weighted selection for remaining slots.
+                </p>
+                <FavoriteNumbersSelector />
+              </div>
+
+              <!-- Weighted Method Content -->
+              <div v-if="selectionMethod === 'weighted'">
+                <p class="text-gray-300 mb-3 text-sm leading-relaxed">
+                  Uses historical frequency data to weight number selection.
+                  Past draws don't affect future results - purely educational.
+                </p>
+                <a
+                  href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-casino-gold hover:text-casino-gold-light underline text-xs mb-3 inline-block"
+                >
+                  Method details →
+                </a>
                 <FrequencyDisplay />
               </div>
             </div>
+          </div>
+        </form>
+      </div>
 
-            <!-- Favorites Method -->
-            <div class="space-y-0">
-              <label
-                class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-              >
-                <div class="flex items-center gap-3">
-                  <input
-                    v-model="selectionMethod"
-                    value="favorites"
-                    type="radio"
-                    name="selectionMethod"
-                    class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                  />
-                  <span class="text-sm text-gray-200">
-                    <strong>Your favorite numbers</strong><br />
-                    <span class="text-xs text-gray-400">
-                      Prioritize up to 5 favorite numbers for each pool
-                    </span>
-                  </span>
-                </div>
-                <button
-                  v-if="selectionMethod === 'favorites'"
-                  type="button"
-                  class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
-                  :class="{ 'rotate-180': showFavoritesDetails }"
-                  @click.stop="toggleFavoritesDetails"
-                >
-                  ▼
-                </button>
-              </label>
+      <!-- Fixed Footer -->
+      <div
+        class="bg-casino-blue-dark border-t border-casino-blue-light/30 p-6 rounded-b-xl"
+      >
+        <div
+          class="flex flex-col sm:flex-row justify-between items-center gap-4"
+        >
+          <!-- Price Display -->
+          <div class="flex flex-col items-center sm:items-start">
+            <span class="text-xl font-bold text-casino-gold-light">
+              €{{ totalPrice.toFixed(2) }}
+            </span>
+            <span class="text-xs text-gray-400">
+              €{{ ticketsStore.systemCost.toFixed(2) }} × {{ ticketCount }}
+            </span>
+          </div>
 
-              <!-- Favorites Details Accordion -->
-              <div
-                v-if="selectionMethod === 'favorites' && showFavoritesDetails"
-                class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
-              >
-                <FavoriteNumbersSelector />
-              </div>
-            </div>
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              class="px-5 py-2 rounded-md font-semibold border border-navy-muted text-ivory bg-transparent hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+              @click="closeOverlay"
+            >
+              Cancel
+            </button>
 
-            <!-- Unpopular Method -->
-            <div class="space-y-0">
-              <label
-                class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-              >
-                <div class="flex items-center gap-3">
-                  <input
-                    v-model="selectionMethod"
-                    value="unpopular"
-                    type="radio"
-                    name="selectionMethod"
-                    class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                  />
-                  <span class="text-sm text-gray-200">
-                    <strong>Random (unpopular)</strong><br />
-                    <span class="text-xs text-gray-400">
-                      Avoids common patterns to minimise prize sharing
-                    </span>
-                  </span>
-                </div>
-                <button
-                  v-if="selectionMethod === 'unpopular'"
-                  type="button"
-                  class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
-                  :class="{ 'rotate-180': showUnpopularDetails }"
-                  @click.stop="toggleUnpopularDetails"
-                >
-                  ▼
-                </button>
-              </label>
-
-              <!-- Unpopular Details Accordion -->
-              <div
-                v-if="selectionMethod === 'unpopular' && showUnpopularDetails"
-                class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
-              >
-                <UnpopularityDisplay />
-              </div>
-            </div>
+            <button
+              :disabled="loading"
+              type="submit"
+              class="bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-6 py-3 rounded-md font-bold hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition-all duration-150 text-lg shadow-lg"
+              @click="handleGenerate"
+            >
+              {{
+                loading
+                  ? 'Generating...'
+                  : hasTickets
+                    ? 'Update Numbers'
+                    : 'Generate Numbers'
+              }}
+            </button>
           </div>
         </div>
-
-        <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-8">
-          <button
-            type="button"
-            class="px-5 py-2 rounded-md font-semibold border border-navy-muted text-ivory bg-transparent hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
-            @click="closeOverlay"
-          >
-            Cancel
-          </button>
-
-          <button
-            :disabled="loading"
-            type="submit"
-            class="bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-6 py-3 rounded-md font-bold hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition-all duration-150 text-lg shadow-lg"
-          >
-            {{
-              loading
-                ? 'Generating...'
-                : hasTickets
-                  ? 'Update Numbers'
-                  : 'Generate Numbers'
-            }}
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { systemPrice } from '~/utils/pricing'
 import { TICKET_COUNT_MAX } from '~/utils/constants'
 import StepperInput from './StepperInput.vue'
@@ -387,34 +331,6 @@ const selectionMethod = computed<
 const loading = computed(() => ticketsStore.isGenerating)
 const hasTickets = computed(() => ticketsStore.hasTickets)
 const totalPrice = computed(() => ticketsStore.totalPrice)
-
-// Accordion state
-const showFrequencyDetails = ref(false)
-const showFavoritesDetails = ref(false)
-const showUnpopularDetails = ref(false)
-
-const toggleFrequencyDetails = () => {
-  showFrequencyDetails.value = !showFrequencyDetails.value
-}
-
-const toggleFavoritesDetails = () => {
-  showFavoritesDetails.value = !showFavoritesDetails.value
-}
-
-const toggleUnpopularDetails = () => {
-  showUnpopularDetails.value = !showUnpopularDetails.value
-}
-
-// Auto-expand accordions when methods are selected
-watch(selectionMethod, (newMethod) => {
-  if (newMethod === 'weighted') {
-    showFrequencyDetails.value = true
-  } else if (newMethod === 'favorites') {
-    showFavoritesDetails.value = true
-  } else if (newMethod === 'unpopular') {
-    showUnpopularDetails.value = true
-  }
-})
 
 // Event handlers
 const closeOverlay = () => {

@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Main Numbers Section -->
     <div>
       <div class="flex items-center justify-between mb-3">
@@ -150,14 +150,6 @@
           numbers selected
         </div>
       </div>
-    </div>
-
-    <!-- Info Message -->
-    <div class="text-xs text-gray-500 bg-casino-blue/40 p-3 rounded-md">
-      <strong>💡 How it works:</strong> Your favorite numbers will be
-      prioritized during ticket generation, combined with the weighted algorithm
-      for remaining slots. This gives your preferred numbers a higher chance of
-      being selected while maintaining statistical balance.
     </div>
   </div>
 </template>
