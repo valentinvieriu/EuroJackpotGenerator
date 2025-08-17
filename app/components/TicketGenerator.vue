@@ -121,7 +121,7 @@
               </h2>
               <div class="flex gap-2">
                 <button
-                  class="px-2 py-1 text-sm text-brand-gold hover:text-brand-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 rounded"
+                  class="px-2 py-1 text-sm text-brand-gold hover:text-brand-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 rounded cursor-pointer"
                   title="Create shareable link for these numbers"
                   @click="ticketsStore.share"
                 >
@@ -129,20 +129,20 @@
                 </button>
                 <button
                   v-if="ticketsStore.isCustomMode"
-                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-surface-card-hover text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400"
+                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-surface-card-hover text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 cursor-pointer"
                   @click="toggleGenerationForm()"
                 >
                   Modify
                 </button>
                 <button
                   v-else
-                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-surface-card-hover text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400"
+                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-surface-card-hover text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 cursor-pointer"
                   @click="handleCustomizeFromSimpleMode()"
                 >
                   Customize
                 </button>
                 <button
-                  class="px-3 py-1 text-sm border border-border-primary text-brand-gold rounded-md transition duration-150 hover:bg-brand-gold hover:text-casino-blue-dark focus:outline-none focus:ring-2 focus:ring-brand-gold-400"
+                  class="px-3 py-1 text-sm border border-border-primary text-brand-gold rounded-md transition duration-150 hover:bg-brand-gold hover:text-casino-blue-dark focus:outline-none focus:ring-2 focus:ring-brand-gold-400 cursor-pointer"
                   @click="resetTickets"
                 >
                   Reset
@@ -150,15 +150,21 @@
               </div>
             </div>
 
-            <div class="space-y-4">
+            <TransitionGroup
+              name="ticket-entry"
+              tag="div"
+              class="space-y-4"
+              appear
+            >
               <TicketComponent
-                v-for="ticket in tickets"
+                v-for="(ticket, index) in tickets"
                 :key="ticket.id"
                 :ticket="ticket"
                 :ticket-number="ticket.id"
+                :style="{ '--entry-delay': `${index * 150}ms` }"
                 @delete="handleDeleteTicket"
               />
-            </div>
+            </TransitionGroup>
           </div>
         </div>
       </div>
@@ -233,15 +239,19 @@
             {{ error }}
           </div>
 
-          <div v-else-if="!loading">
-            <SingleDrawPanel
-              v-if="activeMode === 'single'"
-              :tickets="tickets"
-            />
-            <MonteCarloPanel
-              v-if="activeMode === 'montecarlo'"
-              :tickets="tickets"
-            />
+          <div v-else-if="!loading" class="relative">
+            <Transition name="mode-switch" mode="out-in">
+              <SingleDrawPanel
+                v-if="activeMode === 'single'"
+                key="single"
+                :tickets="tickets"
+              />
+              <MonteCarloPanel
+                v-else-if="activeMode === 'montecarlo'"
+                key="montecarlo"
+                :tickets="tickets"
+              />
+            </Transition>
           </div>
         </div>
       </div>
@@ -405,5 +415,96 @@ input[type='number'] {
   .grid {
     transition: grid-template-columns 500ms ease-in-out;
   }
+}
+
+/* Ticket generation entry animations */
+.ticket-entry-enter-active {
+  transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition-delay: var(--entry-delay, 0ms);
+}
+
+.ticket-entry-leave-active {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.ticket-entry-enter-from {
+  opacity: 0;
+  transform: translateY(40px) scale(0.95) rotateX(10deg);
+}
+
+.ticket-entry-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95) rotateX(-5deg);
+}
+
+.ticket-entry-enter-to,
+.ticket-entry-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1) rotateX(0deg);
+}
+
+/* Smooth reordering transitions */
+.ticket-entry-move {
+  transition: transform 0.4s ease;
+}
+
+/* Add a subtle entrance animation for the entire tickets section */
+@keyframes tickets-section-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mode switching animations */
+.mode-switch-enter-active,
+.mode-switch-leave-active {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.mode-switch-enter-from {
+  opacity: 0;
+  transform: translateX(20px) scale(0.98);
+}
+
+.mode-switch-leave-to {
+  opacity: 0;
+  transform: translateX(-20px) scale(0.98);
+}
+
+.mode-switch-enter-to,
+.mode-switch-leave-from {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+/* Enhanced tab buttons with sliding indicator */
+.flex.border-b {
+  position: relative;
+  overflow: hidden;
+}
+
+.flex.border-b::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 50%;
+  background: linear-gradient(
+    90deg,
+    var(--color-brand-gold-400),
+    var(--color-brand-gold-light)
+  );
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(0);
+}
+
+.flex.border-b:has(button:nth-child(2).text-brand-gold)::after {
+  transform: translateX(100%);
 }
 </style>

@@ -2,7 +2,7 @@
   <!-- TicketItem component - renamed to meet multi-word requirement -->
   <div
     :class="[
-      'rounded-lg p-4 transition-all duration-300 card-interactive',
+      'rounded-lg p-4 transition-all duration-300',
       isWinner
         ? 'casino-card-premium border-2 border-border-primary ring-2 ring-brand-gold-400/50 glow-gold'
         : 'casino-card hover-lift',
@@ -14,12 +14,14 @@
         <span v-if="ticket.linesCount" class="ml-2 text-sm text-content-muted">
           ({{ ticket.linesCount }} lines)
         </span>
-        <span
-          v-if="ticket.winClass"
-          :class="['ml-2 font-bold', getWinClassTextClass(ticket.winClass)]"
-        >
-          - Winner Class {{ ticket.winClass }}!
-        </span>
+        <Transition name="winner-badge" appear>
+          <span
+            v-if="ticket.winClass"
+            :class="['ml-2 font-bold', getWinClassTextClass(ticket.winClass)]"
+          >
+            🏆 Winner Class {{ ticket.winClass }}!
+          </span>
+        </Transition>
       </h3>
       <button
         class="text-content-muted hover:text-error hover:bg-red-900/20 rounded-full p-1 transition-colors duration-200 flex-shrink-0"
@@ -47,12 +49,19 @@
         >Main Numbers:</span
       >
       <div class="flex flex-wrap gap-2">
-        <TicketNumber
-          v-for="number in ticket.mainNumbers"
-          :key="'main-' + number"
-          :number="number"
-          :is-winner="ticket.winningMainNumbers?.includes(number) || false"
-        />
+        <TransitionGroup
+          name="winning-number"
+          tag="div"
+          class="flex flex-wrap gap-2"
+        >
+          <TicketNumber
+            v-for="(number, index) in ticket.mainNumbers"
+            :key="'main-' + number"
+            :number="number"
+            :is-winner="ticket.winningMainNumbers?.includes(number) || false"
+            :style="{ '--win-delay': `${index * 50}ms` }"
+          />
+        </TransitionGroup>
       </div>
     </div>
     <div>
@@ -60,35 +69,54 @@
         >Euro Numbers:</span
       >
       <div class="flex flex-wrap gap-2">
-        <TicketNumber
-          v-for="number in ticket.euroNumbers"
-          :key="'euro-' + number"
-          :number="number"
-          :is-winner="ticket.winningEuroNumbers?.includes(number) || false"
-          type="euro"
-        />
+        <TransitionGroup
+          name="winning-number"
+          tag="div"
+          class="flex flex-wrap gap-2"
+        >
+          <TicketNumber
+            v-for="(number, index) in ticket.euroNumbers"
+            :key="'euro-' + number"
+            :number="number"
+            :is-winner="ticket.winningEuroNumbers?.includes(number) || false"
+            type="euro"
+            :style="{
+              '--win-delay': `${(index + ticket.mainNumbers.length) * 50}ms`,
+            }"
+          />
+        </TransitionGroup>
       </div>
     </div>
 
     <!-- Per-class breakdown for system tickets -->
-    <div
-      v-if="winClassBreakdown.length > 0"
-      class="mt-3 pt-3 border-t border-casino-blue-light/30"
-    >
-      <span class="font-medium text-sm text-content-muted block mb-1"
-        >Winning Lines:</span
+    <Transition name="prize-reveal" appear>
+      <div
+        v-if="winClassBreakdown.length > 0"
+        class="mt-3 pt-3 border-t border-casino-blue-light/30"
       >
-      <div class="flex flex-wrap gap-2">
-        <span
-          v-for="{ winClass, count } in winClassBreakdown"
-          :key="winClass"
-          :class="[getWinClassChipClasses(winClass), 'cursor-help']"
-          :title="getPrizeTooltip(winClass, count)"
+        <span class="font-medium text-sm text-content-muted block mb-1"
+          >Winning Lines:</span
         >
-          {{ count }}×Class {{ winClass }}
-        </span>
+        <div class="flex flex-wrap gap-2">
+          <TransitionGroup
+            name="prize-chip"
+            tag="div"
+            class="flex flex-wrap gap-2"
+            appear
+          >
+            <span
+              v-for="({ winClass, count }, index) in winClassBreakdown"
+              :key="winClass"
+              :class="[getWinClassChipClasses(winClass), 'cursor-help']"
+              :title="getPrizeTooltip(winClass, count)"
+              :style="{ '--chip-delay': `${index * 100}ms` }"
+            >
+              {{ count }}×Class {{ winClass }}
+            </span>
+          </TransitionGroup>
+        </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
@@ -164,3 +192,115 @@ const getWinClassChipClasses = (winClass: number) => {
   }
 }
 </script>
+
+<style scoped>
+/* Winner badge slide-in animation */
+.winner-badge-enter-active {
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.winner-badge-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.winner-badge-enter-from {
+  opacity: 0;
+  transform: translateX(-30px) scale(0.8);
+}
+
+.winner-badge-leave-to {
+  opacity: 0;
+  transform: translateX(30px) scale(0.8);
+}
+
+/* Winning numbers celebration */
+.winning-number-enter-active {
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition-delay: var(--win-delay, 0ms);
+}
+
+.winning-number-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.winning-number-enter-from {
+  opacity: 0;
+  transform: scale(0.5) rotateZ(-180deg);
+}
+
+.winning-number-leave-to {
+  opacity: 0;
+  transform: scale(0.5) rotateZ(180deg);
+}
+
+/* Prize reveal animation */
+.prize-reveal-enter-active {
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition-delay: 200ms;
+}
+
+.prize-reveal-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.prize-reveal-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+  max-height: 0;
+}
+
+.prize-reveal-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+}
+
+/* Prize chip staggered entry */
+.prize-chip-enter-active {
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition-delay: var(--chip-delay, 0ms);
+}
+
+.prize-chip-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.prize-chip-enter-from {
+  opacity: 0;
+  transform: translateY(-15px) scale(0.9);
+}
+
+.prize-chip-leave-to {
+  opacity: 0;
+  transform: translateY(15px) scale(0.9);
+}
+
+/* Enhanced winner card pulsing */
+.glow-gold {
+  animation: winner-celebration 2s ease-in-out infinite;
+}
+
+@keyframes winner-celebration {
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px var(--color-brand-gold-400),
+      0 0 40px var(--color-brand-gold-300),
+      inset 0 0 20px var(--color-brand-gold-400);
+  }
+  50% {
+    box-shadow:
+      0 0 30px var(--color-brand-gold-400),
+      0 0 60px var(--color-brand-gold-300),
+      0 0 90px var(--color-brand-gold-200),
+      inset 0 0 30px var(--color-brand-gold-400);
+    transform: scale(1.02);
+  }
+}
+
+/* Smooth move transitions for reordering */
+.winning-number-move,
+.prize-chip-move {
+  transition: transform 0.3s ease;
+}
+</style>
