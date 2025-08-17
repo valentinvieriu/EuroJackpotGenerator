@@ -9,7 +9,7 @@
       :class="[
         'transition-all duration-500 ease-in-out',
         tickets.length > 0
-          ? 'space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-6 lg:items-stretch'
+          ? 'flex flex-col-reverse gap-6 lg:flex-row lg:grid lg:grid-cols-5 lg:gap-6 lg:items-stretch'
           : 'block',
       ]"
     >
