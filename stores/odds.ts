@@ -4,7 +4,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed, readonly } from 'vue'
+import { ref, computed } from 'vue'
 import type { EurojackpotHistoricOdds } from '~/schemas'
 import { buildOddsMap } from '~/utils/payout'
 import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
@@ -177,8 +177,8 @@ export const useOddsStore = defineStore('odds', () => {
 
   // Return store interface
   return {
-    // State (readonly)
-    cache: readonly(cache),
+    // State
+    cache,
 
     // Computed
     isExpired,

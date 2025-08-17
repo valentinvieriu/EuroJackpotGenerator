@@ -5,7 +5,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed, readonly, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Ticket, StatisticsData } from '~/schemas'
 import type {
   AppConfig,
@@ -868,8 +868,8 @@ export const useTicketsStore = defineStore('tickets', () => {
 
   // Return store interface
   return {
-    // State (readonly)
-    state: readonly(state),
+    // State
+    state,
 
     // Computed
     hasTickets,

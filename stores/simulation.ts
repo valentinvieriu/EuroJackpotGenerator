@@ -4,7 +4,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed, readonly } from 'vue'
+import { ref, computed } from 'vue'
 import type {
   BatchSimulationResult,
   BatchSimulationRequest,
@@ -1009,7 +1009,7 @@ export const useSimulationStore = defineStore('simulation', () => {
   // Return store interface
   return {
     // State
-    state: readonly(state),
+    state,
 
     // Computed
     isRunning,
