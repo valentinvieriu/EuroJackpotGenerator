@@ -1,6 +1,9 @@
 <template>
-  <div class="container mx-auto px-4 py-12 min-h-screen">
-    <TicketGenerator />
+  <div class="container mx-auto px-4 py-12 min-h-screen relative">
+    <BouncingBallsCanvas />
+    <div class="relative z-10">
+      <TicketGenerator />
+    </div>
   </div>
 </template>
 

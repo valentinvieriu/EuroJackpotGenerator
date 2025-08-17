@@ -41,9 +41,7 @@ eslint.config.js
 tsconfig.json
 
 # Documentation (keep only essential)
-README.md
-AGENTS.md
-CLAUDE.md
+*.md
 ai_docs/*
 !ai_docs/ARCHITECTURE.md
 __tests__

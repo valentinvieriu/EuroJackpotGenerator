@@ -1,6 +1,9 @@
 <template>
-  <div class="text-center mb-8">
-    <div class="max-w-4xl mx-auto">
+  <div class="relative text-center mb-8">
+    <!-- Bouncing balls background -->
+    <BouncingBallsCanvas />
+
+    <div class="relative z-10 max-w-4xl mx-auto">
       <h1
         class="text-3xl md:text-4xl font-bold text-casino-gold-light tracking-wider font-serif shadow-sm mb-4"
       >
@@ -14,7 +17,7 @@
       <!-- Simple Mode CTA -->
       <div
         v-if="!hasTickets"
-        class="bg-gradient-to-br from-casino-blue-dark to-casino-blue rounded-xl shadow-2xl p-8 mb-8 border border-casino-blue-light/30"
+        class="bg-gradient-to-br from-casino-blue-dark/90 to-casino-blue/90 backdrop-blur-sm rounded-xl shadow-2xl p-8 mb-8 border border-casino-blue-light/30"
       >
         <div class="mb-6">
           <div class="text-4xl mb-3">🎰</div>
@@ -78,7 +81,7 @@
 
       <!-- Educational disclaimer -->
       <div
-        class="inline-flex items-center px-4 py-2 bg-casino-blue/40 rounded-full mb-4"
+        class="inline-flex items-center px-4 py-2 bg-casino-blue/60 backdrop-blur-sm rounded-full mb-4"
       >
         <svg
           class="w-4 h-4 text-green-400 mr-2"
@@ -108,6 +111,7 @@ import {
 import { systemPrice } from '~/utils/pricing'
 import StepperInput from './StepperInput.vue'
 import CustomizationOverlay from './CustomizationOverlay.vue'
+import BouncingBallsCanvas from './BouncingBallsCanvas.vue'
 
 const ticketsStore = useTicketsStore()
 
