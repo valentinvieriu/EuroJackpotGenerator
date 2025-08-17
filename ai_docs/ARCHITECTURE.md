@@ -93,9 +93,10 @@ The application enforces strict **state layer separation** to maintain clarity a
 **Layer 2: Pinia Domain Stores (Business Logic & Caching)**
 
 - **Purpose**: Complex business logic, API orchestration, and application state management
-- **Scope**: Simulation lifecycle management, data caching, async operations
-- **Implementation**: Domain-specific stores (`tickets`, `simulation`, `odds`)
-- **Application State Flow**: Simulation lifecycle (`config` → `running` → `results`)
+- **Scope**: Simulation lifecycle management, data caching, async operations, mode state management
+- **Implementation**: Domain-specific stores (`tickets`, `simulation`, `odds`) with mode-aware state
+- **Application State Flow**: Mode selection (`simple`/`custom`) → Ticket configuration → Generation → Simulation lifecycle (`config` → `running` → `results`)
+- **Mode Management**: Simple mode auto-triggers single draw, custom mode provides full control
 
 **Layer 3: SSR-Safe Ephemeral State (UI State)**
 
@@ -219,6 +220,17 @@ const handleStartSimulation = () => {
 - Contain business logic or validation rules
 - Directly manipulate data structures
 
+### Overlay UI Pattern
+
+**Design Principle**: Centralized modal overlay architecture eliminates code duplication and ensures consistent user experience across all customization interfaces.
+
+**Implementation**: The `CustomizationOverlay` component provides a single, comprehensive modal interface that can be accessed from both the initial hero section and results screen. This pattern:
+
+- **Eliminates Duplication**: Replaces 270+ lines of duplicate form code with a single overlay component
+- **Ensures Consistency**: Identical customization experience regardless of entry point
+- **Maintains Accessibility**: Full keyboard navigation, backdrop blur, and click-outside-to-close functionality
+- **Follows Architecture**: Overlay remains a "dumb" UI component, dispatching all actions to `TicketsStore`
+
 ---
 
 ## System Components
@@ -229,7 +241,9 @@ const handleStartSimulation = () => {
 
 **Key Components**:
 
-- **TicketGenerator**: Orchestrates ticket configuration and generation through `TicketsStore`
+- **HeroSection**: Entry point component providing simple mode quick-start with interactive stepper and progressive disclosure to custom mode
+- **TicketGenerator**: Orchestrates ticket configuration and generation through `TicketsStore` with dual-mode support
+- **CustomizationOverlay**: Centralized modal overlay for all customization interfaces, providing consistent user experience across both first screen and results screen
 - **FavoriteNumbersSelector**: Visual interface for custom number selection with add/remove functionality
 - **UnpopularityDisplay**: Educational component explaining unpopular combination factors and cognitive biases
 - **FrequencyDisplay**: Comprehensive frequency visualization with bar charts and statistical analysis
@@ -239,7 +253,8 @@ const handleStartSimulation = () => {
 
 **Utility Organization**:
 
-- **Constants Management**: All numeric bounds centralized in `app/utils/constants.ts`
+- **Constants Management**: All numeric bounds centralized in `app/utils/constants.ts` including simple mode configuration
+- **Scroll Utilities**: Smooth navigation utilities in `app/utils/scrollUtils.ts` for mode transitions
 - **Pure Functions**: Mathematical calculations, data transformations in dedicated utilities
 - **Type Safety**: Comprehensive TypeScript coverage with Zod schema integration
 
@@ -340,6 +355,17 @@ The application supports four distinct number generation methods, each serving d
 
 ### Ticket Generation Flow
 
+**Simple Mode Flow**:
+
+1. **One-Click Start**: User clicks "Generate Random Tickets" in HeroSection
+1. **Auto-Configuration**: System applies simple mode defaults (10 tickets, 5+2 format, random method)
+1. **Generation**: Server generates tickets using uniform random algorithm
+1. **Auto-Simulation**: System automatically triggers single draw simulation
+1. **Results Display**: Immediate feedback with matches highlighted and ROI calculated
+
+**Custom Mode Flow**:
+
+1. **Mode Transition**: User switches from simple to custom mode via "Customize" button
 1. **User Configuration**: Component captures system parameters (main/euro numbers) and optional favorite numbers
 1. **Validation**: Zod schemas validate parameters including favorite number constraints before API call
 1. **Generation**: Server applies uniform, weighted, favorite-enhanced, or unpopular algorithms based on configuration

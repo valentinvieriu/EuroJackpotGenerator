@@ -111,6 +111,12 @@ export const POPULARITY_EURO_MONTH_SPREAD_THRESHOLD = 3 // Euro numbers spread t
 // EuroJackpot System Constants (for popularity scoring)
 export const EUROJACKPOT_TOTAL_COMBINATIONS = 139_838_160 // C(50,5) * C(12,2)
 
+// Simple Mode Configuration
+export const SIMPLE_MODE_TICKET_COUNT = 10
+export const SIMPLE_MODE_SYSTEM_MAIN = 5
+export const SIMPLE_MODE_SYSTEM_EURO = 2
+export const SIMPLE_MODE_METHOD = 'random' as const
+
 // Derived Arrays for Components
 export const WIN_CLASSES = Array.from(
   { length: WIN_CLASS_MAX - WIN_CLASS_MIN + 1 },

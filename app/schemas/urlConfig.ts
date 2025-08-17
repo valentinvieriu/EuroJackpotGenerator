@@ -59,6 +59,15 @@ export const SelectionMethodSchema = z.enum(
 )
 
 /**
+ * Schema for app mode
+ */
+export const AppModeSchema = z.enum(['simple', 'custom'], {
+  errorMap: () => ({
+    message: 'Mode must be "simple" or "custom"',
+  }),
+})
+
+/**
  * Schema for ticket count
  */
 export const TicketCountSchema = z.coerce
@@ -100,6 +109,7 @@ export const AppConfigSchema = z.object({
   system: TicketSystemSchema,
   tickets: TicketCountSchema,
   method: SelectionMethodSchema,
+  mode: AppModeSchema.optional(),
   lucky: LuckyCodeSchema.optional(),
   fav_main: z.string().optional(), // comma-separated favorite main numbers
   fav_euro: z.string().optional(), // comma-separated favorite euro numbers
@@ -118,6 +128,7 @@ export const UrlParamsSchema = z.object({
   system: z.string().optional(),
   tickets: z.string().optional(),
   method: z.string().optional(),
+  mode: z.string().optional(),
   lucky: z.string().optional(),
   fav_main: z.string().optional(),
   fav_euro: z.string().optional(),
@@ -138,6 +149,7 @@ export type AppConfig = z.infer<typeof AppConfigSchema>
 export type UrlParams = z.infer<typeof UrlParamsSchema>
 export type ParsedSystem = z.infer<typeof ParsedSystemSchema>
 export type SelectionMethod = z.infer<typeof SelectionMethodSchema>
+export type AppMode = z.infer<typeof AppModeSchema>
 export type FavoriteNumbers = z.infer<typeof FavoriteNumbersSchema>
 
 /**

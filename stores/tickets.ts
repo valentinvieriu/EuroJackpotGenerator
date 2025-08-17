@@ -11,6 +11,7 @@ import type {
   AppConfig,
   SelectionMethod,
   FavoriteNumbers,
+  AppMode,
 } from '~/schemas/urlConfig'
 import { useSimulationStore } from './simulation'
 import { useUIState, useTransientErrors } from '~/composables/useAppState'
@@ -35,6 +36,10 @@ import {
   EURO_NUMBER_MAX,
   FAVORITE_NUMBERS_MAX,
   MINIMUM_TICKETS_FOR_DELETION,
+  SIMPLE_MODE_TICKET_COUNT,
+  SIMPLE_MODE_SYSTEM_MAIN,
+  SIMPLE_MODE_SYSTEM_EURO,
+  SIMPLE_MODE_METHOD,
 } from '~/utils/constants'
 import { extractErrorMessage } from '~/utils/errors'
 
@@ -52,6 +57,8 @@ export interface TicketConfig {
 export interface TicketsState {
   phase: TicketPhase
   appState: AppState
+  mode: AppMode
+  autoSimulate: boolean
   tickets: Ticket[]
   config: TicketConfig
   luckyCode: string
@@ -72,7 +79,7 @@ export const useTicketsStore = defineStore('tickets', () => {
   const createDefaultConfig = (): TicketConfig => ({
     mainCount: 5,
     euroCount: 2,
-    ticketCount: 1,
+    ticketCount: SIMPLE_MODE_TICKET_COUNT, // Start with simple mode default
     method: 'weighted',
     favoriteNumbers: {
       mainNumbers: [],
@@ -84,6 +91,8 @@ export const useTicketsStore = defineStore('tickets', () => {
   const state = ref<TicketsState>({
     phase: 'fresh',
     appState: 'FRESH',
+    mode: 'simple',
+    autoSimulate: true,
     tickets: [],
     config: createDefaultConfig(),
     luckyCode: '',
@@ -100,6 +109,8 @@ export const useTicketsStore = defineStore('tickets', () => {
   const isGenerating = computed(() => state.value.phase === 'generating')
   const hasError = computed(() => !!state.value.error)
   const isShared = computed(() => state.value.appState === 'SHARED')
+  const isSimpleMode = computed(() => state.value.mode === 'simple')
+  const isCustomMode = computed(() => state.value.mode === 'custom')
 
   const hasFavoriteNumbers = computed(() => {
     const favorites = state.value.config.favoriteNumbers
@@ -211,6 +222,7 @@ export const useTicketsStore = defineStore('tickets', () => {
       ),
       tickets: state.value.config.ticketCount,
       method: state.value.config.method,
+      mode: state.value.mode,
       ...(state.value.luckyCode && { lucky: state.value.luckyCode }),
       ...(state.value.config.favoriteNumbers?.mainNumbers.length && {
         fav_main: state.value.config.favoriteNumbers.mainNumbers.join(','),
@@ -229,6 +241,36 @@ export const useTicketsStore = defineStore('tickets', () => {
   }
 
   // Semantic Actions
+
+  /**
+   * Generate simple tickets with auto-simulation - for quick start experience
+   */
+  const generateSimpleTickets = async (): Promise<void> => {
+    logger.debug('TicketsStore: Starting simple ticket generation')
+
+    // Set simple mode defaults
+    state.value.mode = 'simple'
+    state.value.autoSimulate = true
+    state.value.config.mainCount = SIMPLE_MODE_SYSTEM_MAIN
+    state.value.config.euroCount = SIMPLE_MODE_SYSTEM_EURO
+    // Keep current ticketCount (set by stepper in HeroSection)
+    state.value.config.method = SIMPLE_MODE_METHOD
+
+    // Generate tickets using the regular generation logic
+    await generate()
+
+    // If generation was successful and autoSimulate is enabled, trigger single draw
+    if (state.value.phase === 'ready' && state.value.autoSimulate) {
+      logger.debug('TicketsStore: Auto-triggering single draw for simple mode')
+      setTimeout(async () => {
+        try {
+          await simulationStore.runSingleDraw(totalPrice.value)
+        } catch (error) {
+          logger.error('TicketsStore: Auto single draw failed:', error)
+        }
+      }, 100) // Small delay to ensure UI has updated
+    }
+  }
 
   /**
    * Generate tickets - owns the API call, state transitions, and business logic
@@ -309,6 +351,10 @@ export const useTicketsStore = defineStore('tickets', () => {
 
       // Success - update state
       state.value.tickets = generatedTickets
+      // Update config to match actual tickets only if we received tickets
+      if (generatedTickets.length > 0) {
+        state.value.config.ticketCount = generatedTickets.length
+      }
       state.value.phase = 'ready'
       state.value.lastGenerated = Date.now()
 
@@ -422,6 +468,14 @@ export const useTicketsStore = defineStore('tickets', () => {
       state.value.config.method = config.method
     }
 
+    if (config.mode) {
+      state.value.mode = config.mode
+      // When switching to custom mode via URL, disable auto-simulate
+      if (config.mode === 'custom') {
+        state.value.autoSimulate = false
+      }
+    }
+
     // Handle favorite numbers if present
     if (config.fav_main || config.fav_euro) {
       if (!state.value.config.favoriteNumbers) {
@@ -523,6 +577,23 @@ export const useTicketsStore = defineStore('tickets', () => {
         updateBrowserUrl()
       }
     }, URL_DEBOUNCE_MS)
+  }
+
+  /**
+   * Switch application mode
+   */
+  const setMode = (mode: AppMode): void => {
+    state.value.mode = mode
+
+    // When switching to custom mode, disable auto-simulate
+    if (mode === 'custom') {
+      state.value.autoSimulate = false
+    } else if (mode === 'simple') {
+      state.value.autoSimulate = true
+    }
+
+    // Update URL to persist mode
+    updateBrowserUrl()
   }
 
   /**
@@ -805,6 +876,8 @@ export const useTicketsStore = defineStore('tickets', () => {
     isGenerating,
     hasError,
     isShared,
+    isSimpleMode,
+    isCustomMode,
     hasFavoriteNumbers,
     totalPrice,
     ticketTypeLabel,
@@ -818,11 +891,13 @@ export const useTicketsStore = defineStore('tickets', () => {
 
     // Actions
     generate,
+    generateSimpleTickets,
     reset,
     share,
     applyUrlConfig,
     handleUrlConfiguration,
     updateConfig,
+    setMode,
     setLuckyCode,
     clearError,
     removeTicket,

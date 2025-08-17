@@ -1,505 +1,267 @@
 <template>
-  <div
-    :class="[
-      'transition-all duration-500 ease-in-out',
-      tickets.length > 0
-        ? 'space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-6 lg:items-stretch'
-        : 'block',
-    ]"
-  >
-    <!-- Welcome message for shared Lucky Numbers -->
-    <div
-      v-if="showWelcomeMessage"
-      class="col-span-full bg-gradient-to-r from-casino-gold/20 to-casino-gold-light/20 border border-casino-gold/50 rounded-lg p-4 mb-6 relative"
-    >
-      <div class="flex items-start gap-3">
-        <div class="text-2xl">🎯</div>
-        <div class="flex-1">
-          <h3 class="text-lg font-semibold text-casino-gold-light mb-1">
-            Welcome to Lucky Numbers "{{ welcomeLuckyCode }}"!
-          </h3>
-          <p class="text-sm text-gray-300">
-            Someone shared their ticket configuration with you. The settings
-            below have been loaded automatically. Click "Generate Numbers" to
-            create the exact same tickets they had!
-          </p>
-        </div>
-        <button
-          class="text-gray-400 hover:text-gray-200 transition duration-150 p-1"
-          title="Dismiss"
-          @click="dismissWelcomeMessage"
-        >
-          ✕
-        </button>
-      </div>
-    </div>
+  <div>
+    <!-- Hero Section for Simple Mode or Empty State -->
+    <HeroSection v-if="!ticketsStore.hasTickets || ticketsStore.isSimpleMode" />
 
+    <!-- Main Content Grid -->
     <div
+      v-if="ticketsStore.hasTickets || ticketsStore.isCustomMode"
       :class="[
-        'space-y-6 transition-all duration-500',
-        tickets.length > 0 ? 'lg:col-span-2' : 'w-full',
+        'transition-all duration-500 ease-in-out',
+        tickets.length > 0
+          ? 'space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-6 lg:items-stretch'
+          : 'block',
       ]"
     >
+      <!-- Welcome message for shared Lucky Numbers -->
       <div
-        v-if="tickets.length === 0 || showGenerationForm"
-        class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
+        v-if="showWelcomeMessage"
+        class="col-span-full bg-gradient-to-r from-casino-gold/20 to-casino-gold-light/20 border border-casino-gold/50 rounded-lg p-4 mb-6 relative"
       >
-        <div class="mb-6">
-          <h2 class="text-xl font-semibold text-casino-gold-light mb-2">
-            {{ tickets.length === 0 ? 'Ticket Settings' : 'Modify Tickets' }}
-          </h2>
-          <p class="text-gray-400 text-sm">
-            Configure your EuroJackpot number generation
-          </p>
-        </div>
-
-        <form @submit.prevent="generateTicketsHandler">
-          <div
-            :class="[
-              'grid gap-4 mb-6',
-              tickets.length > 0
-                ? 'grid-cols-1 md:grid-cols-2 items-start' // Constrained: max 2 columns, align to top
-                : 'grid-cols-1 lg:grid-cols-3 items-end', // Full width: up to 3 columns, align to bottom
-            ]"
-          >
-            <div>
-              <label
-                for="ticketType"
-                class="mb-2 block text-gray-400 text-sm font-medium"
-                >Pick Format:</label
-              >
-              <select
-                id="ticketType"
-                v-model="selectedTicketType"
-                class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
-                aria-label="Select Ticket System Type"
-              >
-                <option
-                  v-for="type in ticketTypes"
-                  :key="type.label"
-                  :value="type"
-                  class="bg-casino-blue-dark text-gray-200"
-                >
-                  {{ type.label }} (€{{ type.price.toFixed(2) }})
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label class="mb-2 block text-gray-400 text-sm font-medium"
-                >Quantity:</label
-              >
-              <div
-                :class="[
-                  'flex gap-3',
-                  tickets.length > 0
-                    ? 'flex-col items-start' // Constrained: stack vertically
-                    : 'items-center', // Full width: horizontal alignment
-                ]"
-              >
-                <StepperInput
-                  v-model="ticketCount"
-                  :min="1"
-                  :max="TICKET_COUNT_MAX"
-                />
-                <span
-                  :class="[
-                    'text-sm text-gray-400',
-                    tickets.length > 0 ? 'text-xs' : '', // Smaller text when constrained
-                  ]"
-                >
-                  €{{ ticketsStore.systemCost.toFixed(2) }} per ticket
-                </span>
-              </div>
-            </div>
-
-            <div class="text-right sm:text-left">
-              <label class="mb-2 block text-gray-400 text-sm font-medium"
-                >Total:</label
-              >
-              <div
-                class="flex flex-col items-end sm:items-start justify-center h-10"
-              >
-                <span class="text-2xl font-bold text-casino-gold-light"
-                  >€{{ totalPrice.toFixed(2) }}</span
-                >
-                <span class="text-xs text-gray-400 -mt-1">
-                  €{{ ticketsStore.systemCost.toFixed(2) }} × {{ ticketCount }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-8">
-            <label class="mb-3 block text-gray-400 text-sm font-medium">
-              Selection Method:
-            </label>
-            <div class="space-y-3">
-              <label
-                class="flex items-center gap-3 p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-              >
-                <input
-                  v-model="selectionMethod"
-                  value="random"
-                  type="radio"
-                  name="selectionMethod"
-                  class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                />
-                <span class="text-sm text-gray-200">
-                  <strong>Random (recommended)</strong><br />
-                  <span class="text-xs text-gray-400"
-                    >Pure random number selection</span
-                  >
-                </span>
-              </label>
-              <div class="space-y-0">
-                <label
-                  class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-                >
-                  <div class="flex items-center gap-3">
-                    <input
-                      v-model="selectionMethod"
-                      value="weighted"
-                      type="radio"
-                      name="selectionMethod"
-                      class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                    />
-                    <span class="text-sm text-gray-200">
-                      <strong>Weighted by past frequencies</strong><br />
-                      <span class="text-xs text-gray-400">
-                        Past draws don't affect future results.
-                        <a
-                          href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="text-casino-gold hover:text-casino-gold-light underline"
-                          @click.stop
-                        >
-                          Method details
-                        </a>
-                      </span>
-                    </span>
-                  </div>
-                  <button
-                    v-if="selectionMethod === 'weighted'"
-                    type="button"
-                    class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
-                    :class="{ 'rotate-180': showFrequencyDetails }"
-                    @click.stop="toggleFrequencyDetails"
-                  >
-                    ▼
-                  </button>
-                </label>
-
-                <!-- Frequency Details Accordion Content -->
-                <div
-                  v-if="selectionMethod === 'weighted' && showFrequencyDetails"
-                  class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
-                >
-                  <FrequencyDisplay />
-                </div>
-              </div>
-              <div class="space-y-0">
-                <label
-                  class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-                >
-                  <div class="flex items-center gap-3">
-                    <input
-                      v-model="selectionMethod"
-                      value="favorites"
-                      type="radio"
-                      name="selectionMethod"
-                      class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                    />
-                    <span class="text-sm text-gray-200">
-                      <strong>Your favorite numbers</strong><br />
-                      <span class="text-xs text-gray-400">
-                        Prioritize up to 5 favorite numbers for each pool
-                      </span>
-                    </span>
-                  </div>
-                  <button
-                    v-if="selectionMethod === 'favorites'"
-                    type="button"
-                    class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
-                    :class="{ 'rotate-180': showFavoritesDetails }"
-                    @click.stop="toggleFavoritesDetails"
-                  >
-                    ▼
-                  </button>
-                </label>
-
-                <!-- Favorites Details Accordion Content -->
-                <div
-                  v-if="selectionMethod === 'favorites' && showFavoritesDetails"
-                  class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
-                >
-                  <FavoriteNumbersSelector />
-                </div>
-              </div>
-              <div class="space-y-0">
-                <label
-                  class="flex items-center justify-between p-3 rounded bg-casino-blue/40 border border-casino-blue-light/30 cursor-pointer hover:bg-casino-blue/60 transition-colors duration-150"
-                >
-                  <div class="flex items-center gap-3">
-                    <input
-                      v-model="selectionMethod"
-                      value="unpopular"
-                      type="radio"
-                      name="selectionMethod"
-                      class="w-4 h-4 text-casino-gold bg-casino-blue border-casino-blue-light focus:ring-casino-gold focus:ring-2"
-                    />
-                    <span class="text-sm text-gray-200">
-                      <strong>Random (unpopular)</strong><br />
-                      <span class="text-xs text-gray-400">
-                        Avoids common patterns to minimise prize sharing
-                      </span>
-                    </span>
-                  </div>
-                  <button
-                    v-if="selectionMethod === 'unpopular'"
-                    type="button"
-                    class="text-casino-gold-light transition-transform duration-200 hover:text-casino-gold"
-                    :class="{ 'rotate-180': showUnpopularDetails }"
-                    @click.stop="toggleUnpopularDetails"
-                  >
-                    ▼
-                  </button>
-                </label>
-
-                <!-- Unpopular Details Accordion Content -->
-                <div
-                  v-if="selectionMethod === 'unpopular' && showUnpopularDetails"
-                  class="mt-0 p-4 bg-casino-blue/20 border border-casino-blue-light/10 rounded-b-lg border-t-0"
-                >
-                  <UnpopularityDisplay />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex flex-col sm:flex-row justify-end gap-3 mt-8">
-            <button
-              v-if="tickets.length > 0 && showGenerationForm"
-              type="button"
-              class="px-5 py-2 rounded-md font-semibold border border-navy-muted text-ivory bg-transparent hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
-              @click="toggleGenerationForm()"
-            >
-              Cancel
-            </button>
-
-            <button
-              :disabled="loading"
-              type="submit"
-              class="bg-gradient-to-r from-casino-gold to-casino-gold-light text-casino-blue-dark px-6 py-3 rounded-md font-bold hover:from-casino-gold-light hover:to-[#FFE55C] focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-wait transition-all duration-150 text-lg shadow-lg"
-            >
-              {{
-                loading && currentOperation === 'generate'
-                  ? 'Generating...'
-                  : tickets.length > 0
-                    ? 'Update Numbers'
-                    : 'Generate Numbers'
-              }}
-            </button>
-          </div>
-        </form>
-      </div>
-      <!-- Lucky Numbers Sharing Dialog -->
-      <div
-        v-if="showSharingDialog"
-        class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-gold/50"
-      >
-        <div class="flex justify-between items-start mb-4">
-          <div>
+        <div class="flex items-start gap-3">
+          <div class="text-2xl">🎯</div>
+          <div class="flex-1">
             <h3 class="text-lg font-semibold text-casino-gold-light mb-1">
-              🎉 Lucky Numbers Created!
+              Welcome to Lucky Numbers "{{ welcomeLuckyCode }}"!
             </h3>
-            <p class="text-sm text-gray-400">
-              Your configuration has been saved as "{{ sharingLuckyCode }}"
+            <p class="text-sm text-gray-300">
+              Someone shared their ticket configuration with you. The settings
+              below have been loaded automatically. Click "Generate Numbers" to
+              create the exact same tickets they had!
             </p>
           </div>
           <button
-            class="text-gray-400 hover:text-gray-200 transition duration-150"
-            title="Close"
-            @click="hideSharing"
+            class="text-gray-400 hover:text-gray-200 transition duration-150 p-1"
+            title="Dismiss"
+            @click="dismissWelcomeMessage"
           >
             ✕
           </button>
         </div>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-400 mb-2">
-              Shareable link:
-            </label>
-            <div class="flex gap-2">
-              <input
-                :value="shareableUrl"
-                readonly
-                class="flex-1 px-3 py-2 bg-casino-blue border border-casino-blue-light/50 rounded-md text-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-casino-gold"
-              />
-              <button
-                :class="[
-                  'px-4 py-2 text-sm font-medium rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold',
-                  copySuccess
-                    ? 'bg-green-600 text-white'
-                    : 'bg-casino-gold text-casino-blue-dark hover:bg-casino-gold-light',
-                ]"
-                @click="copyShareableUrl"
-              >
-                {{ copySuccess ? '✓ Copied!' : 'Copy Link' }}
-              </button>
-            </div>
-          </div>
-
-          <div class="text-xs text-gray-500 bg-casino-blue/40 p-3 rounded-md">
-            <strong>💡 How it works:</strong> Anyone with this link can recreate
-            your exact ticket configuration and numbers. The lucky code "{{
-              sharingLuckyCode
-            }}" ensures the same results every time.
-          </div>
-        </div>
       </div>
 
-      <!-- Generated Tickets Section (moved to left column) -->
-      <div v-if="tickets.length && !loading && !showGenerationForm">
+      <div
+        :class="[
+          'space-y-6 transition-all duration-500',
+          tickets.length > 0 ? 'lg:col-span-2' : 'w-full',
+        ]"
+      >
+        <!-- Lucky Numbers Sharing Dialog -->
         <div
-          class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
+          v-if="showSharingDialog"
+          class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-gold/50"
         >
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-casino-gold-light">
-              Generated Tickets ({{ tickets.length }})
-            </h2>
-            <div class="flex gap-2">
-              <button
-                class="px-2 py-1 text-sm text-casino-gold hover:text-casino-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold rounded"
-                title="Create shareable link for these numbers"
-                @click="ticketsStore.share"
-              >
-                Share
-              </button>
-              <button
-                class="px-3 py-1 text-sm bg-navy-muted hover:bg-[#3B4B60] text-ivory rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold"
-                @click="toggleGenerationForm()"
-              >
-                Modify
-              </button>
-              <button
-                class="px-3 py-1 text-sm border border-casino-gold text-casino-gold rounded-md transition duration-150 hover:bg-casino-gold hover:text-casino-blue-dark focus:outline-none focus:ring-2 focus:ring-casino-gold"
-                @click="resetTickets"
-              >
-                Reset
-              </button>
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-lg font-semibold text-casino-gold-light mb-1">
+                🎉 Lucky Numbers Created!
+              </h3>
+              <p class="text-sm text-gray-400">
+                Your configuration has been saved as "{{ sharingLuckyCode }}"
+              </p>
             </div>
+            <button
+              class="text-gray-400 hover:text-gray-200 transition duration-150"
+              title="Close"
+              @click="hideSharing"
+            >
+              ✕
+            </button>
           </div>
 
           <div class="space-y-4">
-            <TicketComponent
-              v-for="ticket in tickets"
-              :key="ticket.id"
-              :ticket="ticket"
-              :ticket-number="ticket.id"
-              @delete="handleDeleteTicket"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">
+                Shareable link:
+              </label>
+              <div class="flex gap-2">
+                <input
+                  :value="shareableUrl"
+                  readonly
+                  class="flex-1 px-3 py-2 bg-casino-blue border border-casino-blue-light/50 rounded-md text-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                />
+                <button
+                  :class="[
+                    'px-4 py-2 text-sm font-medium rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold',
+                    copySuccess
+                      ? 'bg-green-600 text-white'
+                      : 'bg-casino-gold text-casino-blue-dark hover:bg-casino-gold-light',
+                  ]"
+                  @click="copyShareableUrl"
+                >
+                  {{ copySuccess ? '✓ Copied!' : 'Copy Link' }}
+                </button>
+              </div>
+            </div>
 
-    <div
-      v-if="tickets.length > 0"
-      :class="['transition-all duration-500', 'lg:col-span-3']"
-    >
-      <div
-        class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
-      >
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-semibold text-casino-gold-light">
-            Simulation
-          </h2>
-          <div
-            v-if="!loading"
-            class="flex border-b border-casino-blue-light/30"
-          >
-            <button
-              :class="[
-                'px-3 py-1 text-sm font-medium transition-colors duration-200 border-b-2 relative',
-                activeMode === 'single'
-                  ? 'text-casino-gold border-casino-gold'
-                  : 'text-gray-400 border-transparent hover:text-gray-300',
-              ]"
-              @click="handleModeChange('single')"
-            >
-              Single Draw
-            </button>
-            <button
-              :class="[
-                'px-3 py-1 text-sm font-medium transition-colors duration-200 border-b-2 relative',
-                activeMode === 'montecarlo'
-                  ? 'text-casino-gold border-casino-gold'
-                  : 'text-gray-400 border-transparent hover:text-gray-300',
-              ]"
-              @click="handleModeChange('montecarlo')"
-            >
-              Monte Carlo
-            </button>
+            <div class="text-xs text-gray-500 bg-casino-blue/40 p-3 rounded-md">
+              <strong>💡 How it works:</strong> Anyone with this link can
+              recreate your exact ticket configuration and numbers. The lucky
+              code "{{ sharingLuckyCode }}" ensures the same results every time.
+            </div>
           </div>
         </div>
 
-        <div v-if="loading" class="text-center text-gray-400 my-8">
-          <svg
-            class="animate-spin h-8 w-8 text-casino-gold-light mx-auto"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            />
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          <p class="mt-2">Processing {{ currentOperation }}...</p>
-        </div>
-
+        <!-- Generated Tickets Section (moved to left column) -->
         <div
-          v-else-if="error"
-          class="text-center text-red-400 bg-red-900/50 border border-red-500 p-4 rounded-md"
-          role="alert"
+          v-if="
+            tickets.length &&
+            !loading &&
+            (!showGenerationForm || !ticketsStore.isCustomMode)
+          "
         >
-          {{ error }}
-        </div>
+          <div
+            class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
+          >
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-semibold text-casino-gold-light">
+                Generated Tickets ({{ tickets.length }})
+              </h2>
+              <div class="flex gap-2">
+                <button
+                  class="px-2 py-1 text-sm text-casino-gold hover:text-casino-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold rounded"
+                  title="Create shareable link for these numbers"
+                  @click="ticketsStore.share"
+                >
+                  Share
+                </button>
+                <button
+                  v-if="ticketsStore.isCustomMode"
+                  class="px-3 py-1 text-sm bg-navy-muted hover:bg-[#3B4B60] text-ivory rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                  @click="toggleGenerationForm()"
+                >
+                  Modify
+                </button>
+                <button
+                  v-else
+                  class="px-3 py-1 text-sm bg-navy-muted hover:bg-[#3B4B60] text-ivory rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                  @click="handleCustomizeFromSimpleMode()"
+                >
+                  Customize
+                </button>
+                <button
+                  class="px-3 py-1 text-sm border border-casino-gold text-casino-gold rounded-md transition duration-150 hover:bg-casino-gold hover:text-casino-blue-dark focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                  @click="resetTickets"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
 
-        <div v-else-if="!loading">
-          <SingleDrawPanel v-if="activeMode === 'single'" :tickets="tickets" />
-          <MonteCarloPanel
-            v-if="activeMode === 'montecarlo'"
-            :tickets="tickets"
-          />
+            <div class="space-y-4">
+              <TicketComponent
+                v-for="ticket in tickets"
+                :key="ticket.id"
+                :ticket="ticket"
+                :ticket-number="ticket.id"
+                @delete="handleDeleteTicket"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="tickets.length > 0"
+        :class="['transition-all duration-500', 'lg:col-span-3']"
+      >
+        <div
+          class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
+        >
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-casino-gold-light">
+              Simulation
+            </h2>
+            <div
+              v-if="!loading"
+              class="flex border-b border-casino-blue-light/30"
+            >
+              <button
+                :class="[
+                  'px-3 py-1 text-sm font-medium transition-colors duration-200 border-b-2 relative',
+                  activeMode === 'single'
+                    ? 'text-casino-gold border-casino-gold'
+                    : 'text-gray-400 border-transparent hover:text-gray-300',
+                ]"
+                @click="handleModeChange('single')"
+              >
+                Single Draw
+              </button>
+              <button
+                :class="[
+                  'px-3 py-1 text-sm font-medium transition-colors duration-200 border-b-2 relative',
+                  activeMode === 'montecarlo'
+                    ? 'text-casino-gold border-casino-gold'
+                    : 'text-gray-400 border-transparent hover:text-gray-300',
+                ]"
+                @click="handleModeChange('montecarlo')"
+              >
+                Monte Carlo
+              </button>
+            </div>
+          </div>
+
+          <div v-if="loading" class="text-center text-gray-400 my-8">
+            <svg
+              class="animate-spin h-8 w-8 text-casino-gold-light mx-auto"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            <p class="mt-2">Processing {{ currentOperation }}...</p>
+          </div>
+
+          <div
+            v-else-if="error"
+            class="text-center text-red-400 bg-red-900/50 border border-red-500 p-4 rounded-md"
+            role="alert"
+          >
+            {{ error }}
+          </div>
+
+          <div v-else-if="!loading">
+            <SingleDrawPanel
+              v-if="activeMode === 'single'"
+              :tickets="tickets"
+            />
+            <MonteCarloPanel
+              v-if="activeMode === 'montecarlo'"
+              :tickets="tickets"
+            />
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Customization Overlay -->
+    <CustomizationOverlay
+      :is-open="showCustomizationOverlay"
+      @close="showCustomizationOverlay = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { systemPrice } from '~/utils/pricing'
+import { computed, onMounted, ref } from 'vue'
 import { useSimulationPanelState } from '~/composables/useAppState'
+import HeroSection from './HeroSection.vue'
 import SingleDrawPanel from './SingleDrawPanel.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
 import TicketComponent from './TicketItem.vue'
-import StepperInput from './StepperInput.vue'
-import FavoriteNumbersSelector from './FavoriteNumbersSelector.vue'
-import FrequencyDisplay from './FrequencyDisplay.vue'
 import { logger } from '~/utils/logger'
 import {
   formatTicketType,
@@ -507,94 +269,10 @@ import {
   getAppConfigUrl,
   type AppConfig,
 } from '~/utils/urlHash'
-import { TICKET_COUNT_MAX } from '~/utils/constants'
-
-interface TicketType {
-  label: string
-  mainCount: number
-  euroCount: number
-  price: number
-}
-
-// System presets - prices computed dynamically using systemPrice utility
-const systemPresets = [
-  [5, 2], // standard
-  [5, 3],
-  [5, 4],
-  [5, 5],
-  [5, 6],
-  [5, 7],
-  [5, 8],
-  [5, 9],
-  [5, 10],
-  [5, 11],
-  [5, 12],
-  [6, 2],
-  [6, 3],
-  [7, 2],
-  [7, 3],
-] as const
-
-const ticketTypes = computed(
-  (): ReadonlyArray<TicketType> =>
-    systemPresets.map(([mainCount, euroCount]) => ({
-      label:
-        mainCount === 5 && euroCount === 2
-          ? `${mainCount} main + ${euroCount} Euro numbers (standard)`
-          : `${mainCount} main + ${euroCount} Euro numbers`,
-      mainCount,
-      euroCount,
-      price: systemPrice(mainCount, euroCount),
-    }))
-)
+import CustomizationOverlay from './CustomizationOverlay.vue'
 
 // Store
 const ticketsStore = useTicketsStore()
-
-// Bind component controls directly to store config
-const selectedTicketType = computed<TicketType>({
-  get: () => {
-    const { mainCount, euroCount } = ticketsStore.state.config
-    const match = ticketTypes.value.find(
-      (t) => t.mainCount === mainCount && t.euroCount === euroCount
-    )
-    // Fallback to computed price for current store config if not in presets
-    return (
-      match ?? {
-        label:
-          mainCount === 5 && euroCount === 2
-            ? `${mainCount} main + ${euroCount} Euro numbers (standard)`
-            : `${mainCount} main + ${euroCount} Euro numbers`,
-        mainCount,
-        euroCount,
-        price: systemPrice(mainCount, euroCount),
-      }
-    )
-  },
-  set: (val) => {
-    ticketsStore.updateConfig({
-      mainCount: val.mainCount,
-      euroCount: val.euroCount,
-    })
-  },
-})
-
-const ticketCount = computed<number>({
-  get: () => ticketsStore.state.config.ticketCount,
-  set: (val) => {
-    const n = Number(val) || 1
-    ticketsStore.updateConfig({
-      ticketCount: Math.max(1, Math.min(TICKET_COUNT_MAX, n)),
-    })
-  },
-})
-
-const selectionMethod = computed<
-  'random' | 'weighted' | 'favorites' | 'unpopular'
->({
-  get: () => ticketsStore.state.config.method,
-  set: (val) => ticketsStore.updateConfig({ method: val }),
-})
 
 // Use store-derived decorated tickets (with highlights)
 const tickets = computed(() =>
@@ -605,42 +283,11 @@ const loading = computed(() => ticketsStore.isGenerating)
 // Error handling using centralized state
 const error = computed(() => ticketsStore.state.error || '')
 
-// Accordion state for frequency details
-const showFrequencyDetails = ref(false)
-const showFavoritesDetails = ref(false)
-const showUnpopularDetails = ref(false)
-
-const toggleFrequencyDetails = () => {
-  showFrequencyDetails.value = !showFrequencyDetails.value
-}
-
-const toggleFavoritesDetails = () => {
-  showFavoritesDetails.value = !showFavoritesDetails.value
-}
-
-const toggleUnpopularDetails = () => {
-  showUnpopularDetails.value = !showUnpopularDetails.value
-}
-
-// Auto-expand accordions when methods are selected
-watch(selectionMethod, (newMethod) => {
-  if (newMethod === 'weighted') {
-    showFrequencyDetails.value = true
-  } else if (newMethod === 'favorites') {
-    showFavoritesDetails.value = true
-  } else if (newMethod === 'unpopular') {
-    showUnpopularDetails.value = true
-  }
-})
-
 // UI mode (using shared simulation panel state)
 const { activeMode, setMode } = useSimulationPanelState()
 
 // Store-derived decorated tickets automatically update when simulation results change
 // No manual highlight application needed - tickets computed property handles this reactively
-
-// Use store-computed total price
-const totalPrice = ticketsStore.totalPrice
 
 // UI state (now using centralized state management)
 const {
@@ -656,6 +303,9 @@ const {
   hideSharing,
   setCopySuccess,
 } = useUIState()
+
+// Overlay state
+const showCustomizationOverlay = ref(false)
 
 // Computed shareable URL based on current configuration and sharing lucky code
 const shareableUrl = computed(() => {
@@ -695,21 +345,13 @@ const resetTickets = (): void => {
   hideWelcome()
 }
 
-const generateTicketsHandler = async (): Promise<void> => {
-  if (ticketsStore.isGenerating) return
-
-  // Use semantic action - let the store own the entire generation process
-  await ticketsStore.generate()
-
-  // Update UI state based on store results
-  if (ticketsStore.hasTickets) {
-    if (showGenerationForm.value) toggleGenerationForm()
-  }
-}
-
 const handleDeleteTicket = (ticketId: number): void => {
   // Use semantic action - let the store handle the entire deletion process
   ticketsStore.removeTicket(ticketId)
+}
+
+const handleCustomizeFromSimpleMode = (): void => {
+  showCustomizationOverlay.value = true
 }
 
 // Sharing functions (now simplified using centralized state)

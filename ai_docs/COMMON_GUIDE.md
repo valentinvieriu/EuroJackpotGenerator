@@ -41,10 +41,11 @@ npm run format   # Format code
 
 ### Understanding the Codebase
 
-1. **State Management**: 3-layer architecture (URL → Pinia → SSR-safe) with favorite numbers persistence
+1. **Dual-Mode Architecture**: Simple mode for quick start, custom mode for advanced configuration with progressive disclosure
+1. **State Management**: 3-layer architecture (URL → Pinia → SSR-safe) with mode state and favorite numbers persistence
 1. **Business Logic**: Located in `stores/` and `app/utils/` including custom number generation algorithms and popularity scoring
 1. **API Endpoints**: Server logic in `server/api/` including frequency analysis endpoints
-1. **Component Patterns**: Accordion UI, visual selectors, deletion handlers with state cleanup
+1. **Component Patterns**: Hero section with stepper, overlay modals, accordion UI, visual selectors, deletion handlers with state cleanup, mode transitions
 1. **Testing**: Focus on business logic, not UI rendering
 
 _For detailed patterns and examples, see [ARCHITECTURE.md](./ARCHITECTURE.md)_
@@ -69,11 +70,11 @@ _For detailed testing strategies and examples, see testing sections in [ARCHITEC
 
 ### Feature Development Pattern
 
-1. **Schema First**: Define Zod schemas in `app/schemas/` (including URL config for new state)
-1. **Constants**: Add values to `app/utils/constants.ts` (never hardcode)
-1. **Business Logic**: Implement in Pinia stores with tests (including state cleanup patterns)
+1. **Schema First**: Define Zod schemas in `app/schemas/` (including URL config for new state and mode definitions)
+1. **Constants**: Add values to `app/utils/constants.ts` (never hardcode, includes simple mode configuration)
+1. **Business Logic**: Implement in Pinia stores with tests (including state cleanup patterns and mode management)
 1. **API Layer**: Create server endpoints with validation
-1. **UI Components**: Thin presentation layer only (accordion patterns, deletion handlers)
+1. **UI Components**: Thin presentation layer only (hero section with stepper, overlay modals, accordion patterns, deletion handlers, mode transitions)
 1. **Quality Check**: Run tests, lint, and format before completion
 
 ### Debugging Approach

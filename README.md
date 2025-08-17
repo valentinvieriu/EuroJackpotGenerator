@@ -6,7 +6,9 @@
 
 EuroJackpot Simulator helps you understand:
 
+- **Instant Results**: One-click ticket generation with immediate simulation results
 - **System Tickets**: How selecting more numbers affects your chances and costs
+- **Progressive Learning**: Start simple, then explore advanced customisation options
 - **Real Probabilities**: What actually happens when you play different strategies
 - **Cost vs. Benefit**: Whether system tickets are worth the extra expense
 - **Monte Carlo Analysis**: See patterns emerge from thousands of simulated draws
@@ -21,7 +23,9 @@ Instead of guessing about lottery strategies, you can **see the data**. Run 10,0
 
 ### 🎫 System Ticket Generation
 
-- Generate 1-500 unique tickets per batch
+- **Simple Mode**: One-click generation of 10 random tickets with auto-simulation
+- **Custom Mode**: Full control with 1-500 unique tickets per batch
+- **Progressive Disclosure**: Smooth transition from simple to advanced features
 - System combinations (5/50 + 2/12 format) from 5-16 main and 2-12 Euro numbers
 - Transparent €2.00 per line pricing with immediate cost calculation
 - Multiple generation methods: random, historically weighted, or custom favorite numbers
@@ -55,7 +59,11 @@ Instead of guessing about lottery strategies, you can **see the data**. Run 10,0
 
 ## How It Works
 
-The simulator uses the official EuroJackpot format (5 numbers from 1-50, plus 2 Euro numbers from 1-12) and real win-class payouts to provide accurate simulations. Choose your system size, optionally select favorite numbers based on personal preference or frequency analysis, generate tickets, and run either single draws or large-scale Monte Carlo simulations to see the mathematics in action. Compare different strategies including random selection, weighted historical frequencies, and custom number preferences.
+The simulator uses the official EuroJackpot format (5 numbers from 1-50, plus 2 Euro numbers from 1-12) and real win-class payouts to provide accurate simulations.
+
+**Quick Start**: Click "Generate Random Tickets" for instant results with 10 standard tickets and automatic simulation.
+
+**Advanced Use**: Switch to custom mode to choose your system size, optionally select favorite numbers based on personal preference or frequency analysis, generate tickets, and run either single draws or large-scale Monte Carlo simulations to see the mathematics in action. Compare different strategies including random selection, weighted historical frequencies, and custom number preferences.
 
 ## Quick Start
 
