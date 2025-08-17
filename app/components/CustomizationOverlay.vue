@@ -5,15 +5,15 @@
     @click.self="closeOverlay"
   >
     <div
-      class="bg-casino-blue-dark rounded-xl shadow-2xl border border-casino-blue-light/30 max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
+      class="bg-surface-primary-dark rounded-xl shadow-2xl border border-casino-blue-light/30 max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
     >
       <!-- Header -->
       <div class="flex justify-between items-center p-6 pb-4">
-        <h2 class="text-2xl font-bold text-casino-gold-light">
+        <h2 class="text-2xl font-bold text-brand-gold-light">
           Customize Your Tickets
         </h2>
         <button
-          class="text-gray-400 hover:text-gray-200 transition duration-150 p-2"
+          class="text-content-muted hover:text-content-secondary transition duration-150 p-2"
           title="Close"
           @click="closeOverlay"
         >
@@ -42,21 +42,21 @@
             <div class="flex-1">
               <label
                 for="ticketType"
-                class="mb-2 block text-gray-400 text-sm font-medium"
+                class="mb-2 block text-content-muted text-sm font-medium"
               >
                 Pick Format:
               </label>
               <select
                 id="ticketType"
                 v-model="selectedTicketType"
-                class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200"
+                class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-border-primary text-content-secondary"
                 aria-label="Select Ticket System Type"
               >
                 <option
                   v-for="type in ticketTypes"
                   :key="type.label"
                   :value="type"
-                  class="bg-casino-blue-dark text-gray-200"
+                  class="bg-surface-primary-dark text-content-secondary"
                 >
                   {{ type.label }} (€{{ type.price.toFixed(2) }})
                 </option>
@@ -65,7 +65,7 @@
 
             <!-- Quantity -->
             <div class="flex-shrink-0 w-full sm:w-auto">
-              <label class="mb-2 block text-gray-400 text-sm font-medium">
+              <label class="mb-2 block text-content-muted text-sm font-medium">
                 Quantity:
               </label>
               <StepperInput
@@ -80,7 +80,7 @@
           <div class="mt-8 pb-20">
             <label
               for="selectionMethodDropdown"
-              class="mb-3 block text-gray-400 text-sm font-medium"
+              class="mb-3 block text-content-muted text-sm font-medium"
             >
               Selection Method:
             </label>
@@ -89,27 +89,27 @@
             <select
               id="selectionMethodDropdown"
               v-model="selectionMethod"
-              class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200 mb-4"
+              class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-border-primary text-content-secondary mb-4"
             >
-              <option value="random" class="bg-casino-blue-dark text-gray-200">
+              <option value="random" class="bg-surface-primary-dark text-content-secondary">
                 Random (recommended) - Pure random number selection
               </option>
               <option
                 value="unpopular"
-                class="bg-casino-blue-dark text-gray-200"
+                class="bg-surface-primary-dark text-content-secondary"
               >
                 Random (unpopular) - Avoids common patterns to minimise prize
                 sharing
               </option>
               <option
                 value="favorites"
-                class="bg-casino-blue-dark text-gray-200"
+                class="bg-surface-primary-dark text-content-secondary"
               >
                 Your favorite numbers - Prioritise your chosen numbers
               </option>
               <option
                 value="weighted"
-                class="bg-casino-blue-dark text-gray-200"
+                class="bg-surface-primary-dark text-content-secondary"
               >
                 Weighted by past frequencies - Uses historical draw data
               </option>
@@ -117,17 +117,17 @@
 
             <!-- Dynamic Content Area -->
             <div
-              class="mt-4 p-6 bg-casino-blue/20 rounded-lg border border-casino-blue-light/20 transition-all duration-200 text-left"
+              class="mt-4 p-6 bg-surface-primary/20 rounded-lg border border-casino-blue-light/20 transition-all duration-200 text-left"
             >
               <!-- Random Method Content -->
               <div v-if="selectionMethod === 'random'">
-                <p class="text-gray-300 mb-3 text-sm leading-relaxed">
+                <p class="text-content-secondary mb-3 text-sm leading-relaxed">
                   Uses cryptographically secure random number generation for
                   completely unbiased selection, giving every combination equal
                   probability.
                 </p>
                 <div
-                  class="text-xs text-gray-400 bg-casino-blue/30 p-3 rounded-md"
+                  class="text-xs text-content-muted bg-surface-primary/30 p-3 rounded-md"
                 >
                   <strong>🔒 Technical:</strong> Built on Web Crypto API. Future
                   versions may include quantum random number generation.
@@ -136,7 +136,7 @@
 
               <!-- Unpopular Method Content -->
               <div v-if="selectionMethod === 'unpopular'">
-                <p class="text-gray-300 mb-3 text-sm leading-relaxed">
+                <p class="text-content-secondary mb-3 text-sm leading-relaxed">
                   Generates multiple combinations and selects the one with
                   patterns least commonly chosen by other players, potentially
                   reducing prize sharing.
@@ -146,7 +146,7 @@
 
               <!-- Favorites Method Content -->
               <div v-if="selectionMethod === 'favorites'">
-                <p class="text-gray-300 mb-3 text-sm leading-relaxed">
+                <p class="text-content-secondary mb-3 text-sm leading-relaxed">
                   Prioritises your chosen numbers during generation, combined
                   with weighted selection for remaining slots.
                 </p>
@@ -155,7 +155,7 @@
 
               <!-- Weighted Method Content -->
               <div v-if="selectionMethod === 'weighted'">
-                <p class="text-gray-300 mb-3 text-sm leading-relaxed">
+                <p class="text-content-secondary mb-3 text-sm leading-relaxed">
                   Uses historical frequency data to weight number selection.
                   Past draws don't affect future results - purely educational.
                 </p>
@@ -163,7 +163,7 @@
                   href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="text-casino-gold hover:text-casino-gold-light underline text-xs mb-3 inline-block"
+                  class="text-brand-gold hover:text-brand-gold-light underline text-xs mb-3 inline-block"
                 >
                   Method details →
                 </a>
@@ -176,17 +176,17 @@
 
       <!-- Fixed Footer -->
       <div
-        class="bg-casino-blue-dark border-t border-casino-blue-light/30 p-6 rounded-b-xl"
+        class="bg-surface-primary-dark border-t border-casino-blue-light/30 p-6 rounded-b-xl"
       >
         <div
           class="flex flex-col sm:flex-row justify-between items-center gap-4"
         >
           <!-- Price Display -->
           <div class="flex flex-col items-center sm:items-start">
-            <span class="text-xl font-bold text-casino-gold-light">
+            <span class="text-xl font-bold text-brand-gold-light">
               €{{ totalPrice.toFixed(2) }}
             </span>
-            <span class="text-xs text-gray-400">
+            <span class="text-xs text-content-muted">
               €{{ ticketsStore.systemCost.toFixed(2) }} × {{ ticketCount }}
             </span>
           </div>
@@ -195,7 +195,7 @@
           <div class="flex flex-col sm:flex-row gap-3">
             <button
               type="button"
-              class="px-5 py-2 rounded-md font-semibold border border-navy-muted text-ivory bg-transparent hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+              class="px-5 py-2 rounded-md font-semibold border border-border-secondary text-content-primary bg-transparent hover:bg-surface-primary-light focus:outline-none focus:ring-2 focus:ring-casino-gold focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
               @click="closeOverlay"
             >
               Cancel

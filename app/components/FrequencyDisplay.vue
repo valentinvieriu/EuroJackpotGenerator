@@ -2,10 +2,10 @@
   <div>
     <div
       v-if="isLoadingFrequencies"
-      class="flex items-center gap-2 text-gray-400 text-sm"
+      class="flex items-center gap-2 text-content-muted text-sm"
     >
       <div
-        class="animate-spin w-4 h-4 border-2 border-casino-gold border-t-transparent rounded-full"
+        class="animate-spin w-4 h-4 border-2 border-border-primary border-t-transparent rounded-full"
       ></div>
       Loading frequency data...
     </div>
@@ -18,7 +18,7 @@
       <!-- Statistical Summary -->
       <div
         v-if="frequencyStats"
-        class="text-xs text-gray-400 bg-casino-blue/20 rounded p-2"
+        class="text-xs text-content-muted bg-surface-primary/20 rounded p-2"
       >
         <div class="font-medium mb-1">Historical Data Analysis</div>
         <div class="grid grid-cols-2 gap-2 text-xs">
@@ -32,12 +32,12 @@
 
       <!-- Main Numbers (1-50) -->
       <div>
-        <div class="text-xs text-gray-400 mb-3">Main Numbers (1-50):</div>
+        <div class="text-xs text-content-muted mb-3">Main Numbers (1-50):</div>
         <div class="grid grid-cols-5 sm:grid-cols-10 gap-2">
           <div
             v-for="number in allMainNumbers"
             :key="`main-${number.number}`"
-            class="flex flex-col items-center p-2 bg-casino-blue/30 rounded border border-casino-blue-light/20 hover:bg-casino-blue/50 transition-colors cursor-pointer"
+            class="flex flex-col items-center p-2 bg-surface-primary/30 rounded border border-casino-blue-light/20 hover:bg-surface-primary/50 transition-colors cursor-pointer"
             :title="
               getFrequencyTooltip(
                 number,
@@ -46,7 +46,7 @@
               )
             "
           >
-            <div class="text-sm font-medium text-casino-gold-light mb-1">
+            <div class="text-sm font-medium text-brand-gold-light mb-1">
               {{ number.number }}
             </div>
             <div class="w-full bg-gray-700 rounded-full h-1.5 mb-1">
@@ -66,19 +66,19 @@
                 }"
               />
             </div>
-            <div class="text-xs text-gray-400">{{ number.value }}</div>
+            <div class="text-xs text-content-muted">{{ number.value }}</div>
           </div>
         </div>
       </div>
 
       <!-- Euro Numbers (1-12) -->
       <div>
-        <div class="text-xs text-gray-400 mb-3">Euro Numbers (1-12):</div>
+        <div class="text-xs text-content-muted mb-3">Euro Numbers (1-12):</div>
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2">
           <div
             v-for="number in allEuroNumbers"
             :key="`euro-${number.number}`"
-            class="flex flex-col items-center p-2 bg-casino-blue/30 rounded border border-casino-blue-light/20 hover:bg-casino-blue/50 transition-colors cursor-pointer"
+            class="flex flex-col items-center p-2 bg-surface-primary/30 rounded border border-casino-blue-light/20 hover:bg-surface-primary/50 transition-colors cursor-pointer"
             :title="
               getFrequencyTooltip(
                 number,
@@ -107,18 +107,18 @@
                 }"
               />
             </div>
-            <div class="text-xs text-gray-400">{{ number.value }}</div>
+            <div class="text-xs text-content-muted">{{ number.value }}</div>
           </div>
         </div>
       </div>
 
-      <div class="text-xs text-gray-500 italic">
+      <div class="text-xs text-content-muted italic">
         Numbers weighted by √(frequency) using Efraimidis-Spirakis algorithm.
         Past patterns don't predict future draws.
       </div>
     </div>
 
-    <div v-else class="text-gray-400 text-sm">
+    <div v-else class="text-content-muted text-sm">
       No frequency data available. Using default weighting.
     </div>
   </div>
@@ -169,16 +169,16 @@ const getFrequencyBarColor = (value: number, expected: number): string => {
   const ratio = value / expected
   if (ratio >= 1.15) {
     // High frequency (15%+ above expected)
-    return 'bg-casino-gold'
+    return 'bg-brand-gold'
   } else if (ratio >= 1.05) {
     // Medium frequency (5-15% above expected)
-    return 'bg-casino-gold/70'
+    return 'bg-brand-gold/70'
   } else if (ratio <= 0.85) {
     // Low frequency (15%+ below expected)
     return 'bg-gray-500'
   } else {
     // Normal frequency
-    return 'bg-casino-gold/40'
+    return 'bg-brand-gold/40'
   }
 }
 </script>

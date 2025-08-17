@@ -1,31 +1,31 @@
 <template>
   <div
-    class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30 sticky top-4"
+    class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30 sticky top-4"
   >
     <div class="mb-6">
-      <h3 class="text-lg font-semibold text-casino-gold-light mb-4">Summary</h3>
+      <h3 class="text-lg font-semibold text-brand-gold-light mb-4">Summary</h3>
 
       <div class="space-y-3 mb-6">
         <div class="flex justify-between items-center">
-          <span class="text-gray-400 text-sm">Price per ticket:</span>
-          <span class="text-gray-200 font-medium"
+          <span class="text-content-muted text-sm">Price per ticket:</span>
+          <span class="text-content-secondary font-medium"
             >€{{ pricePerTicket.toFixed(2) }}</span
           >
         </div>
 
         <div class="flex justify-between items-center">
-          <span class="text-gray-400 text-sm">Quantity:</span>
-          <span class="text-gray-200 font-medium">{{ ticketCount }}</span>
+          <span class="text-content-muted text-sm">Quantity:</span>
+          <span class="text-content-secondary font-medium">{{ ticketCount }}</span>
         </div>
 
         <div class="border-t border-casino-blue-light/30 pt-3">
           <div class="flex justify-between items-center">
-            <span class="text-gray-400 text-sm">Total:</span>
+            <span class="text-content-muted text-sm">Total:</span>
             <div class="text-right">
-              <div class="text-2xl font-bold text-casino-gold-light">
+              <div class="text-2xl font-bold text-brand-gold-light">
                 €{{ totalPrice.toFixed(2) }}
               </div>
-              <div class="text-xs text-gray-400">
+              <div class="text-xs text-content-muted">
                 €{{ pricePerTicket.toFixed(2) }} × {{ ticketCount }}
               </div>
             </div>
@@ -34,8 +34,8 @@
       </div>
 
       <div v-if="nextDrawDate" class="mb-6 text-center">
-        <div class="text-xs text-gray-400 mb-1">Next draw:</div>
-        <div class="text-sm text-casino-gold">{{ nextDrawDate }}</div>
+        <div class="text-xs text-content-muted mb-1">Next draw:</div>
+        <div class="text-sm text-brand-gold">{{ nextDrawDate }}</div>
       </div>
     </div>
 
@@ -50,7 +50,7 @@
     <button
       v-if="props.showSimulateAction && !props.disabled"
       type="button"
-      class="w-full mt-3 text-casino-gold hover:text-casino-gold-light underline text-sm font-medium transition-colors duration-150"
+      class="w-full mt-3 text-brand-gold hover:text-brand-gold-light underline text-sm font-medium transition-colors duration-150"
       @click="$emit('simulate')"
     >
       Simulate {{ ticketCount }} draw{{ ticketCount > 1 ? 's' : '' }}
@@ -58,7 +58,7 @@
 
     <div class="mt-6 text-center">
       <div
-        class="inline-flex items-center px-2 py-1 bg-casino-blue/40 rounded-full"
+        class="inline-flex items-center px-2 py-1 bg-surface-primary/40 rounded-full"
       >
         <svg
           class="w-3 h-3 text-green-400 mr-1"
@@ -71,7 +71,7 @@
             clip-rule="evenodd"
           />
         </svg>
-        <span class="text-xs text-gray-300">No account required</span>
+        <span class="text-xs text-content-secondary">No account required</span>
       </div>
     </div>
   </div>

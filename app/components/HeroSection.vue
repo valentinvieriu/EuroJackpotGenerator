@@ -5,11 +5,11 @@
 
     <div class="relative z-10 max-w-4xl mx-auto">
       <h1
-        class="text-3xl md:text-4xl font-bold text-casino-gold-light tracking-wider font-serif shadow-sm mb-4"
+        class="text-3xl md:text-4xl font-bold text-brand-gold-light tracking-wider font-serif shadow-sm mb-4"
       >
         EuroJackpot Simulator
       </h1>
-      <p class="text-gray-400 text-base md:text-lg mb-8 max-w-2xl mx-auto">
+      <p class="text-content-muted text-base md:text-lg mb-8 max-w-2xl mx-auto">
         Understand lottery mathematics through realistic simulations. Generate
         tickets, run draws, and explore statistical outcomes.
       </p>
@@ -21,29 +21,29 @@
       >
         <div class="mb-6">
           <div class="text-4xl mb-3">🎰</div>
-          <p class="text-gray-300 text-lg mb-6">
+          <p class="text-content-secondary text-lg mb-6">
             Generate random tickets and see instant results
           </p>
 
           <!-- Ticket Count Selector -->
           <div class="flex items-center justify-center gap-4 mb-6">
-            <label class="text-gray-400 text-sm font-medium"> Tickets: </label>
+            <label class="text-content-muted text-sm font-medium"> Tickets: </label>
             <StepperInput v-model="ticketCount" :min="1" :max="50" />
           </div>
 
           <div
-            class="flex items-center justify-center gap-4 text-sm text-gray-400"
+            class="flex items-center justify-center gap-4 text-sm text-content-muted"
           >
             <span class="flex items-center gap-1">
-              <span class="w-2 h-2 bg-casino-gold rounded-full"></span>
+              <span class="w-2 h-2 bg-brand-gold rounded-full"></span>
               5+2 standard format
             </span>
             <span class="flex items-center gap-1">
-              <span class="w-2 h-2 bg-casino-gold rounded-full"></span>
+              <span class="w-2 h-2 bg-brand-gold rounded-full"></span>
               Total cost: €{{ simpleModeCost }}
             </span>
             <span class="flex items-center gap-1">
-              <span class="w-2 h-2 bg-casino-gold rounded-full"></span>
+              <span class="w-2 h-2 bg-brand-gold rounded-full"></span>
               Instant simulation
             </span>
           </div>
@@ -64,7 +64,7 @@
 
           <div class="text-center">
             <button
-              class="text-casino-gold hover:text-casino-gold-light text-sm underline transition-colors duration-200"
+              class="text-brand-gold hover:text-brand-gold-light text-sm underline transition-colors duration-200"
               @click="handleShowCustom"
             >
               ⚙️ Want to customize? Show advanced options
@@ -81,7 +81,7 @@
 
       <!-- Educational disclaimer -->
       <div
-        class="inline-flex items-center px-4 py-2 bg-casino-blue/60 backdrop-blur-sm rounded-full mb-4"
+        class="inline-flex items-center px-4 py-2 bg-surface-primary/60 backdrop-blur-sm rounded-full mb-4"
       >
         <svg
           class="w-4 h-4 text-green-400 mr-2"
@@ -94,7 +94,7 @@
             clip-rule="evenodd"
           />
         </svg>
-        <span class="text-sm text-gray-300">
+        <span class="text-sm text-content-secondary">
           Educational tool only. No real money involved.
         </span>
       </div>

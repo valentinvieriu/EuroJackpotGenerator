@@ -1,18 +1,18 @@
 <template>
   <div
-    class="bg-casino-blue-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
+    class="bg-surface-primary-dark rounded-lg shadow-xl p-6 border border-casino-blue-light/30"
   >
     <div class="mb-6">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xl font-semibold text-gray-200">
+        <h3 class="text-xl font-semibold text-content-secondary">
           Mass Simulation in Progress
         </h3>
-        <div class="text-sm text-gray-400">
+        <div class="text-sm text-content-muted">
           {{ formatElapsedTime(elapsedTime) }}
         </div>
       </div>
 
-      <div class="w-full bg-casino-blue rounded-full h-3 mb-3">
+      <div class="w-full bg-surface-primary rounded-full h-3 mb-3">
         <div
           class="bg-gradient-to-r from-vip-orange to-vip-orange-light h-3 rounded-full transition-all duration-300 ease-out"
           :style="{ width: `${progressPercentage}%` }"
@@ -20,11 +20,11 @@
       </div>
 
       <div class="flex justify-between items-center text-sm">
-        <span class="text-gray-300">
+        <span class="text-content-secondary">
           {{ currentSimulation.toLocaleString() }} /
           {{ totalSimulations.toLocaleString() }} simulations
         </span>
-        <span class="text-casino-gold font-medium">
+        <span class="text-brand-gold font-medium">
           {{ progressPercentage.toFixed(1) }}%
         </span>
       </div>
@@ -32,26 +32,26 @@
 
     <div
       v-if="partialResults"
-      class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+      class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-surface-primary/50 rounded-lg border border-casino-blue-light/20"
     >
       <div class="text-center">
-        <div class="text-sm text-gray-400">Current Win Rate</div>
+        <div class="text-sm text-content-muted">Current Win Rate</div>
         <div class="text-lg font-semibold" :class="winRateColor">
           {{ partialResults.winPercentage.toFixed(1) }}%
         </div>
-        <div class="text-xs text-gray-500">
+        <div class="text-xs text-content-muted">
           {{ partialResults.totalWins }} /
           {{ partialResults.simulationsCompleted }} wins
         </div>
       </div>
 
       <div class="text-center">
-        <div class="text-sm text-gray-400">Current ROI</div>
+        <div class="text-sm text-content-muted">Current ROI</div>
         <div class="text-lg font-semibold" :class="roiColor">
           {{ partialResults.currentROI >= 0 ? '+' : ''
           }}{{ partialResults.currentROI.toFixed(1) }}%
         </div>
-        <div class="text-xs text-gray-500">
+        <div class="text-xs text-content-muted">
           €{{
             partialResults.netProfit.toLocaleString('en-GB', {
               minimumFractionDigits: 2,
@@ -62,44 +62,44 @@
       </div>
 
       <div class="text-center">
-        <div class="text-sm text-gray-400">Biggest Win</div>
-        <div class="text-lg font-semibold text-casino-gold">
+        <div class="text-sm text-content-muted">Biggest Win</div>
+        <div class="text-lg font-semibold text-brand-gold">
           €{{
             partialResults.maxWin.toLocaleString('en-GB', {
               minimumFractionDigits: 2,
             })
           }}
         </div>
-        <div class="text-xs text-gray-500">Best single simulation</div>
+        <div class="text-xs text-content-muted">Best single simulation</div>
       </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <div class="text-center p-3 bg-casino-blue/30 rounded-lg">
-        <div class="text-sm text-gray-400 mb-1">Estimated Time Remaining</div>
-        <div class="text-lg font-medium text-gray-200">
+      <div class="text-center p-3 bg-surface-primary/30 rounded-lg">
+        <div class="text-sm text-content-muted mb-1">Estimated Time Remaining</div>
+        <div class="text-lg font-medium text-content-secondary">
           {{ estimatedTimeRemaining || '---' }}
         </div>
       </div>
-      <div class="text-center p-3 bg-casino-blue/30 rounded-lg">
-        <div class="text-sm text-gray-400 mb-1">Processing Speed</div>
-        <div class="text-lg font-medium text-gray-200">
+      <div class="text-center p-3 bg-surface-primary/30 rounded-lg">
+        <div class="text-sm text-content-muted mb-1">Processing Speed</div>
+        <div class="text-lg font-medium text-content-secondary">
           {{ processingSpeed.toFixed(0) }} sim/sec
         </div>
       </div>
     </div>
 
     <div v-if="partialResults?.winsByClass" class="mb-6">
-      <h4 class="text-lg font-medium text-gray-200 mb-3">
+      <h4 class="text-lg font-medium text-content-secondary mb-3">
         Win Distribution (Live)
       </h4>
       <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
         <div
           v-for="classNum in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]"
           :key="classNum"
-          class="text-center p-2 bg-casino-blue/50 rounded"
+          class="text-center p-2 bg-surface-primary/50 rounded"
         >
-          <div class="text-xs text-gray-400">Class {{ classNum }}</div>
+          <div class="text-xs text-content-muted">Class {{ classNum }}</div>
           <div
             class="text-sm font-medium"
             :class="
@@ -117,12 +117,12 @@
 
     <div v-if="canCancel" class="text-center">
       <button
-        class="bg-red-600 text-white px-4 py-2 rounded-md font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
+        class="bg-red-600 text-content-primary px-4 py-2 rounded-md font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-casino-blue-dark transition duration-150"
         @click="$emit('cancel')"
       >
         Cancel Simulation
       </button>
-      <p class="text-xs text-gray-500 mt-2">
+      <p class="text-xs text-content-muted mt-2">
         Simulation will stop after current batch completes
       </p>
     </div>
@@ -171,7 +171,7 @@ const processingSpeed = computed(() => {
 })
 
 const winRateColor = computed(() => {
-  if (!props.partialResults) return 'text-gray-400'
+  if (!props.partialResults) return 'text-content-muted'
   const rate = props.partialResults.winPercentage
   if (rate > WIN_RATE_EXCELLENT_THRESHOLD) return 'text-green-400'
   if (rate > WIN_RATE_GOOD_THRESHOLD) return 'text-yellow-400'
@@ -179,7 +179,7 @@ const winRateColor = computed(() => {
 })
 
 const roiColor = computed(() => {
-  if (!props.partialResults) return 'text-gray-400'
+  if (!props.partialResults) return 'text-content-muted'
   const roi = props.partialResults.currentROI
   if (roi > 0) return 'text-green-400'
   if (roi > -50) return 'text-yellow-400'

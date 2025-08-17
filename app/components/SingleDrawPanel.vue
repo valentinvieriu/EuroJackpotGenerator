@@ -13,16 +13,16 @@
 
     <div
       v-if="simulationResult"
-      class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-casino-blue/50 rounded-lg border border-casino-blue-light/20"
+      class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-surface-primary/50 rounded-lg border border-casino-blue-light/20"
     >
       <div class="text-center">
-        <div class="text-sm text-gray-400">Total Winnings</div>
-        <div class="text-xl font-semibold text-casino-gold">
+        <div class="text-sm text-content-muted">Total Winnings</div>
+        <div class="text-xl font-semibold text-brand-gold">
           €{{ totalWinnings.toFixed(2) }}
         </div>
       </div>
       <div class="text-center">
-        <div class="text-sm text-gray-400">Profit / Loss</div>
+        <div class="text-sm text-content-muted">Profit / Loss</div>
         <div
           :class="[
             'text-xl font-semibold',
@@ -42,13 +42,13 @@
       class="flex justify-between items-center"
       @submit.prevent="simulateExtractionHandler"
     >
-      <p class="text-gray-400 text-sm">
+      <p class="text-content-muted text-sm">
         Simulate a single draw to see immediate winning results and ROI
       </p>
       <button
         :disabled="loading || tickets.length === 0"
         type="submit"
-        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-white px-5 py-2 rounded-md font-semibold hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+        class="bg-gradient-to-r from-vip-orange to-vip-orange-light text-content-primary px-5 py-2 rounded-md font-semibold hover:from-vip-orange-light hover:to-[#FF7A4D] focus:outline-none focus:ring-2 focus:ring-vip-orange focus:ring-offset-2 focus:ring-offset-casino-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
       >
         {{ loading ? 'Simulating...' : 'Run Single Draw Simulation' }}
       </button>

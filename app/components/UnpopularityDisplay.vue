@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <!-- Educational Header -->
-    <div class="text-xs text-gray-400 bg-casino-blue/20 rounded p-2">
+    <div class="text-xs text-content-muted bg-surface-primary/20 rounded p-2">
       <div class="font-medium mb-1">🎯 How Unpopularity Works</div>
       <p class="text-xs">
         This method generates combinations that avoid common human biases,
@@ -13,55 +13,55 @@
 
     <!-- Bias Factors Explanation -->
     <div>
-      <div class="text-xs text-gray-400 mb-3 font-medium">
+      <div class="text-xs text-content-muted mb-3 font-medium">
         Common Patterns We Avoid:
       </div>
       <div class="grid grid-cols-1 gap-2 text-xs">
-        <div class="flex items-start gap-2 p-2 bg-casino-blue/30 rounded">
+        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
           <span class="text-red-400 mt-0.5">🎂</span>
           <div>
-            <div class="text-gray-200 font-medium">Birthday Bias</div>
-            <div class="text-gray-400">
+            <div class="text-content-secondary font-medium">Birthday Bias</div>
+            <div class="text-content-muted">
               Numbers 1-31 are over-chosen due to birthday dates
             </div>
           </div>
         </div>
 
-        <div class="flex items-start gap-2 p-2 bg-casino-blue/30 rounded">
+        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
           <span class="text-yellow-400 mt-0.5">🍀</span>
           <div>
-            <div class="text-gray-200 font-medium">Lucky Numbers</div>
-            <div class="text-gray-400">
+            <div class="text-content-secondary font-medium">Lucky Numbers</div>
+            <div class="text-content-muted">
               Numbers like 3, 7, 11, 13, 17, 21 are popular choices
             </div>
           </div>
         </div>
 
-        <div class="flex items-start gap-2 p-2 bg-casino-blue/30 rounded">
+        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
           <span class="text-blue-400 mt-0.5">📈</span>
           <div>
-            <div class="text-gray-200 font-medium">Sequences & Patterns</div>
-            <div class="text-gray-400">
+            <div class="text-content-secondary font-medium">Sequences & Patterns</div>
+            <div class="text-content-muted">
               Consecutive numbers (1,2,3,4,5) or arithmetic sequences
             </div>
           </div>
         </div>
 
-        <div class="flex items-start gap-2 p-2 bg-casino-blue/30 rounded">
+        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
           <span class="text-green-400 mt-0.5">🎯</span>
           <div>
-            <div class="text-gray-200 font-medium">Visual Patterns</div>
-            <div class="text-gray-400">
+            <div class="text-content-secondary font-medium">Visual Patterns</div>
+            <div class="text-content-muted">
               Same last digits (7,17,27) or tight number clustering
             </div>
           </div>
         </div>
 
-        <div class="flex items-start gap-2 p-2 bg-casino-blue/30 rounded">
+        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
           <span class="text-purple-400 mt-0.5">📅</span>
           <div>
-            <div class="text-gray-200 font-medium">Month-like Euro Numbers</div>
-            <div class="text-gray-400">
+            <div class="text-content-secondary font-medium">Month-like Euro Numbers</div>
+            <div class="text-content-muted">
               Euro numbers close together (like 7,8 or 11,12)
             </div>
           </div>
@@ -71,7 +71,7 @@
 
     <!-- Examples Section -->
     <div>
-      <div class="text-xs text-gray-400 mb-3 font-medium">Examples:</div>
+      <div class="text-xs text-content-muted mb-3 font-medium">Examples:</div>
       <div class="space-y-2">
         <!-- Popular Example -->
         <div class="p-3 bg-red-900/20 border border-red-500/30 rounded">
@@ -81,10 +81,10 @@
               >Popular (avoid):</span
             >
           </div>
-          <div class="text-xs text-gray-300 mb-1">
+          <div class="text-xs text-content-secondary mb-1">
             <strong>5 + 2:</strong> 1, 2, 3, 4, 5 + 7, 11
           </div>
-          <div class="text-xs text-gray-400">
+          <div class="text-xs text-content-muted">
             Sequential main numbers + lucky Euro numbers. Many players choose
             this pattern.
           </div>
@@ -98,10 +98,10 @@
               >Unpopular (preferred):</span
             >
           </div>
-          <div class="text-xs text-gray-300 mb-1">
+          <div class="text-xs text-content-secondary mb-1">
             <strong>5 + 2:</strong> 6, 19, 28, 37, 49 + 1, 12
           </div>
-          <div class="text-xs text-gray-400">
+          <div class="text-xs text-content-muted">
             Spread across decades, avoids patterns, no birthday bias or lucky
             numbers.
           </div>
@@ -111,44 +111,44 @@
 
     <!-- Scoring Details -->
     <div>
-      <div class="text-xs text-gray-400 mb-3 font-medium">Scoring Factors:</div>
-      <div class="space-y-1 text-xs text-gray-400">
+      <div class="text-xs text-content-muted mb-3 font-medium">Scoring Factors:</div>
+      <div class="space-y-1 text-xs text-content-muted">
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">•</span>
+          <span class="text-brand-gold">•</span>
           <span
             ><strong>Birthday numbers (1-31):</strong> +0.2 points each</span
           >
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">•</span>
+          <span class="text-brand-gold">•</span>
           <span><strong>Lucky numbers:</strong> +0.15 points each</span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">•</span>
+          <span class="text-brand-gold">•</span>
           <span
             ><strong>Sequences (3+ numbers):</strong> +0.25 points per sequence
             length</span
           >
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">•</span>
+          <span class="text-brand-gold">•</span>
           <span
             ><strong>Same last digit pairs:</strong> +0.12 points per pair</span
           >
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">•</span>
+          <span class="text-brand-gold">•</span>
           <span><strong>Same decade pairs:</strong> +0.1 points per pair</span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">•</span>
+          <span class="text-brand-gold">•</span>
           <span
             ><strong>Tight clustering:</strong> +0.18 points if numbers are
             bunched</span
           >
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">•</span>
+          <span class="text-brand-gold">•</span>
           <span
             ><strong>Close Euro numbers:</strong> +0.1 points if within 3 of
             each other</span
@@ -159,7 +159,7 @@
 
     <!-- More Examples -->
     <div>
-      <div class="text-xs text-gray-400 mb-3 font-medium">More Examples:</div>
+      <div class="text-xs text-content-muted mb-3 font-medium">More Examples:</div>
       <div class="space-y-2">
         <!-- Medium popularity example -->
         <div class="p-3 bg-yellow-900/20 border border-yellow-500/30 rounded">
@@ -169,10 +169,10 @@
               >Medium popularity:</span
             >
           </div>
-          <div class="text-xs text-gray-300 mb-1">
+          <div class="text-xs text-content-secondary mb-1">
             <strong>5 + 2:</strong> 15, 22, 33, 41, 50 + 4, 9
           </div>
-          <div class="text-xs text-gray-400">
+          <div class="text-xs text-content-muted">
             Some birthday numbers (15, 22), but spread across decades. Moderate
             choice.
           </div>
@@ -186,10 +186,10 @@
               >Very unpopular:</span
             >
           </div>
-          <div class="text-xs text-gray-300 mb-1">
+          <div class="text-xs text-content-secondary mb-1">
             <strong>5 + 2:</strong> 32, 38, 41, 47, 50 + 2, 10
           </div>
-          <div class="text-xs text-gray-400">
+          <div class="text-xs text-content-muted">
             No birthday bias, no lucky numbers, well-distributed across decades,
             distant Euro numbers.
           </div>
@@ -199,26 +199,26 @@
 
     <!-- Algorithm Process -->
     <div>
-      <div class="text-xs text-gray-400 mb-3 font-medium">
+      <div class="text-xs text-content-muted mb-3 font-medium">
         Algorithm Process:
       </div>
-      <div class="space-y-1 text-xs text-gray-400">
+      <div class="space-y-1 text-xs text-content-muted">
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">1.</span>
+          <span class="text-brand-gold">1.</span>
           <span>Generates 100 random combinations</span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">2.</span>
+          <span class="text-brand-gold">2.</span>
           <span
             >Scores each combination using the factors above (0-100 scale)</span
           >
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">3.</span>
+          <span class="text-brand-gold">3.</span>
           <span>Selects the combination with the lowest popularity score</span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-casino-gold">4.</span>
+          <span class="text-brand-gold">4.</span>
           <span
             >Result: Numbers statistically less likely to be chosen by
             others</span

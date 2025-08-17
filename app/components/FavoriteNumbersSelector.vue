@@ -3,13 +3,13 @@
     <!-- Main Numbers Section -->
     <div>
       <div class="flex items-center justify-between mb-3">
-        <label class="text-sm font-medium text-gray-400">
+        <label class="text-sm font-medium text-content-muted">
           Favorite Main Numbers (1-50)
         </label>
         <button
           v-if="mainNumbers.length > 0"
           type="button"
-          class="text-xs text-casino-gold hover:text-casino-gold-light underline"
+          class="text-xs text-brand-gold hover:text-brand-gold-light underline"
           @click="clearFavorites('main')"
         >
           Clear All
@@ -22,12 +22,12 @@
           <span
             v-for="number in mainNumbers"
             :key="`main-${number}`"
-            class="inline-flex items-center gap-1 px-3 py-1 bg-casino-gold/20 border border-casino-gold/50 rounded-full text-sm font-medium text-casino-gold"
+            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-gold/20 border border-border-primary/50 rounded-full text-sm font-medium text-brand-gold"
           >
             {{ number }}
             <button
               type="button"
-              class="hover:text-casino-gold-light transition-colors"
+              class="hover:text-brand-gold-light transition-colors"
               @click="removeFavorite('main', number)"
             >
               ✕
@@ -39,23 +39,23 @@
         <div v-if="mainNumbers.length < FAVORITE_NUMBERS_MAX" class="relative">
           <select
             :value="''"
-            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200 appearance-none cursor-pointer"
+            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-border-primary text-content-secondary appearance-none cursor-pointer"
             @change="addMainNumber($event)"
           >
-            <option value="" disabled class="bg-casino-blue-dark text-gray-400">
+            <option value="" disabled class="bg-surface-primary-dark text-content-muted">
               Select a main number to add...
             </option>
             <option
               v-for="number in availableMainNumbers"
               :key="`main-option-${number}`"
               :value="number"
-              class="bg-casino-blue-dark text-gray-200"
+              class="bg-surface-primary-dark text-content-secondary"
             >
               {{ number }}
             </option>
           </select>
           <div
-            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"
+            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-content-muted"
           >
             <svg
               class="fill-current h-4 w-4"
@@ -69,7 +69,7 @@
           </div>
         </div>
 
-        <div class="text-xs text-gray-500">
+        <div class="text-xs text-content-muted">
           {{ mainNumbers.length }}/{{ FAVORITE_NUMBERS_MAX }} favorite main
           numbers selected
         </div>
@@ -79,13 +79,13 @@
     <!-- Euro Numbers Section -->
     <div>
       <div class="flex items-center justify-between mb-3">
-        <label class="text-sm font-medium text-gray-400">
+        <label class="text-sm font-medium text-content-muted">
           Favorite Euro Numbers (1-12)
         </label>
         <button
           v-if="euroNumbers.length > 0"
           type="button"
-          class="text-xs text-casino-gold hover:text-casino-gold-light underline"
+          class="text-xs text-brand-gold hover:text-brand-gold-light underline"
           @click="clearFavorites('euro')"
         >
           Clear All
@@ -98,12 +98,12 @@
           <span
             v-for="number in euroNumbers"
             :key="`euro-${number}`"
-            class="inline-flex items-center gap-1 px-3 py-1 bg-casino-gold/20 border border-casino-gold/50 rounded-full text-sm font-medium text-casino-gold"
+            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-gold/20 border border-border-primary/50 rounded-full text-sm font-medium text-brand-gold"
           >
             {{ number }}
             <button
               type="button"
-              class="hover:text-casino-gold-light transition-colors"
+              class="hover:text-brand-gold-light transition-colors"
               @click="removeFavorite('euro', number)"
             >
               ✕
@@ -115,23 +115,23 @@
         <div v-if="euroNumbers.length < FAVORITE_NUMBERS_MAX" class="relative">
           <select
             :value="''"
-            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-casino-blue rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-casino-gold text-gray-200 appearance-none cursor-pointer"
+            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-border-primary text-content-secondary appearance-none cursor-pointer"
             @change="addEuroNumber($event)"
           >
-            <option value="" disabled class="bg-casino-blue-dark text-gray-400">
+            <option value="" disabled class="bg-surface-primary-dark text-content-muted">
               Select a Euro number to add...
             </option>
             <option
               v-for="number in availableEuroNumbers"
               :key="`euro-option-${number}`"
               :value="number"
-              class="bg-casino-blue-dark text-gray-200"
+              class="bg-surface-primary-dark text-content-secondary"
             >
               {{ number }}
             </option>
           </select>
           <div
-            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"
+            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-content-muted"
           >
             <svg
               class="fill-current h-4 w-4"
@@ -145,7 +145,7 @@
           </div>
         </div>
 
-        <div class="text-xs text-gray-500">
+        <div class="text-xs text-content-muted">
           {{ euroNumbers.length }}/{{ FAVORITE_NUMBERS_MAX }} favorite Euro
           numbers selected
         </div>

@@ -3,11 +3,11 @@
     <button
       type="button"
       :disabled="modelValue <= min"
-      class="w-10 h-10 flex items-center justify-center bg-casino-blue border border-casino-blue-light/50 rounded-l-md hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+      class="w-10 h-10 flex items-center justify-center bg-surface-primary border border-casino-blue-light/50 rounded-l-md hover:bg-surface-primary-light focus:outline-none focus:ring-2 focus:ring-casino-gold disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
       @click="decrement"
     >
       <svg
-        class="w-4 h-4 text-gray-300"
+        class="w-4 h-4 text-content-secondary"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -26,7 +26,7 @@
       type="number"
       :min="min"
       :max="max"
-      class="w-20 h-10 px-3 text-center border-t border-b border-casino-blue-light/50 bg-casino-blue focus:outline-none focus:ring-2 focus:ring-casino-gold text-gray-200 [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      class="w-20 h-10 px-3 text-center border-t border-b border-casino-blue-light/50 bg-surface-primary focus:outline-none focus:ring-2 focus:ring-casino-gold text-content-secondary [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       @input="onInput"
       @blur="onBlur"
     />
@@ -34,11 +34,11 @@
     <button
       type="button"
       :disabled="modelValue >= max"
-      class="w-10 h-10 flex items-center justify-center bg-casino-blue border border-casino-blue-light/50 rounded-r-md hover:bg-casino-blue-light focus:outline-none focus:ring-2 focus:ring-casino-gold disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+      class="w-10 h-10 flex items-center justify-center bg-surface-primary border border-casino-blue-light/50 rounded-r-md hover:bg-surface-primary-light focus:outline-none focus:ring-2 focus:ring-casino-gold disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
       @click="increment"
     >
       <svg
-        class="w-4 h-4 text-gray-300"
+        class="w-4 h-4 text-content-secondary"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

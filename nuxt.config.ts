@@ -1,10 +1,16 @@
+import tailwindcss from '@tailwindcss/vite'
+
 export default defineNuxtConfig({
   // Align aliases so ~ and @ point to the app directory, and ~~ and @@ to the project root
   srcDir: 'app',
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
+  modules: ['@pinia/nuxt'],
 
   pinia: {
     storesDirs: ['./stores/**'], // Auto-import stores from root stores directory
+  },
+
+  vite: {
+    plugins: [tailwindcss()],
   },
 
   app: {
@@ -23,7 +29,7 @@ export default defineNuxtConfig({
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
   },
-  css: ['~/assets/css/tailwind.css'],
+  css: ['~/assets/css/theme.css'],
 
   runtimeConfig: {
     // Server-only configuration

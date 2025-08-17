@@ -20,7 +20,7 @@ export function getWinClassColor(
   classNum: number,
   hasWins: boolean = true
 ): string {
-  if (!hasWins) return 'text-gray-500'
+  if (!hasWins) return 'text-content-muted'
 
   switch (classNum) {
     case 1:
@@ -36,7 +36,7 @@ export function getWinClassColor(
     case 9:
       return 'text-blue-400' // Minor wins - blue
     default:
-      return 'text-gray-300' // Minimal wins - light gray
+      return 'text-content-secondary' // Minimal wins - light gray
   }
 }
 
