@@ -221,12 +221,16 @@ We ship premium utilities in `theme.css`:
 
 ## ✅ Quality Checklist (enforced)
 
-- [ ] Uses **token-based utilities** in components (no hardcoded values)
-- [ ] Meets **contrast** targets; uses focus-visible/focus ring tokens
-- [ ] Respects **reduced motion**
-- [ ] Works in **dark mode**; overrides live in `@layer theme`
-- [ ] Uses spacing/radius/type tokens for scale consistency
-- [ ] Correct opacity pattern:
-  - Slash opacity only with token utilities (e.g., `bg-*-token/20`)
-  - For `bg-(--token)`, use `color-mix` or alpha-encoded colors
-    \
+- [ ] Uses **token-based utilities** in components (no hardcoded hex/rgb/hsl).
+- [ ] Meets **contrast** targets (≥ 4.5:1 on `surface-primary`) and provides **focus-visible** using ring/focus tokens or `.focus-*` classes.
+- [ ] Respects **reduced motion** (`prefers-reduced-motion`) and avoids conveying essential information by motion only.
+- [ ] **Dark mode** works via `dark:` variant (mapped with `@custom-variant`) and theme overrides live in `@layer theme` — no `[data-theme]` selectors inside components.
+- [ ] Uses **spacing/radius/type/blur/shadow/z-index** tokens for scale consistency.
+- [ ] **Opacity pattern is correct**:
+  - Use slash opacity **only with token utilities** (e.g., `bg-surface-card/20`, `border-casino-blue-light/50`, `text-brand-gold/90`).
+  - For `bg-(--token)`/`border-(--token)` shorthand, use `color-mix(...)` or Tailwind `--alpha()` in CSS, or encode alpha in the color; **don’t** use slash opacity suffix.
+- [ ] **Variable shorthand is a fallback**, not the default: prefer token utilities; drop to `bg-(--token)` or `bg-[...]` only when necessary.
+- [ ] **Arbitrary values** (`[...]`) used sparingly; avoid dynamic string interpolation of class names; safelist if needed for runtime variants.
+- [ ] **Blur tokens** are **lengths**; bespoke blurs (`--blur-casino-*`) only in CSS utilities, not as `blur-[...]` when a token exists.
+- [ ] **Transitions** use tokenized durations/easings (`duration-*`, `ease-*`).
+- [ ] **No business logic in components**; style-only utilities and recipe classes (`.casino-card`, `.btn-*`) are allowed.
