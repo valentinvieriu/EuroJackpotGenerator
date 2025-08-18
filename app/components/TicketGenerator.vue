@@ -119,7 +119,7 @@
               >
                 Generated Tickets ({{ tickets.length }})
               </h2>
-              <div class="flex gap-2">
+              <div class="flex flex-col gap-2 sm:flex-row">
                 <button
                   class="cursor-pointer rounded px-2 py-1 text-sm text-brand-gold underline transition duration-150 hover:text-brand-gold-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
                   title="Create shareable link for these numbers"
