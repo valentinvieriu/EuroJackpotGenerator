@@ -89,7 +89,7 @@
               >Total Cost</span
             >
             <span
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-900/50 text-error-light border border-red-400/30"
+              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-error-dark/50 text-error-light border border-error/30"
             >
               HIGH
             </span>
@@ -125,7 +125,7 @@
               >Break-even Target</span
             >
             <span
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-900/50 text-warning-light border border-yellow-400/30"
+              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning-dark/50 text-warning-light border border-warning/30"
             >
               TARGET
             </span>
@@ -200,7 +200,7 @@
         <button
           v-if="showCancelButton"
           :disabled="disabled && !canCancel"
-          class="bg-red-600 text-content-primary px-5 py-2 rounded-md font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-surface-primary disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+          class="bg-error text-content-primary px-5 py-2 rounded-md font-semibold hover:bg-error-dark focus:outline-none focus:ring-2 focus:ring-error focus:ring-offset-2 focus:ring-offset-surface-primary disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
           @click="$emit('cancel')"
         >
           Cancel Simulation

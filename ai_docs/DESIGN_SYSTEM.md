@@ -187,7 +187,34 @@ interactive-danger-active    → Danger active
 - Secondary (gold) for brand-related actions
 - Tertiary (platinum) for subtle, low-priority actions
 - Success (emerald) for positive confirmations
-- Danger (burgundy) for destructive actions
+  - Danger (burgundy) for destructive actions
+
+### **5. Status Colors - Feedback & Alerts**
+
+Semantic tokens for application status messaging:
+
+```css
+/* Error */
+error         → Critical failures and destructive actions
+error-light   → Error text/icons on dark surfaces
+error-dark    → Emphasized error backgrounds
+
+/* Warning */
+warning       → Cautionary notices and pending risks
+warning-light → Warning text/icons on dark surfaces
+warning-dark  → Emphasized warning backgrounds
+
+/* Success */
+success       → Positive confirmations and completed actions
+success-light → Success text/icons on dark surfaces
+success-dark  → Emphasized success backgrounds
+```
+
+**Usage Guidelines:**
+
+- Use matching text/background pairs from the same status family
+- Avoid Tailwind default color names (`bg-red-500`, etc.)
+- Reserve emerald premium accents for jackpot visuals, not generic success states
 
 ---
 

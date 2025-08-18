@@ -84,7 +84,7 @@
                   :class="[
                     'px-4 py-2 text-sm font-medium rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400',
                     copySuccess
-                      ? 'bg-green-600 text-content-primary'
+                      ? 'bg-success text-content-primary'
                       : 'bg-brand-gold text-casino-blue-dark hover:bg-brand-gold-light',
                   ]"
                   @click="copyShareableUrl"
@@ -233,7 +233,7 @@
 
           <div
             v-else-if="error"
-            class="text-center text-error bg-red-900/50 border border-red-500 p-4 rounded-md"
+            class="text-center text-error bg-error-dark/50 border border-error p-4 rounded-md"
             role="alert"
           >
             {{ error }}
