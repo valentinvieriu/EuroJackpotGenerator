@@ -52,7 +52,7 @@
                   <select
                     id="ticketType"
                     v-model="selectedTicketType"
-                    class="w-full rounded-md border border-border-secondary/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
+                    class="form-select form-select-secondary"
                     aria-label="Select Ticket System Type"
                   >
                     <option
@@ -94,7 +94,7 @@
                 <select
                   id="selectionMethodDropdown"
                   v-model="selectionMethod"
-                  class="mb-4 w-full rounded-md border border-border-secondary/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
+                  class="form-select form-select-secondary mb-4"
                 >
                   <option
                     value="random"

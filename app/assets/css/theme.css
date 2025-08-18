@@ -1107,4 +1107,53 @@
   .alert--solid.alert-info {
     background-color: var(--color-feedback-info-bg-solid);
   }
+
+  /* ============================================
+     📋 FORM CONTROL UTILITIES
+     Standardised form styling for DRY components
+     ============================================ */
+
+  /* Standard form select styling */
+  .form-select {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-casino-blue-light);
+    border-opacity: 0.5;
+    background-color: var(--color-surface-primary);
+    padding: var(--spacing-2) var(--spacing-3);
+    color: var(--color-content-secondary);
+    transition: all var(--duration-150) var(--ease-standard);
+  }
+
+  .form-select:focus {
+    outline: none;
+    border-color: var(--color-border-primary);
+    box-shadow: 0 0 0 2px var(--color-brand-gold-400);
+  }
+
+  /* Variant with secondary border */
+  .form-select-secondary {
+    border-color: var(--color-border-secondary);
+    border-opacity: 0.5;
+  }
+
+  /* Dropdown appearance for custom selects */
+  .form-select-custom {
+    cursor: pointer;
+    appearance: none;
+    background-image: none;
+  }
+
+  /* Enhanced focus states */
+  .focus-success:focus {
+    outline: none;
+    box-shadow: var(--ring-focus-success);
+    transform: scale(1.02);
+  }
+
+  .focus-danger:focus {
+    outline: none;
+    box-shadow: var(--ring-focus-danger);
+    transform: scale(1.02);
+  }
 }

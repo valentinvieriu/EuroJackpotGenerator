@@ -39,7 +39,7 @@
 
     <!-- Description and Action Button -->
     <form
-      class="flex items-center justify-between"
+      class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
       @submit.prevent="simulateExtractionHandler"
     >
       <p class="text-sm text-content-muted">
@@ -59,7 +59,8 @@
         <Transition name="button-content" mode="out-in">
           <span v-if="!loading" key="default" class="flex items-center gap-2">
             <span class="text-2xl">🎲</span>
-            <span>Run Single Draw Simulation</span>
+            <span class="hidden sm:inline">Run Single Draw Simulation</span>
+            <span class="sm:hidden">Run Single Draw</span>
           </span>
           <span v-else key="loading" class="flex items-center gap-2">
             <svg

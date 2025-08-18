@@ -12,22 +12,20 @@
         >
           Main Numbers
         </h4>
-        <div class="flex flex-wrap justify-center gap-3">
-          <TransitionGroup
-            name="ball"
-            tag="div"
-            class="flex flex-wrap justify-center gap-3"
-            appear
-          >
-            <TicketNumber
-              v-for="(number, index) in result.mainNumbers"
-              :key="`main-${number}`"
-              :number="number"
-              :is-winner="true"
-              :style="{ '--stagger-delay': `${index * 100}ms` }"
-            />
-          </TransitionGroup>
-        </div>
+        <TransitionGroup
+          name="ball"
+          tag="div"
+          class="flex flex-wrap justify-center gap-3"
+          appear
+        >
+          <TicketNumber
+            v-for="(number, index) in result.mainNumbers"
+            :key="`main-${number}`"
+            :number="number"
+            :is-winner="true"
+            :style="{ '--stagger-delay': `${index * 100}ms` }"
+          />
+        </TransitionGroup>
       </div>
       <div class="text-center">
         <h4
@@ -35,23 +33,21 @@
         >
           Euro Numbers
         </h4>
-        <div class="flex flex-wrap justify-center gap-3">
-          <TransitionGroup
-            name="ball"
-            tag="div"
-            class="flex flex-wrap justify-center gap-3"
-            appear
-          >
-            <TicketNumber
-              v-for="(number, index) in result.euroNumbers"
-              :key="`euro-${number}`"
-              :number="number"
-              :is-winner="true"
-              type="euro"
-              :style="{ '--stagger-delay': `${index * 100}ms` }"
-            />
-          </TransitionGroup>
-        </div>
+        <TransitionGroup
+          name="ball"
+          tag="div"
+          class="flex flex-wrap justify-center gap-3"
+          appear
+        >
+          <TicketNumber
+            v-for="(number, index) in result.euroNumbers"
+            :key="`euro-${number}`"
+            :number="number"
+            :is-winner="true"
+            type="euro"
+            :style="{ '--stagger-delay': `${index * 100}ms` }"
+          />
+        </TransitionGroup>
       </div>
     </div>
   </div>

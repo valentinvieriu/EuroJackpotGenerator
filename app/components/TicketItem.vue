@@ -48,44 +48,40 @@
       <span class="mb-1 block text-sm font-medium text-content-muted"
         >Main Numbers:</span
       >
-      <div class="flex flex-wrap gap-2">
-        <TransitionGroup
-          name="winning-number"
-          tag="div"
-          class="flex flex-wrap gap-2"
-        >
-          <TicketNumber
-            v-for="(number, index) in ticket.mainNumbers"
-            :key="'main-' + number"
-            :number="number"
-            :is-winner="ticket.winningMainNumbers?.includes(number) || false"
-            :style="{ '--win-delay': `${index * 50}ms` }"
-          />
-        </TransitionGroup>
-      </div>
+      <TransitionGroup
+        name="winning-number"
+        tag="div"
+        class="flex flex-wrap gap-2"
+      >
+        <TicketNumber
+          v-for="(number, index) in ticket.mainNumbers"
+          :key="'main-' + number"
+          :number="number"
+          :is-winner="ticket.winningMainNumbers?.includes(number) || false"
+          :style="{ '--win-delay': `${index * 50}ms` }"
+        />
+      </TransitionGroup>
     </div>
     <div>
       <span class="mb-1 block text-sm font-medium text-content-muted"
         >Euro Numbers:</span
       >
-      <div class="flex flex-wrap gap-2">
-        <TransitionGroup
-          name="winning-number"
-          tag="div"
-          class="flex flex-wrap gap-2"
-        >
-          <TicketNumber
-            v-for="(number, index) in ticket.euroNumbers"
-            :key="'euro-' + number"
-            :number="number"
-            :is-winner="ticket.winningEuroNumbers?.includes(number) || false"
-            type="euro"
-            :style="{
-              '--win-delay': `${(index + ticket.mainNumbers.length) * 50}ms`,
-            }"
-          />
-        </TransitionGroup>
-      </div>
+      <TransitionGroup
+        name="winning-number"
+        tag="div"
+        class="flex flex-wrap gap-2"
+      >
+        <TicketNumber
+          v-for="(number, index) in ticket.euroNumbers"
+          :key="'euro-' + number"
+          :number="number"
+          :is-winner="ticket.winningEuroNumbers?.includes(number) || false"
+          type="euro"
+          :style="{
+            '--win-delay': `${(index + ticket.mainNumbers.length) * 50}ms`,
+          }"
+        />
+      </TransitionGroup>
     </div>
 
     <!-- Per-class breakdown for system tickets -->
@@ -97,24 +93,22 @@
         <span class="mb-1 block text-sm font-medium text-content-muted"
           >Winning Lines:</span
         >
-        <div class="flex flex-wrap gap-2">
-          <TransitionGroup
-            name="prize-chip"
-            tag="div"
-            class="flex flex-wrap gap-2"
-            appear
+        <TransitionGroup
+          name="prize-chip"
+          tag="div"
+          class="flex flex-wrap gap-2"
+          appear
+        >
+          <span
+            v-for="({ winClass, count }, index) in winClassBreakdown"
+            :key="winClass"
+            :class="[getWinClassChipClasses(winClass), 'cursor-help']"
+            :title="getPrizeTooltip(winClass, count)"
+            :style="{ '--chip-delay': `${index * 100}ms` }"
           >
-            <span
-              v-for="({ winClass, count }, index) in winClassBreakdown"
-              :key="winClass"
-              :class="[getWinClassChipClasses(winClass), 'cursor-help']"
-              :title="getPrizeTooltip(winClass, count)"
-              :style="{ '--chip-delay': `${index * 100}ms` }"
-            >
-              {{ count }}×Class {{ winClass }}
-            </span>
-          </TransitionGroup>
-        </div>
+            {{ count }}×Class {{ winClass }}
+          </span>
+        </TransitionGroup>
       </div>
     </Transition>
   </div>

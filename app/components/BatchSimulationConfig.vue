@@ -21,7 +21,7 @@
         <select
           id="simulationCount"
           v-model.number="config.simulationCount"
-          class="w-full min-w-0 rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
+          class="form-select min-w-0"
           :disabled="disabled"
           :title="
             simulationOptions.find(
@@ -49,7 +49,7 @@
         <select
           id="batchSize"
           v-model.number="config.batchSize"
-          class="w-full rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
+          class="form-select"
           :disabled="disabled"
         >
           <option :value="50">50 (Faster)</option>
@@ -200,7 +200,7 @@
         <button
           v-if="showCancelButton"
           :disabled="disabled && !canCancel"
-          class="rounded-md bg-interactive-danger px-5 py-2 font-semibold text-content-primary transition duration-150 hover:bg-interactive-danger-hover focus:ring-2 focus:ring-interactive-danger focus:ring-offset-2 focus:ring-offset-surface-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          class="focus-danger rounded-md bg-interactive-danger px-5 py-2 font-semibold text-content-primary transition duration-150 hover:bg-interactive-danger-hover disabled:cursor-not-allowed disabled:opacity-50"
           @click="$emit('cancel')"
         >
           Cancel Simulation

@@ -39,7 +39,7 @@
         <div v-if="mainNumbers.length < FAVORITE_NUMBERS_MAX" class="relative">
           <select
             :value="''"
-            class="w-full cursor-pointer appearance-none rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
+            class="form-select form-select-custom"
             @change="addMainNumber($event)"
           >
             <option
@@ -119,7 +119,7 @@
         <div v-if="euroNumbers.length < FAVORITE_NUMBERS_MAX" class="relative">
           <select
             :value="''"
-            class="w-full cursor-pointer appearance-none rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
+            class="form-select form-select-custom"
             @change="addEuroNumber($event)"
           >
             <option
