@@ -8,8 +8,8 @@
       <p
         class="text-luxury-subtitle mx-auto mb-8 max-w-2xl text-base md:text-lg"
       >
-        Understand lottery mathematics through realistic simulations. Generate
-        tickets, run draws, and explore statistical outcomes.
+        Stop believing lottery myths—see the mathematics for yourself. Generate
+        tickets, run simulations, and discover what the numbers really tell you.
       </p>
 
       <!-- Simple Mode CTA -->
@@ -101,13 +101,33 @@
             </Transition>
           </button>
 
-          <div class="text-center">
+          <div class="flex flex-col items-center gap-3 text-center">
             <button
               class="text-sm text-brand-gold underline transition-colors duration-200 hover:text-brand-gold-light"
               @click="handleShowCustom"
             >
               ⚙️ Want to customize? Show advanced options
             </button>
+
+            <NuxtLink
+              to="/about"
+              class="inline-flex items-center gap-2 text-sm font-medium text-premium-emerald-400 transition-all duration-200 hover:scale-105 hover:text-premium-emerald-300"
+            >
+              <svg
+                class="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014.846 17H9.154a3.374 3.374 0 00-1.849-.553L6.757 16z"
+                />
+              </svg>
+              <span>Why we built this tool</span>
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -118,24 +138,48 @@
         @close="showCustomizationOverlay = false"
       />
 
-      <!-- Educational disclaimer -->
+      <!-- Educational disclaimer and About link -->
       <div
-        class="glass-luxury mb-4 inline-flex items-center rounded-full px-4 py-2"
+        class="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
       >
-        <svg
-          class="mr-2 h-4 w-4 text-premium-emerald-400"
-          fill="currentColor"
-          viewBox="0 0 20 20"
+        <div
+          class="glass-luxury inline-flex items-center rounded-full px-4 py-2"
         >
-          <path
-            fill-rule="evenodd"
-            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-            clip-rule="evenodd"
-          />
-        </svg>
-        <span class="text-sm text-content-secondary">
-          Educational tool only. No real money involved.
-        </span>
+          <svg
+            class="mr-2 h-4 w-4 text-premium-emerald-400"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span class="text-sm text-content-secondary">
+            Educational tool only. No real money involved.
+          </span>
+        </div>
+
+        <NuxtLink
+          to="/about"
+          class="inline-flex items-center gap-2 text-sm font-medium text-brand-gold transition-all duration-200 hover:scale-105 hover:text-brand-gold-light"
+        >
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>Discover the truth behind lottery myths</span>
+        </NuxtLink>
       </div>
     </div>
   </div>
