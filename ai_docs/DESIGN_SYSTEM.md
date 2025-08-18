@@ -9,14 +9,15 @@
 - **Token-first & semantic:** Colors and scales are named by **role** (surface, content, brand) — not by hex.
 - **Predictable hierarchy:** Elevation, depth, and state are consistent and repeatable.
 - **Accessible by default:** AA/AAA where applicable, clear focus, reduced-motion-friendly.
-- **SSR-safe & scalable:** Same tokens server/client; no runtime-calculated styles in components.
+- **SSR-safe & scalable:** Same tokens server/client; no runtime-computed styles in components.
 - **Dumb components:** Presentation-only. No business logic or API calls (see `ARCHITECTURE.md`).
 
 ---
 
 ## 🧩 Tailwind v4 Token Mapping (what actually generates utilities)
 
-Tokens live in `@theme` inside **`app/assets/css/theme.css`**.
+Tokens live in `@theme` inside **`app/assets/css/theme.css`** and create utilities automatically.
+See Tailwind v4 "Theme variables" docs for how tokens map to classes. :contentReference[oaicite:4]{index=4}
 
 | Family (token prefix)                    | Examples in CSS Tokens                              | Utilities you get                         |
 | ---------------------------------------- | --------------------------------------------------- | ----------------------------------------- |
@@ -29,7 +30,7 @@ Tokens live in `@theme` inside **`app/assets/css/theme.css`**.
 | **Z-index** `--z-*`                      | `--z-50`, `--z-max`                                 | `z-*`                                     |
 | **Blur** `--blur-*`                      | `--blur-md: 12px` (**length**)                      | `blur-*`                                  |
 
-> **Important:** Blur tokens must be **lengths** (e.g., `12px`), not `blur(12px)`. We keep bespoke casino blurs (`--blur-casino-*`) for custom CSS where needed.
+> **Decimals in tokens:** Use underscores in `@theme` (e.g., `--spacing-0_5`) — Tailwind maps `p-0.5` to that token at runtime. :contentReference[oaicite:5]{index=5}
 
 ---
 
@@ -73,10 +74,7 @@ Tokens live in `@theme` inside **`app/assets/css/theme.css`**.
 
 ### Status & Feedback Colors
 
-- `error-*`: critical issues (`error`, `error-light`, `error-dark`)
-- `warning-*`: cautionary notices (`warning`, `warning-light`, `warning-dark`)
-- `success-*`: positive confirmations (`success`, `success-light`, `success-dark`)
-- `info-*`: informational messages (`info`, `info-light`, `info-dark`)
+- `error-*`, `warning-*`, `success-*`, `info-*` with matching `*-light`/`*-dark` and feedback variables
 
 **Common patterns**
 
@@ -84,34 +82,13 @@ Tokens live in `@theme` inside **`app/assets/css/theme.css`**.
 - Warning badges: `bg-warning-dark/50 border-warning/30 text-warning-light`
 - Status messages: pair with matching text/background variants
 
-### Opacity & Tokens (Tailwind v4)
-
-**Slash opacity with custom tokens IS reliable** in Tailwind v4 when tokens are defined under `@theme --color-*` (our setup):
-
-- ✅ **Use freely**: `border-casino-blue-light/50`, `bg-surface-primary/20`, `text-brand-gold/90`
-- ✅ **Element opacity**: `opacity-50` (when you want the whole element transparent)
-- ✅ **Arbitrary values** (for complex cases):
-  - OKLCH: `border-[oklch(0.62_0.05_229_/_0.5)]`
-  - Color-mix: `border-[color-mix(in_oklab,var(--color-casino-blue-light)_50%,transparent)]`
-  - Variable shorthand: `border-(--color-casino-blue-light)/50`
-
 ---
 
-## 🧱 Scales
+## 🌙 Theming & Dark Mode
 
-- **Spacing**: `--spacing-*` → `p-*`, `m-*`, `gap-*` (e.g., `py-12 md:py-16`)
-- **Radius**: `--radius-lg`, `--radius-2xl`, `--radius-full` → `rounded-*`
-- **Type**: `--text-sm..8xl`, `--leading-tight..loose` → `text-*`, `leading-*`
-- **Shadows**: `--shadow-sm..2xl` → `shadow-*` (use `.casino-card`, `.hover-glow` for premium)
-- **Motion**: `--duration-150|300|500`, `--ease-standard|expressive`
-- **Blur**: `--blur-sm|md|lg|xl` (lengths) → `blur-*`
-
----
-
-## 🌙 Theming
-
-- **Dark mode**: `[data-theme='dark']` overrides surfaces, content, borders, and glass shadows.
-- **Seasonal**: `[data-theme='halloween']`, `[data-theme='christmas']` (opt-in via `data-theme`).
+- **Attribute-based dark mode:** We use `<html data-theme="dark">`. In v4, map the built-in **`dark:`** variant to this attribute with `@custom-variant` so you can keep writing `dark:*` utilities normally. :contentReference[oaicite:6]{index=6}
+- **Layering:** Define **overrides in `@layer theme`** to keep variable ordering predictable and avoid specificity battles. (Good practice mirrored in v4 community guidance.) :contentReference[oaicite:7]{index=7}
+- **Seasonal themes:** Same pattern with `[data-theme='halloween']`, `[data-theme='christmas']`.
 
 > Components **never** pick colors by hex — they rely on tokens/utilities so themes swap cleanly.
 
@@ -136,7 +113,32 @@ We ship premium utilities in `theme.css`:
   - Text on `surface-primary`: **≥ 4.5:1**
   - Interactive/focus rings: **≥ 3:1**
 - `prefers-reduced-motion`: respected globally
-- Focus: `.focus-casino` / `.focus-gold` box-shadow rings, not color-only
+- Prefer `focus-visible` in components where appropriate (or tokenized focus rings like `.focus-casino`).
+
+---
+
+## 🔁 Opacity & Tokens (Tailwind v4)
+
+- **Use slash opacity freely with token utilities** (generated from `--color-*`):
+  `border-casino-blue-light/50`, `bg-surface-primary/20`, `text-brand-gold/90`. :contentReference[oaicite:8]{index=8}
+- **Variable shorthand (CSS variables)** using Tailwind’s v4 syntax:
+  `bg-(--my-color)`, `border-(--my-border)` (equivalent to `bg-[var(--my-color)]`). :contentReference[oaicite:9]{index=9}
+  - **Note:** Slash opacity modifiers **don’t apply** to `bg-(--token)`/`border-(--token)` shorthands. For opacity, use:
+    - `color-mix(...)`: `border-[color-mix(in_oklab,var(--color-casino-blue-light)_50%,transparent)]`, or
+    - encode alpha in the color (e.g., `oklch(... / 0.5)`), or
+    - apply opacity at the element level with `opacity-*` when acceptable.
+- Keep Tailwind blur tokens (`--blur-*`) as **lengths**; bespoke CSS blurs (e.g., `--blur-casino-*`) are fine for custom filters.
+
+---
+
+## 🧱 Scales
+
+- **Spacing**: `--spacing-*` → `p-*`, `m-*`, `gap-*` (e.g., `py-12 md:py-16`)
+- **Radius**: `--radius-lg`, `--radius-2xl`, `--radius-full` → `rounded-*` :contentReference[oaicite:10]{index=10}
+- **Type**: `--text-sm..8xl`, `--leading-tight..loose` → `text-*`, `leading-*`
+- **Shadows**: `--shadow-sm..2xl` → `shadow-*`
+- **Motion**: `--duration-150|300|500`, `--ease-standard|expressive`
+- **Blur**: `--blur-sm|md|lg|xl` (lengths) → `blur-*`
 
 ---
 
@@ -147,18 +149,19 @@ We ship premium utilities in `theme.css`:
 - `bg-surface-primary text-content-primary`
 - `rounded-2xl shadow-lg p-6`
 - `transition-all duration-150 ease-standard`
-- `border-casino-blue-light/50` (slash opacity works with our tokens)
-- `border-casino-blue-light` (solid borders)
+- `border-casino-blue-light/50` (slash opacity on token utilities)
+- `bg-(--color-surface-overlay)` for variable shorthand where needed
 
-**Don't**
+**Don’t**
 
 - Hardcoded `#rrggbb` / `rgb()` / `rgba()` in components
 - Runtime-computed inline styles in components (SSR drift)
 - Business logic or API calls in components (stores only)
+- Use `bg-(--token)/50` expecting slash opacity — it won’t apply (use `color-mix(...)` instead)
 
 ---
 
-## 🧪 Examples
+## 🌙 Example Snippets (v4-correct)
 
 **Hero headline**
 
@@ -184,23 +187,24 @@ We ship premium utilities in `theme.css`:
 </div>
 ```
 
-**Overlay container (modal content)**
+**Overlay container (variable shorthand demo)**
 
 ```html
-<div class="rounded-2xl bg-surface-overlay p-6 shadow-2xl backdrop-blur-xl">
+<!-- Uses a token via CSS variable shorthand -->
+<div
+  class="rounded-2xl bg-(--color-surface-overlay) p-6 shadow-2xl backdrop-blur-xl"
+>
   <!-- modal content -->
 </div>
 ```
 
-**Subtle info alert**
+**Semi-transparent border via color-mix**
 
 ```html
-<div class="alert alert-info">
-  <span class="alert-icon">ℹ️</span>
-  <div class="alert-content">
-    <div class="alert-title">Educational Mode</div>
-    <p class="alert-desc">Simulations do not predict real draws.</p>
-  </div>
+<div
+  class="rounded-2xl border-[color-mix(in_oklab,var(--color-casino-blue-light)_50%,transparent)] p-6"
+>
+  <!-- content -->
 </div>
 ```
 
@@ -208,23 +212,21 @@ We ship premium utilities in `theme.css`:
 
 ## 🔒 Alignment with Architecture & PRD
 
-- **Dumb components** consume tokens/utilities only; **all** logic stays in Pinia stores.
+- **Dumb components** consume tokens/utilities; **all** logic stays in Pinia stores.
 - **SSR-safe**: token values are static; no client-only computed styles in components.
-- **Responsiveness & performance**: transitions use `ease-standard` and modest durations; animations are optional/accessible.
-- **Education focus**: alerts, jackpot/VIP sections, and progress feedback use semantic tokens for consistent messaging.
+- **Responsiveness & performance**: modest transitions; animations optional/accessible.
+- **Education focus**: alerts, jackpot/VIP sections, and progress feedback use semantic tokens consistently.
 
 ---
 
 ## ✅ Quality Checklist (enforced)
 
-- [ ] Uses **token-based utilities only** in components (no hardcoded values)
-- [ ] Meets **contrast** targets
-- [ ] Includes **focus-visible** state
+- [ ] Uses **token-based utilities** in components (no hardcoded values)
+- [ ] Meets **contrast** targets; uses focus-visible/focus ring tokens
 - [ ] Respects **reduced motion**
-- [ ] Works in **dark mode** if relevant
+- [ ] Works in **dark mode**; overrides live in `@layer theme`
 - [ ] Uses spacing/radius/type tokens for scale consistency
-- [ ] Avoids hardcoded `rgba()` / hex colors (use tokens with slash opacity as needed)
-
-```
-
-```
+- [ ] Correct opacity pattern:
+  - Slash opacity only with token utilities (e.g., `bg-*-token/20`)
+  - For `bg-(--token)`, use `color-mix` or alpha-encoded colors
+    \

@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* Map the built-in `dark:` variant to our data attribute so we can keep using `dark:*` classes
+   while toggling <html data-theme="dark"> (or any ancestor) in the app. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @theme {
   /* wipe defaults so only *your* tokens generate utilities */
   /* --*: initial; */
@@ -72,10 +76,10 @@
   --color-brand-navy: oklch(0.13 0.02 229);
 
   /* ---------- CASINO BLUE FAMILY (used by components) ---------- */
-  /* Use token utilities like border-casino-blue-light and text-casino-blue-dark.
-     For opacity on custom tokens, prefer element/state-level opacity utilities (e.g., opacity-50)
-     or use an arbitrary color value, e.g. border-[oklch(0.62 0.05 229 / 0.5)] or
-     border-[color-mix(in oklab, var(--color-casino-blue-light) 50%, transparent)]. */
+  /* These are color tokens under --color-*, so you can safely use slash opacity:
+     e.g. border-casino-blue-light/50, bg-casino-blue/20. If you use the CSS variable
+     shorthand like border-(--color-casino-blue-light), note that slash opacity does
+     not apply there — use color-mix(...) or encode alpha in the color instead. */
   --color-casino-blue-light: oklch(0.62 0.05 229);
   --color-casino-blue: oklch(0.45 0.04 229);
   --color-casino-blue-dark: oklch(0.3 0.03 229);
@@ -253,7 +257,7 @@
   --color-feedback-warning-fg: var(--color-warning-light);
   --color-feedback-warning-bg: oklch(
     0.75 0.15 65 / 0.14
-  ); /* slightly stronger for yellow visibility */
+  ); /* stronger for yellow visibility */
   --color-feedback-warning-bg-solid: oklch(0.22 0.1 65);
   --color-feedback-warning-border: oklch(0.75 0.15 65 / 0.5);
 
@@ -488,46 +492,45 @@
 }
 
 /* ============================================
-   🌙 DARK THEME VARIANT
+   🌙 THEME VARIANTS (Dark + Seasonal) — layered
    ============================================ */
-[data-theme='dark'] {
-  --color-surface-primary: oklch(0.08 0.02 229);
-  --color-surface-secondary: oklch(0.12 0.03 229);
-  --color-surface-card: oklch(0.14 0.03 229);
-  --color-surface-card-hover: oklch(0.18 0.035 229);
-  --color-surface-floating: oklch(0.2 0.035 229);
-  --color-surface-overlay: oklch(0.07 0.02 229);
-  --color-surface-overlay-backdrop: oklch(0.04 0.01 229 / 0.8);
-  --color-content-primary: oklch(0.98 0.003 80);
-  --color-content-secondary: oklch(0.78 0.01 229);
-  --color-content-muted: oklch(0.6 0.015 229);
-  --color-brand-gold: oklch(0.9 0.15 85);
-  --color-border-secondary: oklch(0.18 0.02 229);
-  --shadow-glass:
-    0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+@layer theme {
+  [data-theme='dark'] {
+    --color-surface-primary: oklch(0.08 0.02 229);
+    --color-surface-secondary: oklch(0.12 0.03 229);
+    --color-surface-card: oklch(0.14 0.03 229);
+    --color-surface-card-hover: oklch(0.18 0.035 229);
+    --color-surface-floating: oklch(0.2 0.035 229);
+    --color-surface-overlay: oklch(0.07 0.02 229);
+    --color-surface-overlay-backdrop: oklch(0.04 0.01 229 / 0.8);
+    --color-content-primary: oklch(0.98 0.003 80);
+    --color-content-secondary: oklch(0.78 0.01 229);
+    --color-content-muted: oklch(0.6 0.015 229);
+    --color-brand-gold: oklch(0.9 0.15 85);
+    --color-border-secondary: oklch(0.18 0.02 229);
+    --shadow-glass:
+      0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-  /* Feedback BG tuning for dark mode */
-  --color-feedback-success-bg: oklch(0.65 0.15 160 / 0.18);
-  --color-feedback-info-bg: oklch(0.65 0.15 250 / 0.18);
-  --color-feedback-warning-bg: oklch(0.75 0.15 65 / 0.2);
-  --color-feedback-error-bg: oklch(0.6 0.2 15 / 0.18);
-}
+    /* Feedback BG tuning for dark mode */
+    --color-feedback-success-bg: oklch(0.65 0.15 160 / 0.18);
+    --color-feedback-info-bg: oklch(0.65 0.15 250 / 0.18);
+    --color-feedback-warning-bg: oklch(0.75 0.15 65 / 0.2);
+    --color-feedback-error-bg: oklch(0.6 0.2 15 / 0.18);
+  }
 
-/* ============================================
-   🎃 HALLOWEEN & 🎄 CHRISTMAS THEMES (Seasonal)
-   ============================================ */
-[data-theme='halloween'] {
-  --color-interactive-primary: oklch(0.65 0.2 30); /* Orange */
-  --color-premium-emerald-400: oklch(0.3 0.15 120); /* Dark green */
-  --color-surface-primary: oklch(0.08 0.03 280); /* Purple tint */
-  --color-content-primary: oklch(0.98 0.003 80);
-}
+  [data-theme='halloween'] {
+    --color-interactive-primary: oklch(0.65 0.2 30); /* Orange */
+    --color-premium-emerald-400: oklch(0.3 0.15 120); /* Dark green */
+    --color-surface-primary: oklch(0.08 0.03 280); /* Purple tint */
+    --color-content-primary: oklch(0.98 0.003 80);
+  }
 
-[data-theme='christmas'] {
-  --color-interactive-primary: oklch(0.45 0.18 15); /* Red */
-  --color-premium-emerald-400: oklch(0.4 0.15 145); /* Green */
-  --color-brand-gold-400: oklch(0.88 0.08 85); /* Softer gold */
-  --color-surface-primary: oklch(0.16 0.02 229);
+  [data-theme='christmas'] {
+    --color-interactive-primary: oklch(0.45 0.18 15); /* Red */
+    --color-premium-emerald-400: oklch(0.4 0.15 145); /* Green */
+    --color-brand-gold-400: oklch(0.88 0.08 85); /* Softer gold */
+    --color-surface-primary: oklch(0.16 0.02 229);
+  }
 }
 
 /* ============================================
