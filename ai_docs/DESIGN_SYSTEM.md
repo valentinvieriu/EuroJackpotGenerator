@@ -57,6 +57,33 @@ Tokens live in `@theme` inside **`app/assets/css/theme.css`**.
 - VIP section: `bg-surface-vip text-premium-burgundy-300`
 - Sophisticated: `bg-surface-premium text-brand-platinum-300`
 
+### Interactive Elements
+
+- `interactive-primary-*`: main CTAs (`primary`, `hover`, `active`, `disabled`, `glow`)
+- `interactive-secondary-*`: brand actions (`secondary`, `hover`, `active`, `glow`)
+- `interactive-tertiary-*`: subtle actions (`tertiary`, `hover`, `active`, `disabled`)
+- `interactive-success-*`: positive confirmations (`success`, `hover`, `active`, `glow`)
+- `interactive-danger-*`: destructive actions (`danger`, `hover`, `active`)
+
+**Common patterns**
+
+- Cancel buttons: `bg-interactive-danger hover:bg-interactive-danger-hover`
+- Success actions: `bg-interactive-success hover:bg-interactive-success-hover`
+- Primary CTAs: `bg-interactive-primary focus:ring-interactive-primary`
+
+### Status & Feedback Colors
+
+- `error-*`: critical issues (`error`, `error-light`, `error-dark`)
+- `warning-*`: cautionary notices (`warning`, `warning-light`, `warning-dark`)
+- `success-*`: positive confirmations (`success`, `success-light`, `success-dark`)
+- `info-*`: informational messages (`info`, `info-light`, `info-dark`)
+
+**Common patterns**
+
+- Error alerts: `bg-error-dark/50 border-error text-error`
+- Warning badges: `bg-warning-dark/50 border-warning/30 text-warning-light`
+- Status messages: pair with matching text/background variants
+
 ### Opacity with custom tokens
 
 Slash opacity like `border-casino-blue-light/50` is **not reliable** for token colors. Prefer:

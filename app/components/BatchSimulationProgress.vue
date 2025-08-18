@@ -117,7 +117,7 @@
 
     <div v-if="canCancel" class="text-center">
       <button
-        class="bg-red-600 text-content-primary px-4 py-2 rounded-md font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-surface-primary transition duration-150"
+        class="bg-interactive-danger text-content-primary px-4 py-2 rounded-md font-medium hover:bg-interactive-danger-hover focus:outline-none focus:ring-2 focus:ring-interactive-danger focus:ring-offset-2 focus:ring-offset-surface-primary transition duration-150"
         @click="$emit('cancel')"
       >
         Cancel Simulation

@@ -24,7 +24,7 @@
         </Transition>
       </h3>
       <button
-        class="text-content-muted hover:text-error hover:bg-red-900/20 rounded-full p-1 transition-colors duration-200 flex-shrink-0"
+        class="text-content-muted hover:text-error hover:bg-error-dark/20 rounded-full p-1 transition-colors duration-200 flex-shrink-0"
         title="Delete this ticket"
         @click="emit('delete', ticket.id)"
       >
