@@ -1,27 +1,27 @@
 <template>
-  <div class="casino-card-premium rounded-lg p-6 hover-lift">
+  <div class="casino-card-premium hover-lift rounded-lg p-6">
     <div class="mb-6">
-      <h2 class="text-2xl text-section-title mb-2">
+      <h2 class="text-section-title mb-2 text-2xl">
         Mass Simulation Configuration
       </h2>
-      <p class="text-content-muted text-sm">
+      <p class="text-sm text-content-muted">
         Run multiple simulated draws to analyse expected outcomes and
         profitability
       </p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
         <label
           for="simulationCount"
-          class="mb-2 block text-content-muted text-sm font-medium"
+          class="mb-2 block text-sm font-medium text-content-muted"
         >
           Number of Simulations:
         </label>
         <select
           id="simulationCount"
           v-model.number="config.simulationCount"
-          class="w-full min-w-0 px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary"
+          class="w-full min-w-0 rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
           :disabled="disabled"
           :title="
             simulationOptions.find(
@@ -42,14 +42,14 @@
       <div>
         <label
           for="batchSize"
-          class="mb-2 block text-content-muted text-sm font-medium"
+          class="mb-2 block text-sm font-medium text-content-muted"
         >
           Batch Size:
         </label>
         <select
           id="batchSize"
           v-model.number="config.batchSize"
-          class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary"
+          class="w-full rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
           :disabled="disabled"
         >
           <option :value="50">50 (Faster)</option>
@@ -60,12 +60,12 @@
     </div>
 
     <!-- Key Performance Indicators -->
-    <div v-if="ticketCount > 0" class="mb-6 p-5 casino-card rounded-lg">
+    <div v-if="ticketCount > 0" class="casino-card mb-6 rounded-lg p-5">
       <h3
-        class="text-lg font-semibold text-content-secondary mb-4 flex items-center gap-2"
+        class="mb-4 flex items-center gap-2 text-lg font-semibold text-content-secondary"
       >
         <svg
-          class="w-5 h-5 text-brand-gold"
+          class="h-5 w-5 text-brand-gold"
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -73,11 +73,11 @@
         </svg>
         Simulation Summary
       </h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="text-center casino-card p-4 rounded-lg">
-          <div class="flex items-center justify-center gap-2 mb-2">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div class="casino-card rounded-lg p-4 text-center">
+          <div class="mb-2 flex items-center justify-center gap-2">
             <svg
-              class="w-4 h-4 text-error"
+              class="h-4 w-4 text-error"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -85,11 +85,11 @@
                 d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
               />
             </svg>
-            <span class="text-sm text-content-secondary font-medium"
+            <span class="text-sm font-medium text-content-secondary"
               >Total Cost</span
             >
             <span
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-error-dark/50 text-error-light border border-error/30"
+              class="inline-flex items-center rounded-full border border-error/30 bg-error-dark/50 px-2 py-1 text-xs font-medium text-error-light"
             >
               HIGH
             </span>
@@ -101,17 +101,17 @@
               })
             }}
           </div>
-          <div class="text-xs text-content-muted mt-1">
+          <div class="mt-1 text-xs text-content-muted">
             {{ config.simulationCount.toLocaleString() }} × €{{
               costPerSimulation.toFixed(2)
             }}
           </div>
         </div>
 
-        <div class="text-center casino-card p-4 rounded-lg">
-          <div class="flex items-center justify-center gap-2 mb-2">
+        <div class="casino-card rounded-lg p-4 text-center">
+          <div class="mb-2 flex items-center justify-center gap-2">
             <svg
-              class="w-4 h-4 text-brand-gold-400"
+              class="h-4 w-4 text-brand-gold-400"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -121,11 +121,11 @@
                 clip-rule="evenodd"
               />
             </svg>
-            <span class="text-sm text-content-secondary font-medium"
+            <span class="text-sm font-medium text-content-secondary"
               >Break-even Target</span
             >
             <span
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning-dark/50 text-warning-light border border-warning/30"
+              class="inline-flex items-center rounded-full border border-warning/30 bg-warning-dark/50 px-2 py-1 text-xs font-medium text-warning-light"
             >
               TARGET
             </span>
@@ -133,15 +133,15 @@
           <div class="text-2xl font-bold text-brand-gold-400">
             {{ breakEvenPercentage.toFixed(1) }}%
           </div>
-          <div class="text-xs text-content-muted mt-1">
+          <div class="mt-1 text-xs text-content-muted">
             Win rate needed to break even
           </div>
         </div>
 
-        <div class="text-center casino-card p-4 rounded-lg">
-          <div class="flex items-center justify-center gap-2 mb-2">
+        <div class="casino-card rounded-lg p-4 text-center">
+          <div class="mb-2 flex items-center justify-center gap-2">
             <svg
-              class="w-4 h-4 text-brand-gold"
+              class="h-4 w-4 text-brand-gold"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -149,11 +149,11 @@
                 d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
               />
             </svg>
-            <span class="text-sm text-content-secondary font-medium"
+            <span class="text-sm font-medium text-content-secondary"
               >Expected Scenarios</span
             >
             <span
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-gold/20 text-brand-gold border border-border-primary/30"
+              class="inline-flex items-center rounded-full border border-border-primary/30 bg-brand-gold/20 px-2 py-1 text-xs font-medium text-brand-gold"
             >
               EST.
             </span>
@@ -161,7 +161,7 @@
           <div class="text-2xl font-bold text-brand-gold">
             {{ Math.round(config.simulationCount * 0.15) }}
           </div>
-          <div class="text-xs text-content-muted mt-1">
+          <div class="mt-1 text-xs text-content-muted">
             Estimated winning simulations (~15%)
           </div>
         </div>
@@ -169,10 +169,10 @@
     </div>
 
     <div
-      class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4"
+      class="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-end"
     >
       <!-- Export Options -->
-      <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
         <label class="inline-flex items-center">
           <input
             v-model="config.includeIndividualResults"
@@ -200,7 +200,7 @@
         <button
           v-if="showCancelButton"
           :disabled="disabled && !canCancel"
-          class="bg-interactive-danger text-content-primary px-5 py-2 rounded-md font-semibold hover:bg-interactive-danger-hover focus:outline-none focus:ring-2 focus:ring-interactive-danger focus:ring-offset-2 focus:ring-offset-surface-primary disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+          class="rounded-md bg-interactive-danger px-5 py-2 font-semibold text-content-primary transition duration-150 hover:bg-interactive-danger-hover focus:ring-2 focus:ring-interactive-danger focus:ring-offset-2 focus:ring-offset-surface-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           @click="$emit('cancel')"
         >
           Cancel Simulation
@@ -208,12 +208,12 @@
 
         <button
           :disabled="disabled || ticketCount === 0"
-          class="btn-casino-gold px-5 py-2 rounded-md font-cta focus-gold disabled:opacity-50 disabled:cursor-not-allowed"
+          class="btn-casino-gold focus-gold rounded-md px-5 py-2 font-cta disabled:cursor-not-allowed disabled:opacity-50"
           @click="handleStartSimulation"
         >
           <svg
             v-if="disabled"
-            class="animate-spin -ml-1 mr-3 h-4 w-4 text-content-primary inline"
+            class="mr-3 -ml-1 inline h-4 w-4 animate-spin text-content-primary"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -239,11 +239,11 @@
 
     <div
       v-if="config.simulationCount >= HIGH_SIMULATION_WARNING_THRESHOLD"
-      class="mt-4 p-3 bg-warning-dark/50 border border-warning rounded-md"
+      class="mt-4 rounded-md border border-warning bg-warning-dark/50 p-3"
     >
       <div class="flex">
         <svg
-          class="h-5 w-5 text-brand-gold-400 mr-2 flex-shrink-0"
+          class="mr-2 h-5 w-5 flex-shrink-0 text-brand-gold-400"
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -254,10 +254,10 @@
           />
         </svg>
         <div>
-          <h4 class="text-brand-gold-400 font-medium">
+          <h4 class="font-medium text-brand-gold-400">
             Large Simulation Warning
           </h4>
-          <p class="text-warning-light text-sm mt-1">
+          <p class="mt-1 text-sm text-warning-light">
             This simulation may take several minutes to complete and use
             significant computational resources. Consider starting with fewer
             simulations to test your setup.

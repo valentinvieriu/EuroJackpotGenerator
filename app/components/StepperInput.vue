@@ -3,11 +3,11 @@
     <button
       type="button"
       :disabled="modelValue <= min"
-      class="w-10 h-10 flex items-center justify-center bg-surface-primary border border-casino-blue-light/50 rounded-l-md hover:bg-surface-primary-light focus:outline-none focus:ring-2 focus:ring-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+      class="flex h-10 w-10 items-center justify-center rounded-l-md border border-casino-blue-light/50 bg-surface-primary transition-colors duration-150 hover:bg-surface-primary-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       @click="decrement"
     >
       <svg
-        class="w-4 h-4 text-content-secondary"
+        class="h-4 w-4 text-content-secondary"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -26,7 +26,7 @@
       type="number"
       :min="min"
       :max="max"
-      class="w-20 h-10 px-3 text-center border-t border-b border-casino-blue-light/50 bg-surface-primary focus:outline-none focus:ring-2 focus:ring-brand-gold-400 text-content-secondary [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      class="h-10 w-20 border-t border-b border-casino-blue-light/50 bg-surface-primary px-3 text-center text-content-secondary [-moz-appearance:textfield] focus:ring-2 focus:ring-brand-gold-400 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       @input="onInput"
       @blur="onBlur"
     />
@@ -34,11 +34,11 @@
     <button
       type="button"
       :disabled="modelValue >= max"
-      class="w-10 h-10 flex items-center justify-center bg-surface-primary border border-casino-blue-light/50 rounded-r-md hover:bg-surface-primary-light focus:outline-none focus:ring-2 focus:ring-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+      class="flex h-10 w-10 items-center justify-center rounded-r-md border border-casino-blue-light/50 bg-surface-primary transition-colors duration-150 hover:bg-surface-primary-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       @click="increment"
     >
       <svg
-        class="w-4 h-4 text-content-secondary"
+        class="h-4 w-4 text-content-secondary"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

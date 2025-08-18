@@ -9,19 +9,19 @@
       :class="[
         'transition-all duration-500 ease-in-out',
         tickets.length > 0
-          ? 'flex flex-col-reverse gap-6 lg:flex-row lg:grid lg:grid-cols-5 lg:gap-6 lg:items-stretch'
+          ? 'flex flex-col-reverse gap-6 lg:grid lg:grid-cols-5 lg:flex-row lg:items-stretch lg:gap-6'
           : 'block',
       ]"
     >
       <!-- Welcome message for shared Lucky Numbers -->
       <div
         v-if="showWelcomeMessage"
-        class="col-span-full casino-card rounded-lg p-4 mb-6 relative glow-gold"
+        class="casino-card glow-gold relative col-span-full mb-6 rounded-lg p-4"
       >
         <div class="flex items-start gap-3">
           <div class="text-2xl">🎯</div>
           <div class="flex-1">
-            <h3 class="text-lg font-semibold text-brand-gold-light mb-1">
+            <h3 class="mb-1 text-lg font-semibold text-brand-gold-light">
               Welcome to Lucky Numbers "{{ welcomeLuckyCode }}"!
             </h3>
             <p class="text-sm text-content-secondary">
@@ -31,7 +31,7 @@
             </p>
           </div>
           <button
-            class="text-content-muted hover:text-content-secondary transition duration-150 p-1"
+            class="p-1 text-content-muted transition duration-150 hover:text-content-secondary"
             title="Dismiss"
             @click="dismissWelcomeMessage"
           >
@@ -51,9 +51,9 @@
           v-if="showSharingDialog"
           class="casino-card-premium rounded-lg p-6"
         >
-          <div class="flex justify-between items-start mb-4">
+          <div class="mb-4 flex items-start justify-between">
             <div>
-              <h3 class="text-lg font-semibold text-brand-gold-light mb-1">
+              <h3 class="mb-1 text-lg font-semibold text-brand-gold-light">
                 🎉 Lucky Numbers Created!
               </h3>
               <p class="text-sm text-content-muted">
@@ -61,7 +61,7 @@
               </p>
             </div>
             <button
-              class="text-content-muted hover:text-content-secondary transition duration-150"
+              class="text-content-muted transition duration-150 hover:text-content-secondary"
               title="Close"
               @click="hideSharing"
             >
@@ -71,18 +71,18 @@
 
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-content-muted mb-2">
+              <label class="mb-2 block text-sm font-medium text-content-muted">
                 Shareable link:
               </label>
               <div class="flex gap-2">
                 <input
                   :value="shareableUrl"
                   readonly
-                  class="flex-1 px-3 py-2 bg-surface-primary border border-casino-blue-light/50 rounded-md text-content-secondary text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-gold-400"
+                  class="flex-1 rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 font-mono text-sm text-content-secondary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
                 />
                 <button
                   :class="[
-                    'px-4 py-2 text-sm font-medium rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400',
+                    'rounded-md px-4 py-2 text-sm font-medium transition duration-150 focus:ring-2 focus:ring-brand-gold-400 focus:outline-none',
                     copySuccess
                       ? 'bg-interactive-success text-content-primary hover:bg-interactive-success-hover'
                       : 'bg-brand-gold text-casino-blue-dark hover:bg-brand-gold-light',
@@ -95,7 +95,7 @@
             </div>
 
             <div
-              class="text-xs text-content-muted bg-surface-primary/40 p-3 rounded-md"
+              class="rounded-md bg-surface-primary/40 p-3 text-xs text-content-muted"
             >
               <strong>💡 How it works:</strong> Anyone with this link can
               recreate your exact ticket configuration and numbers. The lucky
@@ -113,15 +113,15 @@
           "
         >
           <div class="casino-card-premium rounded-lg p-6">
-            <div class="flex justify-between items-center mb-4">
+            <div class="mb-4 flex items-center justify-between">
               <h2
-                class="text-xl font-semibold text-casino-gold text-premium-glow"
+                class="text-casino-gold text-premium-glow text-xl font-semibold"
               >
                 Generated Tickets ({{ tickets.length }})
               </h2>
               <div class="flex gap-2">
                 <button
-                  class="px-2 py-1 text-sm text-brand-gold hover:text-brand-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 rounded cursor-pointer"
+                  class="cursor-pointer rounded px-2 py-1 text-sm text-brand-gold underline transition duration-150 hover:text-brand-gold-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
                   title="Create shareable link for these numbers"
                   @click="ticketsStore.share"
                 >
@@ -129,20 +129,20 @@
                 </button>
                 <button
                   v-if="ticketsStore.isCustomMode"
-                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-surface-card-hover text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 cursor-pointer"
+                  class="cursor-pointer rounded-md bg-surface-secondary px-3 py-1 text-sm text-content-primary transition duration-150 hover:bg-surface-card-hover focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
                   @click="toggleGenerationForm()"
                 >
                   Modify
                 </button>
                 <button
                   v-else
-                  class="px-3 py-1 text-sm bg-surface-secondary hover:bg-surface-card-hover text-content-primary rounded-md transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 cursor-pointer"
+                  class="cursor-pointer rounded-md bg-surface-secondary px-3 py-1 text-sm text-content-primary transition duration-150 hover:bg-surface-card-hover focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
                   @click="handleCustomizeFromSimpleMode()"
                 >
                   Customize
                 </button>
                 <button
-                  class="px-3 py-1 text-sm border border-border-primary text-brand-gold rounded-md transition duration-150 hover:bg-brand-gold hover:text-casino-blue-dark focus:outline-none focus:ring-2 focus:ring-brand-gold-400 cursor-pointer"
+                  class="cursor-pointer rounded-md border border-border-primary px-3 py-1 text-sm text-brand-gold transition duration-150 hover:bg-brand-gold hover:text-casino-blue-dark focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
                   @click="resetTickets"
                 >
                   Reset
@@ -174,7 +174,7 @@
         :class="['transition-all duration-500', 'lg:col-span-3']"
       >
         <div class="casino-card-premium rounded-lg p-6">
-          <div class="flex justify-between items-center mb-6">
+          <div class="mb-6 flex items-center justify-between">
             <h2 class="text-xl font-semibold text-brand-gold-light">
               Simulation
             </h2>
@@ -184,10 +184,10 @@
             >
               <button
                 :class="[
-                  'px-3 py-1 text-sm font-medium transition-colors duration-200 border-b-2 relative',
+                  'relative border-b-2 px-3 py-1 text-sm font-medium transition-colors duration-200',
                   activeMode === 'single'
-                    ? 'text-brand-gold border-border-primary'
-                    : 'text-content-muted border-transparent hover:text-content-secondary',
+                    ? 'border-border-primary text-brand-gold'
+                    : 'border-transparent text-content-muted hover:text-content-secondary',
                 ]"
                 @click="handleModeChange('single')"
               >
@@ -195,10 +195,10 @@
               </button>
               <button
                 :class="[
-                  'px-3 py-1 text-sm font-medium transition-colors duration-200 border-b-2 relative',
+                  'relative border-b-2 px-3 py-1 text-sm font-medium transition-colors duration-200',
                   activeMode === 'montecarlo'
-                    ? 'text-brand-gold border-border-primary'
-                    : 'text-content-muted border-transparent hover:text-content-secondary',
+                    ? 'border-border-primary text-brand-gold'
+                    : 'border-transparent text-content-muted hover:text-content-secondary',
                 ]"
                 @click="handleModeChange('montecarlo')"
               >
@@ -207,9 +207,9 @@
             </div>
           </div>
 
-          <div v-if="loading" class="text-center text-content-muted my-8">
+          <div v-if="loading" class="my-8 text-center text-content-muted">
             <svg
-              class="animate-spin h-8 w-8 text-brand-gold-light mx-auto"
+              class="mx-auto h-8 w-8 animate-spin text-brand-gold-light"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -233,7 +233,7 @@
 
           <div
             v-else-if="error"
-            class="text-center text-error bg-error-dark/50 border border-error p-4 rounded-md"
+            class="rounded-md border border-error bg-error-dark/50 p-4 text-center text-error"
             role="alert"
           >
             {{ error }}

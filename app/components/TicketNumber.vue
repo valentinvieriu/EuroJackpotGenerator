@@ -3,7 +3,7 @@
     ref="canvasRef"
     :width="canvasSize"
     :height="canvasSize"
-    :class="['ticket-number-3d', 'w-12 h-12', { 'scale-110': isWinner }]"
+    :class="['ticket-number-3d', 'h-12 w-12', { 'scale-110': isWinner }]"
   />
 </template>
 

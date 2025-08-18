@@ -1,24 +1,24 @@
 <template>
-  <div class="casino-card-premium rounded-lg p-6 sticky top-4 hover-lift">
+  <div class="casino-card-premium hover-lift sticky top-4 rounded-lg p-6">
     <div class="mb-6">
-      <h3 class="text-lg text-section-title mb-4">Summary</h3>
+      <h3 class="text-section-title mb-4 text-lg">Summary</h3>
 
-      <div class="space-y-3 mb-6">
-        <div class="flex justify-between items-center">
-          <span class="text-content-muted text-sm">Price per ticket:</span>
+      <div class="mb-6 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-content-muted">Price per ticket:</span>
           <span class="text-money">€{{ pricePerTicket.toFixed(2) }}</span>
         </div>
 
-        <div class="flex justify-between items-center">
-          <span class="text-content-muted text-sm">Quantity:</span>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-content-muted">Quantity:</span>
           <span class="font-numbers">{{ ticketCount }}</span>
         </div>
 
         <div class="border-t border-border-secondary/30 pt-3">
-          <div class="flex justify-between items-center">
-            <span class="text-content-muted text-sm">Total:</span>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-content-muted">Total:</span>
             <div class="text-right">
-              <div class="text-2xl text-money">
+              <div class="text-money text-2xl">
                 €{{ totalPrice.toFixed(2) }}
               </div>
               <div class="text-xs text-content-muted">
@@ -30,7 +30,7 @@
       </div>
 
       <div v-if="nextDrawDate" class="mb-6 text-center">
-        <div class="text-xs text-content-muted mb-1">Next draw:</div>
+        <div class="mb-1 text-xs text-content-muted">Next draw:</div>
         <div class="text-sm text-brand-gold">{{ nextDrawDate }}</div>
       </div>
     </div>
@@ -38,7 +38,7 @@
     <button
       :disabled="props.disabled"
       type="submit"
-      class="w-full btn-casino-gold px-6 py-3 rounded-md font-bold focus-gold disabled:opacity-50 disabled:cursor-wait text-lg"
+      class="btn-casino-gold focus-gold w-full rounded-md px-6 py-3 text-lg font-bold disabled:cursor-wait disabled:opacity-50"
     >
       {{ props.buttonText }}
     </button>
@@ -46,7 +46,7 @@
     <button
       v-if="props.showSimulateAction && !props.disabled"
       type="button"
-      class="w-full mt-3 text-brand-gold hover:text-brand-gold-light underline text-sm font-medium transition-colors duration-150"
+      class="mt-3 w-full text-sm font-medium text-brand-gold underline transition-colors duration-150 hover:text-brand-gold-light"
       @click="$emit('simulate')"
     >
       Simulate {{ ticketCount }} draw{{ ticketCount > 1 ? 's' : '' }}
@@ -54,10 +54,10 @@
 
     <div class="mt-6 text-center">
       <div
-        class="inline-flex items-center px-2 py-1 bg-surface-primary/40 rounded-full"
+        class="inline-flex items-center rounded-full bg-surface-primary/40 px-2 py-1"
       >
         <svg
-          class="w-3 h-3 text-premium-emerald-400 mr-1"
+          class="mr-1 h-3 w-3 text-premium-emerald-400"
           fill="currentColor"
           viewBox="0 0 20 20"
         >

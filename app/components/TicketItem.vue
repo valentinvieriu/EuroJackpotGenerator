@@ -4,11 +4,11 @@
     :class="[
       'rounded-lg p-4 transition-all duration-300',
       isWinner
-        ? 'casino-card-premium border-2 border-border-primary ring-2 ring-brand-gold-400/50 glow-gold'
+        ? 'casino-card-premium glow-gold border-2 border-border-primary ring-2 ring-brand-gold-400/50'
         : 'casino-card hover-lift',
     ]"
   >
-    <div class="flex justify-between items-start mb-3">
+    <div class="mb-3 flex items-start justify-between">
       <h3 class="font-semibold text-content-primary">
         Ticket #{{ ticketNumber }}
         <span v-if="ticket.linesCount" class="ml-2 text-sm text-content-muted">
@@ -24,12 +24,12 @@
         </Transition>
       </h3>
       <button
-        class="text-content-muted hover:text-error hover:bg-error-dark/20 rounded-full p-1 transition-colors duration-200 flex-shrink-0"
+        class="flex-shrink-0 rounded-full p-1 text-content-muted transition-colors duration-200 hover:bg-error-dark/20 hover:text-error"
         title="Delete this ticket"
         @click="emit('delete', ticket.id)"
       >
         <svg
-          class="w-4 h-4"
+          class="h-4 w-4"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -45,7 +45,7 @@
       </button>
     </div>
     <div class="mb-3">
-      <span class="font-medium text-sm text-content-muted block mb-1"
+      <span class="mb-1 block text-sm font-medium text-content-muted"
         >Main Numbers:</span
       >
       <div class="flex flex-wrap gap-2">
@@ -65,7 +65,7 @@
       </div>
     </div>
     <div>
-      <span class="font-medium text-sm text-content-muted block mb-1"
+      <span class="mb-1 block text-sm font-medium text-content-muted"
         >Euro Numbers:</span
       >
       <div class="flex flex-wrap gap-2">
@@ -92,9 +92,9 @@
     <Transition name="prize-reveal" appear>
       <div
         v-if="winClassBreakdown.length > 0"
-        class="mt-3 pt-3 border-t border-casino-blue-light/30"
+        class="mt-3 border-t border-casino-blue-light/30 pt-3"
       >
-        <span class="font-medium text-sm text-content-muted block mb-1"
+        <span class="mb-1 block text-sm font-medium text-content-muted"
           >Winning Lines:</span
         >
         <div class="flex flex-wrap gap-2">

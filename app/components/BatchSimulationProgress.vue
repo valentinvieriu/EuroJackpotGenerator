@@ -1,8 +1,8 @@
 <template>
   <div class="casino-card-premium rounded-lg p-6">
     <div class="mb-6">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xl font-semibold text-casino-gold text-premium-glow">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-casino-gold text-premium-glow text-xl font-semibold">
           Mass Simulation in Progress
         </h3>
         <div class="text-sm text-content-muted">
@@ -10,19 +10,19 @@
         </div>
       </div>
 
-      <div class="w-full bg-surface-secondary rounded-full h-3 mb-3">
+      <div class="mb-3 h-3 w-full rounded-full bg-surface-secondary">
         <div
-          class="bg-gradient-to-r from-interactive-primary to-interactive-primary-light h-3 rounded-full transition-all duration-300 ease-out"
+          class="h-3 rounded-full bg-gradient-to-r from-interactive-primary to-interactive-primary-light transition-all duration-300 ease-out"
           :style="{ width: `${progressPercentage}%` }"
         />
       </div>
 
-      <div class="flex justify-between items-center text-sm">
+      <div class="flex items-center justify-between text-sm">
         <span class="text-content-secondary">
           {{ currentSimulation.toLocaleString() }} /
           {{ totalSimulations.toLocaleString() }} simulations
         </span>
-        <span class="text-brand-gold font-medium">
+        <span class="font-medium text-brand-gold">
           {{ progressPercentage.toFixed(1) }}%
         </span>
       </div>
@@ -30,7 +30,7 @@
 
     <div
       v-if="partialResults"
-      class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-surface-primary/50 rounded-lg border border-casino-blue-light/20"
+      class="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-casino-blue-light/20 bg-surface-primary/50 p-4 md:grid-cols-3"
     >
       <div class="text-center">
         <div class="text-sm text-content-muted">Current Win Rate</div>
@@ -72,17 +72,17 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <div class="text-center p-3 bg-surface-primary/30 rounded-lg">
-        <div class="text-sm text-content-muted mb-1">
+    <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div class="rounded-lg bg-surface-primary/30 p-3 text-center">
+        <div class="mb-1 text-sm text-content-muted">
           Estimated Time Remaining
         </div>
         <div class="text-lg font-medium text-content-secondary">
           {{ estimatedTimeRemaining || '---' }}
         </div>
       </div>
-      <div class="text-center p-3 bg-surface-primary/30 rounded-lg">
-        <div class="text-sm text-content-muted mb-1">Processing Speed</div>
+      <div class="rounded-lg bg-surface-primary/30 p-3 text-center">
+        <div class="mb-1 text-sm text-content-muted">Processing Speed</div>
         <div class="text-lg font-medium text-content-secondary">
           {{ processingSpeed.toFixed(0) }} sim/sec
         </div>
@@ -90,14 +90,14 @@
     </div>
 
     <div v-if="partialResults?.winsByClass" class="mb-6">
-      <h4 class="text-lg font-medium text-content-secondary mb-3">
+      <h4 class="mb-3 text-lg font-medium text-content-secondary">
         Win Distribution (Live)
       </h4>
-      <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
+      <div class="grid grid-cols-3 gap-2 md:grid-cols-6">
         <div
           v-for="classNum in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]"
           :key="classNum"
-          class="text-center p-2 bg-surface-primary/50 rounded"
+          class="rounded bg-surface-primary/50 p-2 text-center"
         >
           <div class="text-xs text-content-muted">Class {{ classNum }}</div>
           <div
@@ -117,12 +117,12 @@
 
     <div v-if="canCancel" class="text-center">
       <button
-        class="bg-interactive-danger text-content-primary px-4 py-2 rounded-md font-medium hover:bg-interactive-danger-hover focus:outline-none focus:ring-2 focus:ring-interactive-danger focus:ring-offset-2 focus:ring-offset-surface-primary transition duration-150"
+        class="rounded-md bg-interactive-danger px-4 py-2 font-medium text-content-primary transition duration-150 hover:bg-interactive-danger-hover focus:ring-2 focus:ring-interactive-danger focus:ring-offset-2 focus:ring-offset-surface-primary focus:outline-none"
         @click="$emit('cancel')"
       >
         Cancel Simulation
       </button>
-      <p class="text-xs text-content-muted mt-2">
+      <p class="mt-2 text-xs text-content-muted">
         Simulation will stop after current batch completes
       </p>
     </div>

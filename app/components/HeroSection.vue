@@ -1,12 +1,12 @@
 <template>
-  <div class="relative text-center mb-8">
+  <div class="relative mb-8 text-center">
     <!-- Bouncing balls background -->
     <BouncingBallsCanvas />
 
-    <div class="relative z-10 max-w-4xl mx-auto">
-      <h1 class="text-3xl md:text-4xl text-hero mb-4">EuroJackpot Simulator</h1>
+    <div class="relative z-10 mx-auto max-w-4xl">
+      <h1 class="text-hero mb-4 text-3xl md:text-4xl">EuroJackpot Simulator</h1>
       <p
-        class="text-luxury-subtitle text-base md:text-lg mb-8 max-w-2xl mx-auto"
+        class="text-luxury-subtitle mx-auto mb-8 max-w-2xl text-base md:text-lg"
       >
         Understand lottery mathematics through realistic simulations. Generate
         tickets, run draws, and explore statistical outcomes.
@@ -15,17 +15,17 @@
       <!-- Simple Mode CTA -->
       <div
         v-if="!hasTickets"
-        class="casino-card rounded-xl p-8 mb-8 card-interactive hover-lift"
+        class="casino-card card-interactive hover-lift mb-8 rounded-xl p-8"
       >
         <div class="mb-6">
-          <div class="text-4xl mb-3">🎰</div>
-          <p class="text-content-secondary text-lg mb-6">
+          <div class="mb-3 text-4xl">🎰</div>
+          <p class="mb-6 text-lg text-content-secondary">
             Generate random tickets and see instant results
           </p>
 
           <!-- Ticket Count Selector -->
-          <div class="flex items-center justify-center gap-4 mb-6">
-            <label class="text-content-muted text-sm font-medium">
+          <div class="mb-6 flex items-center justify-center gap-4">
+            <label class="text-sm font-medium text-content-muted">
               Tickets:
             </label>
             <StepperInput v-model="ticketCount" :min="1" :max="50" />
@@ -35,15 +35,15 @@
             class="flex items-center justify-center gap-4 text-sm text-content-muted"
           >
             <span class="flex items-center gap-1">
-              <span class="w-2 h-2 bg-brand-gold rounded-full"></span>
+              <span class="h-2 w-2 rounded-full bg-brand-gold"></span>
               5+2 standard format
             </span>
             <span class="flex items-center gap-1">
-              <span class="w-2 h-2 bg-brand-gold rounded-full"></span>
+              <span class="h-2 w-2 rounded-full bg-brand-gold"></span>
               Total cost: €{{ simpleModeCost }}
             </span>
             <span class="flex items-center gap-1">
-              <span class="w-2 h-2 bg-brand-gold rounded-full"></span>
+              <span class="h-2 w-2 rounded-full bg-brand-gold"></span>
               Instant simulation
             </span>
           </div>
@@ -53,11 +53,11 @@
           <button
             :disabled="isGenerating"
             :class="[
-              'btn-casino-gold px-8 py-4 rounded-lg font-cta-bold text-xl focus-gold relative overflow-hidden',
-              'transition-all duration-300 ease-out transform-gpu',
-              'hover:shadow-2xl hover:-translate-y-1 hover:scale-105',
+              'btn-casino-gold font-cta-bold focus-gold relative overflow-hidden rounded-lg px-8 py-4 text-xl',
+              'transform-gpu transition-all duration-300 ease-out',
+              'hover:-translate-y-1 hover:scale-105 hover:shadow-2xl',
               'active:translate-y-0 active:scale-100',
-              'disabled:opacity-50 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:scale-100',
+              'disabled:cursor-wait disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:scale-100',
               isGenerating ? 'cursor-wait' : 'glow-gold',
             ]"
             @click="handleQuickStart"
@@ -77,7 +77,7 @@
                 class="flex items-center justify-center gap-3"
               >
                 <svg
-                  class="animate-spin h-6 w-6"
+                  class="h-6 w-6 animate-spin"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -103,7 +103,7 @@
 
           <div class="text-center">
             <button
-              class="text-brand-gold hover:text-brand-gold-light text-sm underline transition-colors duration-200"
+              class="text-sm text-brand-gold underline transition-colors duration-200 hover:text-brand-gold-light"
               @click="handleShowCustom"
             >
               ⚙️ Want to customize? Show advanced options
@@ -120,10 +120,10 @@
 
       <!-- Educational disclaimer -->
       <div
-        class="inline-flex items-center px-4 py-2 glass-luxury rounded-full mb-4"
+        class="glass-luxury mb-4 inline-flex items-center rounded-full px-4 py-2"
       >
         <svg
-          class="w-4 h-4 text-premium-emerald-400 mr-2"
+          class="mr-2 h-4 w-4 text-premium-emerald-400"
           fill="currentColor"
           viewBox="0 0 20 20"
         >

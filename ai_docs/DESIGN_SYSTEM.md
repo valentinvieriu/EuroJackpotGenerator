@@ -84,14 +84,16 @@ Tokens live in `@theme` inside **`app/assets/css/theme.css`**.
 - Warning badges: `bg-warning-dark/50 border-warning/30 text-warning-light`
 - Status messages: pair with matching text/background variants
 
-### Opacity with custom tokens
+### Opacity & Tokens (Tailwind v4)
 
-Slash opacity like `border-casino-blue-light/50` is **not reliable** for token colors. Prefer:
+**Slash opacity with custom tokens IS reliable** in Tailwind v4 when tokens are defined under `@theme --color-*` (our setup):
 
-- Element/state opacity: `opacity-50` (affects the whole element)
-- **Arbitrary color value** for precise alpha:
-  `border-[oklch(0.62_0.05_229_/_0.5)]`
-  or `border-[color-mix(in oklab,var(--color-casino-blue-light) 50%, transparent)]`
+- ✅ **Use freely**: `border-casino-blue-light/50`, `bg-surface-primary/20`, `text-brand-gold/90`
+- ✅ **Element opacity**: `opacity-50` (when you want the whole element transparent)
+- ✅ **Arbitrary values** (for complex cases):
+  - OKLCH: `border-[oklch(0.62_0.05_229_/_0.5)]`
+  - Color-mix: `border-[color-mix(in_oklab,var(--color-casino-blue-light)_50%,transparent)]`
+  - Variable shorthand: `border-(--color-casino-blue-light)/50`
 
 ---
 
@@ -145,12 +147,12 @@ We ship premium utilities in `theme.css`:
 - `bg-surface-primary text-content-primary`
 - `rounded-2xl shadow-lg p-6`
 - `transition-all duration-150 ease-standard`
-- `border-casino-blue-light` (solid) or `border-[oklch(…/0.5)]` (alpha)
+- `border-casino-blue-light/50` (slash opacity works with our tokens)
+- `border-casino-blue-light` (solid borders)
 
-**Don’t**
+**Don't**
 
-- `border-casino-blue-light/50` (slash opacity on token colors)
-- Hardcoded `#rrggbb` / `rgb()` in components
+- Hardcoded `#rrggbb` / `rgb()` / `rgba()` in components
 - Runtime-computed inline styles in components (SSR drift)
 - Business logic or API calls in components (stores only)
 
@@ -161,7 +163,7 @@ We ship premium utilities in `theme.css`:
 **Hero headline**
 
 ```html
-<h1 class="text-5xl md:text-6xl font-heading text-casino-gold">
+<h1 class="text-casino-gold font-heading text-5xl md:text-6xl">
   EuroJackpot Simulator
 </h1>
 ```
@@ -169,7 +171,7 @@ We ship premium utilities in `theme.css`:
 **Primary CTA**
 
 ```html
-<button class="btn-casino-gold focus-casino px-6 py-3 rounded-2xl">
+<button class="btn-casino-gold focus-casino rounded-2xl px-6 py-3">
   Generate Random Tickets
 </button>
 ```
@@ -185,7 +187,7 @@ We ship premium utilities in `theme.css`:
 **Overlay container (modal content)**
 
 ```html
-<div class="bg-surface-overlay backdrop-blur-xl rounded-2xl p-6 shadow-2xl">
+<div class="rounded-2xl bg-surface-overlay p-6 shadow-2xl backdrop-blur-xl">
   <!-- modal content -->
 </div>
 ```
@@ -221,7 +223,7 @@ We ship premium utilities in `theme.css`:
 - [ ] Respects **reduced motion**
 - [ ] Works in **dark mode** if relevant
 - [ ] Uses spacing/radius/type tokens for scale consistency
-- [ ] No color opacity via `/<number>` on token colors (use `opacity-*` or arbitrary color)
+- [ ] Avoids hardcoded `rgba()` / hex colors (use tokens with slash opacity as needed)
 
 ```
 

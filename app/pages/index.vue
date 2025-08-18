@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-12 min-h-screen relative">
+  <div class="relative container mx-auto min-h-screen px-4 py-12">
     <BouncingBallsCanvas />
     <div class="relative z-10">
       <TicketGenerator />

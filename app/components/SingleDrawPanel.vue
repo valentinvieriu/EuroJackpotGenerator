@@ -2,7 +2,7 @@
   <div>
     <div
       v-if="error"
-      class="text-center text-error bg-error-dark/50 border border-error p-3 rounded-md mb-4"
+      class="mb-4 rounded-md border border-error bg-error-dark/50 p-3 text-center text-error"
     >
       {{ error }}
     </div>
@@ -13,7 +13,7 @@
 
     <div
       v-if="simulationResult"
-      class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 casino-card rounded-lg"
+      class="casino-card mb-4 grid grid-cols-1 gap-4 rounded-lg p-4 sm:grid-cols-2"
     >
       <div class="text-center">
         <div class="text-sm text-content-muted">Total Winnings</div>
@@ -39,20 +39,20 @@
 
     <!-- Description and Action Button -->
     <form
-      class="flex justify-between items-center"
+      class="flex items-center justify-between"
       @submit.prevent="simulateExtractionHandler"
     >
-      <p class="text-content-muted text-sm">
+      <p class="text-sm text-content-muted">
         Simulate a single draw to see immediate winning results and ROI
       </p>
       <button
         :disabled="loading || tickets.length === 0"
         type="submit"
         :class="[
-          'btn-casino-gold px-5 py-2 rounded-md font-cta focus-gold',
+          'btn-casino-gold focus-gold rounded-md px-5 py-2 font-cta',
           'transition-transform duration-300 ease-out',
           'hover:scale-105 active:scale-100',
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
+          'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100',
           loading ? 'cursor-wait' : '',
         ]"
       >
@@ -63,7 +63,7 @@
           </span>
           <span v-else key="loading" class="flex items-center gap-2">
             <svg
-              class="animate-spin h-4 w-4"
+              class="h-4 w-4 animate-spin"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

@@ -2,18 +2,18 @@
   <div class="space-y-6">
     <div class="casino-card-premium rounded-lg p-6">
       <h2
-        class="text-2xl font-semibold text-casino-gold text-premium-glow mb-6"
+        class="text-casino-gold text-premium-glow mb-6 text-2xl font-semibold"
       >
         Mass Simulation Results
       </h2>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div
-          class="text-center p-4 casino-card rounded-lg min-h-[120px] flex flex-col justify-center"
+          class="casino-card flex min-h-[120px] flex-col justify-center rounded-lg p-4 text-center"
         >
-          <div class="text-sm text-content-muted mb-1">Total Investment</div>
+          <div class="mb-1 text-sm text-content-muted">Total Investment</div>
           <div
-            class="text-lg lg:text-xl font-bold text-error break-words leading-tight"
+            class="text-lg leading-tight font-bold break-words text-error lg:text-xl"
           >
             €{{
               results.totalCost.toLocaleString('en-GB', {
@@ -21,17 +21,17 @@
               })
             }}
           </div>
-          <div class="text-xs text-content-muted mt-1">
+          <div class="mt-1 text-xs text-content-muted">
             {{ results.totalSimulations.toLocaleString() }} simulations
           </div>
         </div>
 
         <div
-          class="text-center p-4 casino-card rounded-lg min-h-[120px] flex flex-col justify-center"
+          class="casino-card flex min-h-[120px] flex-col justify-center rounded-lg p-4 text-center"
         >
-          <div class="text-sm text-content-muted mb-1">Total Winnings</div>
+          <div class="mb-1 text-sm text-content-muted">Total Winnings</div>
           <div
-            class="text-lg lg:text-xl font-bold text-premium-emerald-400 break-words leading-tight"
+            class="text-lg leading-tight font-bold break-words text-premium-emerald-400 lg:text-xl"
           >
             €{{
               results.totalWinnings.toLocaleString('en-GB', {
@@ -39,17 +39,17 @@
               })
             }}
           </div>
-          <div class="text-xs text-content-muted mt-1">
+          <div class="mt-1 text-xs text-content-muted">
             Across all simulations
           </div>
         </div>
 
         <div
-          class="text-center p-4 casino-card rounded-lg min-h-[120px] flex flex-col justify-center"
+          class="casino-card flex min-h-[120px] flex-col justify-center rounded-lg p-4 text-center"
         >
-          <div class="text-sm text-content-muted mb-1">Net Result</div>
+          <div class="mb-1 text-sm text-content-muted">Net Result</div>
           <div
-            class="text-lg lg:text-xl font-bold break-words leading-tight"
+            class="text-lg leading-tight font-bold break-words lg:text-xl"
             :class="netProfitColor"
           >
             {{ results.netProfit >= 0 ? '+' : '' }}€{{
@@ -58,32 +58,32 @@
               })
             }}
           </div>
-          <div class="text-xs text-content-muted mt-1">
+          <div class="mt-1 text-xs text-content-muted">
             {{ results.netProfit >= 0 ? 'Profit' : 'Loss' }}
           </div>
         </div>
 
         <div
-          class="text-center p-4 casino-card rounded-lg min-h-[120px] flex flex-col justify-center"
+          class="casino-card flex min-h-[120px] flex-col justify-center rounded-lg p-4 text-center"
         >
-          <div class="text-sm text-content-muted mb-1">
+          <div class="mb-1 text-sm text-content-muted">
             Return on Investment
           </div>
           <div
-            class="text-lg lg:text-xl font-bold break-words leading-tight"
+            class="text-lg leading-tight font-bold break-words lg:text-xl"
             :class="roiColor"
           >
             {{ results.roiPercentage >= 0 ? '+' : ''
             }}{{ results.roiPercentage.toFixed(1) }}%
           </div>
-          <div class="text-xs text-content-muted mt-1">Overall performance</div>
+          <div class="mt-1 text-xs text-content-muted">Overall performance</div>
         </div>
       </div>
 
       <!-- Expected Value Analysis -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div class="p-4 casino-card rounded-lg">
-          <h3 class="text-lg font-semibold text-brand-gold-light mb-2">
+      <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="casino-card rounded-lg p-4">
+          <h3 class="mb-2 text-lg font-semibold text-brand-gold-light">
             Expected Value Analysis
           </h3>
           <div class="space-y-2">
@@ -116,8 +116,8 @@
           </div>
         </div>
 
-        <div class="p-4 casino-card rounded-lg">
-          <h3 class="text-lg font-semibold text-brand-gold-light mb-2">
+        <div class="casino-card rounded-lg p-4">
+          <h3 class="mb-2 text-lg font-semibold text-brand-gold-light">
             Win Statistics
           </h3>
           <div class="space-y-2">
@@ -146,12 +146,12 @@
 
     <!-- Detailed Statistics -->
     <div class="casino-card-premium rounded-lg p-6">
-      <h3 class="text-xl font-semibold text-casino-gold text-premium-glow mb-4">
+      <h3 class="text-casino-gold text-premium-glow mb-4 text-xl font-semibold">
         Statistical Analysis
       </h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="p-4 bg-surface-primary/30 rounded-lg">
-          <h4 class="text-lg font-medium text-content-secondary mb-3">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-lg bg-surface-primary/30 p-4">
+          <h4 class="mb-3 text-lg font-medium text-content-secondary">
             Winnings Distribution
           </h4>
           <div class="space-y-2 text-sm">
@@ -176,8 +176,8 @@
           </div>
         </div>
 
-        <div class="p-4 bg-surface-primary/30 rounded-lg">
-          <h4 class="text-lg font-medium text-content-secondary mb-3">
+        <div class="rounded-lg bg-surface-primary/30 p-4">
+          <h4 class="mb-3 text-lg font-medium text-content-secondary">
             Percentiles
           </h4>
           <div class="space-y-2 text-sm">
@@ -202,8 +202,8 @@
           </div>
         </div>
 
-        <div class="p-4 bg-surface-primary/30 rounded-lg">
-          <h4 class="text-lg font-medium text-content-secondary mb-3">
+        <div class="rounded-lg bg-surface-primary/30 p-4">
+          <h4 class="mb-3 text-lg font-medium text-content-secondary">
             Profitability
           </h4>
           <div class="space-y-2 text-sm">
@@ -232,19 +232,19 @@
 
     <!-- Win Class Distribution -->
     <div class="casino-card-premium rounded-lg p-6">
-      <h3 class="text-xl font-semibold text-casino-gold text-premium-glow mb-4">
+      <h3 class="text-casino-gold text-premium-glow mb-4 text-xl font-semibold">
         Win Class Distribution
       </h3>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
-          <h4 class="text-lg font-medium text-content-secondary mb-3">
+          <h4 class="mb-3 text-lg font-medium text-content-secondary">
             Wins by Class
           </h4>
           <div class="space-y-2">
             <div
               v-for="classNum in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]"
               :key="classNum"
-              class="flex items-center justify-between p-2 bg-surface-primary/30 rounded"
+              class="flex items-center justify-between rounded bg-surface-primary/30 p-2"
             >
               <span class="text-sm text-content-secondary">
                 Class {{ classNum }} {{ getClassDescription(classNum) }}
@@ -262,7 +262,7 @@
                   {{ results.winDistribution.winsByClass[classNum] || 0 }}
                 </span>
                 <div
-                  class="w-16 h-2 bg-surface-primary rounded-full overflow-hidden"
+                  class="h-2 w-16 overflow-hidden rounded-full bg-surface-primary"
                 >
                   <div
                     class="h-full transition-all duration-300"
@@ -276,11 +276,11 @@
         </div>
 
         <div>
-          <h4 class="text-lg font-medium text-content-secondary mb-3">
+          <h4 class="mb-3 text-lg font-medium text-content-secondary">
             Key Insights
           </h4>
           <div class="space-y-3">
-            <div class="p-3 casino-card rounded-lg border border-success/30">
+            <div class="casino-card rounded-lg border border-success/30 p-3">
               <div class="text-sm font-medium text-success-light">
                 Best Performing Class
               </div>
@@ -289,7 +289,7 @@
                 {{ bestPerformingClass.count }} wins
               </div>
             </div>
-            <div class="p-3 casino-card rounded-lg border border-warning/30">
+            <div class="casino-card rounded-lg border border-warning/30 p-3">
               <div class="text-sm font-medium text-warning-light">
                 Hit Rate vs Expected
               </div>
@@ -299,7 +299,7 @@
                 expectation
               </div>
             </div>
-            <div class="p-3 casino-card rounded-lg">
+            <div class="casino-card rounded-lg p-3">
               <div class="text-sm font-medium text-brand-gold-light">
                 Recommendation
               </div>
@@ -313,17 +313,17 @@
     </div>
 
     <div
-      class="flex flex-col sm:flex-row justify-end gap-3 casino-card rounded-lg p-4"
+      class="casino-card flex flex-col justify-end gap-3 rounded-lg p-4 sm:flex-row"
     >
       <button
         v-if="results.individualResults"
-        class="px-2 py-1 text-sm text-brand-gold hover:text-brand-gold-light underline transition duration-150 focus:outline-none focus:ring-2 focus:ring-brand-gold-400 rounded"
+        class="rounded px-2 py-1 text-sm text-brand-gold underline transition duration-150 hover:text-brand-gold-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
         @click="exportResults"
       >
         Export Detailed Results
       </button>
       <button
-        class="btn-casino-gold px-4 py-2 rounded-md font-cta focus-gold"
+        class="btn-casino-gold focus-gold rounded-md px-4 py-2 font-cta"
         @click="$emit('reset')"
       >
         Run New Simulation

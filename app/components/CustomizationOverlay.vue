@@ -2,26 +2,26 @@
   <Transition name="overlay" appear>
     <div
       v-if="isOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center overlay-premium"
+      class="overlay-premium fixed inset-0 z-50 flex items-center justify-center"
       @click.self="closeOverlay"
     >
       <Transition name="modal" appear>
         <div
           v-if="isOpen"
-          class="casino-card-premium rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
+          class="casino-card-premium mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl"
         >
           <!-- Header -->
-          <div class="flex justify-between items-center p-6 pb-4">
-            <h2 class="text-2xl font-bold text-casino-gold text-premium-glow">
+          <div class="flex items-center justify-between p-6 pb-4">
+            <h2 class="text-casino-gold text-premium-glow text-2xl font-bold">
               Customize Your Tickets
             </h2>
             <button
-              class="text-content-muted hover:text-content-secondary transition duration-150 p-2"
+              class="p-2 text-content-muted transition duration-150 hover:text-content-secondary"
               title="Close"
               @click="closeOverlay"
             >
               <svg
-                class="w-6 h-6"
+                class="h-6 w-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -40,19 +40,19 @@
           <div class="flex-1 overflow-y-auto px-6 text-left">
             <!-- Customization Form -->
             <form @submit.prevent="handleGenerate">
-              <div class="flex flex-col sm:flex-row gap-4 mb-6 items-end">
+              <div class="mb-6 flex flex-col items-end gap-4 sm:flex-row">
                 <!-- Ticket Type -->
                 <div class="flex-1">
                   <label
                     for="ticketType"
-                    class="mb-2 block text-content-muted text-sm font-medium"
+                    class="mb-2 block text-sm font-medium text-content-muted"
                   >
                     Pick Format:
                   </label>
                   <select
                     id="ticketType"
                     v-model="selectedTicketType"
-                    class="w-full px-3 py-2 border border-border-secondary/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary"
+                    class="w-full rounded-md border border-border-secondary/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
                     aria-label="Select Ticket System Type"
                   >
                     <option
@@ -67,9 +67,9 @@
                 </div>
 
                 <!-- Quantity -->
-                <div class="flex-shrink-0 w-full sm:w-auto">
+                <div class="w-full flex-shrink-0 sm:w-auto">
                   <label
-                    class="mb-2 block text-content-muted text-sm font-medium"
+                    class="mb-2 block text-sm font-medium text-content-muted"
                   >
                     Quantity:
                   </label>
@@ -85,7 +85,7 @@
               <div class="mt-8 pb-20">
                 <label
                   for="selectionMethodDropdown"
-                  class="mb-3 block text-content-muted text-sm font-medium"
+                  class="mb-3 block text-sm font-medium text-content-muted"
                 >
                   Selection Method:
                 </label>
@@ -94,7 +94,7 @@
                 <select
                   id="selectionMethodDropdown"
                   v-model="selectionMethod"
-                  class="w-full px-3 py-2 border border-border-secondary/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary mb-4"
+                  class="mb-4 w-full rounded-md border border-border-secondary/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
                 >
                   <option
                     value="random"
@@ -125,19 +125,19 @@
 
                 <!-- Dynamic Content Area -->
                 <div
-                  class="mt-4 p-6 bg-surface-primary/20 rounded-lg border border-border-secondary/20 transition-all duration-200 text-left"
+                  class="mt-4 rounded-lg border border-border-secondary/20 bg-surface-primary/20 p-6 text-left transition-all duration-200"
                 >
                   <!-- Random Method Content -->
                   <div v-if="selectionMethod === 'random'">
                     <p
-                      class="text-content-secondary mb-3 text-sm leading-relaxed"
+                      class="mb-3 text-sm leading-relaxed text-content-secondary"
                     >
                       Uses cryptographically secure random number generation for
                       completely unbiased selection, giving every combination
                       equal probability.
                     </p>
                     <div
-                      class="text-xs text-content-muted bg-surface-primary/30 p-3 rounded-md"
+                      class="rounded-md bg-surface-primary/30 p-3 text-xs text-content-muted"
                     >
                       <strong>🔒 Technical:</strong> Built on Web Crypto API.
                       Future versions may include quantum random number
@@ -148,7 +148,7 @@
                   <!-- Unpopular Method Content -->
                   <div v-if="selectionMethod === 'unpopular'">
                     <p
-                      class="text-content-secondary mb-3 text-sm leading-relaxed"
+                      class="mb-3 text-sm leading-relaxed text-content-secondary"
                     >
                       Generates multiple combinations and selects the one with
                       patterns least commonly chosen by other players,
@@ -160,7 +160,7 @@
                   <!-- Favorites Method Content -->
                   <div v-if="selectionMethod === 'favorites'">
                     <p
-                      class="text-content-secondary mb-3 text-sm leading-relaxed"
+                      class="mb-3 text-sm leading-relaxed text-content-secondary"
                     >
                       Prioritises your chosen numbers during generation,
                       combined with weighted selection for remaining slots.
@@ -171,7 +171,7 @@
                   <!-- Weighted Method Content -->
                   <div v-if="selectionMethod === 'weighted'">
                     <p
-                      class="text-content-secondary mb-3 text-sm leading-relaxed"
+                      class="mb-3 text-sm leading-relaxed text-content-secondary"
                     >
                       Uses historical frequency data to weight number selection.
                       Past draws don't affect future results - purely
@@ -181,7 +181,7 @@
                       href="https://www.lotto-bayern.de/eurojackpot/statistiken/ziehungen"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-brand-gold hover:text-brand-gold-light underline text-xs mb-3 inline-block"
+                      class="mb-3 inline-block text-xs text-brand-gold underline hover:text-brand-gold-light"
                     >
                       Method details →
                     </a>
@@ -194,10 +194,10 @@
 
           <!-- Fixed Footer -->
           <div
-            class="bg-surface-secondary border-t border-border-secondary/30 p-6 rounded-b-xl"
+            class="rounded-b-xl border-t border-border-secondary/30 bg-surface-secondary p-6"
           >
             <div
-              class="flex flex-col sm:flex-row justify-between items-center gap-4"
+              class="flex flex-col items-center justify-between gap-4 sm:flex-row"
             >
               <!-- Price Display -->
               <div class="flex flex-col items-center sm:items-start">
@@ -210,10 +210,10 @@
               </div>
 
               <!-- Action Buttons -->
-              <div class="flex flex-col sm:flex-row gap-3">
+              <div class="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  class="px-5 py-2 rounded-md font-semibold btn-casino-blue focus-casino transition duration-150"
+                  class="btn-casino-blue focus-casino rounded-md px-5 py-2 font-semibold transition duration-150"
                   @click="closeOverlay"
                 >
                   Cancel
@@ -222,7 +222,7 @@
                 <button
                   :disabled="loading"
                   type="submit"
-                  class="btn-casino-gold px-6 py-3 rounded-md font-bold focus-gold disabled:opacity-50 disabled:cursor-wait text-lg"
+                  class="btn-casino-gold focus-gold rounded-md px-6 py-3 text-lg font-bold disabled:cursor-wait disabled:opacity-50"
                   @click="handleGenerate"
                 >
                   {{
@@ -390,17 +390,21 @@ const handleGenerate = async () => {
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: rgba(59, 75, 96, 0.3);
+  background: color-mix(
+    in oklab,
+    var(--color-surface-tertiary) 30%,
+    transparent
+  );
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: rgba(255, 215, 0, 0.3);
+  background: color-mix(in oklab, var(--color-brand-gold) 30%, transparent);
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 215, 0, 0.5);
+  background: color-mix(in oklab, var(--color-brand-gold) 50%, transparent);
 }
 
 /* Overlay backdrop animations */

@@ -1,8 +1,7 @@
 <template>
   <canvas
     ref="canvasRef"
-    class="fixed inset-0 w-full h-full pointer-events-none z-0"
-    :style="{ opacity: 0.4 }"
+    class="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-40"
   />
 </template>
 

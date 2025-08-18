@@ -2,15 +2,15 @@
   <div>
     <div
       v-if="isLoadingFrequencies"
-      class="flex items-center gap-2 text-content-muted text-sm"
+      class="flex items-center gap-2 text-sm text-content-muted"
     >
       <div
-        class="animate-spin w-4 h-4 border-2 border-border-primary border-t-transparent rounded-full"
+        class="h-4 w-4 animate-spin rounded-full border-2 border-border-primary border-t-transparent"
       ></div>
       Loading frequency data...
     </div>
 
-    <div v-else-if="hasFrequencyError" class="text-error text-sm">
+    <div v-else-if="hasFrequencyError" class="text-sm text-error">
       Unable to load frequency data. Using default weighting.
     </div>
 
@@ -18,9 +18,9 @@
       <!-- Statistical Summary -->
       <div
         v-if="frequencyStats"
-        class="text-xs text-content-muted bg-surface-primary/20 rounded p-2"
+        class="rounded bg-surface-primary/20 p-2 text-xs text-content-muted"
       >
-        <div class="font-medium mb-1">Historical Data Analysis</div>
+        <div class="mb-1 font-medium">Historical Data Analysis</div>
         <div class="grid grid-cols-2 gap-2 text-xs">
           <div>Total draws: {{ frequencyStats.totalDraws }}</div>
           <div>
@@ -32,12 +32,12 @@
 
       <!-- Main Numbers (1-50) -->
       <div>
-        <div class="text-xs text-content-muted mb-3">Main Numbers (1-50):</div>
-        <div class="grid grid-cols-5 sm:grid-cols-10 gap-2">
+        <div class="mb-3 text-xs text-content-muted">Main Numbers (1-50):</div>
+        <div class="grid grid-cols-5 gap-2 sm:grid-cols-10">
           <div
             v-for="number in allMainNumbers"
             :key="`main-${number.number}`"
-            class="flex flex-col items-center p-2 bg-surface-primary/30 rounded border border-casino-blue-light/20 hover:bg-surface-primary/50 transition-colors cursor-pointer"
+            class="flex cursor-pointer flex-col items-center rounded border border-casino-blue-light/20 bg-surface-primary/30 p-2 transition-colors hover:bg-surface-primary/50"
             :title="
               getFrequencyTooltip(
                 number,
@@ -46,10 +46,10 @@
               )
             "
           >
-            <div class="text-sm font-medium text-brand-gold-light mb-1">
+            <div class="mb-1 text-sm font-medium text-brand-gold-light">
               {{ number.number }}
             </div>
-            <div class="w-full bg-surface-tertiary rounded-full h-1.5 mb-1">
+            <div class="mb-1 h-1.5 w-full rounded-full bg-surface-tertiary">
               <div
                 class="h-1.5 rounded-full transition-all duration-300"
                 :class="
@@ -73,12 +73,12 @@
 
       <!-- Euro Numbers (1-12) -->
       <div>
-        <div class="text-xs text-content-muted mb-3">Euro Numbers (1-12):</div>
-        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2">
+        <div class="mb-3 text-xs text-content-muted">Euro Numbers (1-12):</div>
+        <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-12">
           <div
             v-for="number in allEuroNumbers"
             :key="`euro-${number.number}`"
-            class="flex flex-col items-center p-2 bg-surface-primary/30 rounded border border-casino-blue-light/20 hover:bg-surface-primary/50 transition-colors cursor-pointer"
+            class="flex cursor-pointer flex-col items-center rounded border border-casino-blue-light/20 bg-surface-primary/30 p-2 transition-colors hover:bg-surface-primary/50"
             :title="
               getFrequencyTooltip(
                 number,
@@ -87,10 +87,10 @@
               )
             "
           >
-            <div class="text-sm font-medium text-premium-sapphire-400 mb-1">
+            <div class="mb-1 text-sm font-medium text-premium-sapphire-400">
               {{ number.number }}
             </div>
-            <div class="w-full bg-surface-tertiary rounded-full h-1.5 mb-1">
+            <div class="mb-1 h-1.5 w-full rounded-full bg-surface-tertiary">
               <div
                 class="h-1.5 rounded-full transition-all duration-300"
                 :class="
@@ -118,7 +118,7 @@
       </div>
     </div>
 
-    <div v-else class="text-content-muted text-sm">
+    <div v-else class="text-sm text-content-muted">
       No frequency data available. Using default weighting.
     </div>
   </div>

@@ -2,7 +2,7 @@
   <div>
     <div
       v-if="error"
-      class="text-center text-error bg-error-dark/50 border border-error p-3 rounded-md mb-4"
+      class="mb-4 rounded-md border border-error bg-error-dark/50 p-3 text-center text-error"
     >
       {{ error }}
     </div>

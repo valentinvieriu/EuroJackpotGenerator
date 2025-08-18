@@ -1,15 +1,15 @@
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <!-- Main Numbers Section -->
     <div>
-      <div class="flex items-center justify-between mb-3">
+      <div class="mb-3 flex items-center justify-between">
         <label class="text-sm font-medium text-content-muted">
           Favorite Main Numbers (1-50)
         </label>
         <button
           v-if="mainNumbers.length > 0"
           type="button"
-          class="text-xs text-brand-gold hover:text-brand-gold-light underline"
+          class="text-xs text-brand-gold underline hover:text-brand-gold-light"
           @click="clearFavorites('main')"
         >
           Clear All
@@ -22,12 +22,12 @@
           <span
             v-for="number in mainNumbers"
             :key="`main-${number}`"
-            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-gold/20 border border-border-primary/50 rounded-full text-sm font-medium text-brand-gold"
+            class="inline-flex items-center gap-1 rounded-full border border-border-primary/50 bg-brand-gold/20 px-3 py-1 text-sm font-medium text-brand-gold"
           >
             {{ number }}
             <button
               type="button"
-              class="hover:text-brand-gold-light transition-colors"
+              class="transition-colors hover:text-brand-gold-light"
               @click="removeFavorite('main', number)"
             >
               ✕
@@ -39,7 +39,7 @@
         <div v-if="mainNumbers.length < FAVORITE_NUMBERS_MAX" class="relative">
           <select
             :value="''"
-            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary appearance-none cursor-pointer"
+            class="w-full cursor-pointer appearance-none rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
             @change="addMainNumber($event)"
           >
             <option
@@ -62,7 +62,7 @@
             class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-content-muted"
           >
             <svg
-              class="fill-current h-4 w-4"
+              class="h-4 w-4 fill-current"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
             >
@@ -82,14 +82,14 @@
 
     <!-- Euro Numbers Section -->
     <div>
-      <div class="flex items-center justify-between mb-3">
+      <div class="mb-3 flex items-center justify-between">
         <label class="text-sm font-medium text-content-muted">
           Favorite Euro Numbers (1-12)
         </label>
         <button
           v-if="euroNumbers.length > 0"
           type="button"
-          class="text-xs text-brand-gold hover:text-brand-gold-light underline"
+          class="text-xs text-brand-gold underline hover:text-brand-gold-light"
           @click="clearFavorites('euro')"
         >
           Clear All
@@ -102,12 +102,12 @@
           <span
             v-for="number in euroNumbers"
             :key="`euro-${number}`"
-            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-gold/20 border border-border-primary/50 rounded-full text-sm font-medium text-brand-gold"
+            class="inline-flex items-center gap-1 rounded-full border border-border-primary/50 bg-brand-gold/20 px-3 py-1 text-sm font-medium text-brand-gold"
           >
             {{ number }}
             <button
               type="button"
-              class="hover:text-brand-gold-light transition-colors"
+              class="transition-colors hover:text-brand-gold-light"
               @click="removeFavorite('euro', number)"
             >
               ✕
@@ -119,7 +119,7 @@
         <div v-if="euroNumbers.length < FAVORITE_NUMBERS_MAX" class="relative">
           <select
             :value="''"
-            class="w-full px-3 py-2 border border-casino-blue-light/50 bg-surface-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold-400 focus:border-border-primary text-content-secondary appearance-none cursor-pointer"
+            class="w-full cursor-pointer appearance-none rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 text-content-secondary focus:border-border-primary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
             @change="addEuroNumber($event)"
           >
             <option
@@ -142,7 +142,7 @@
             class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-content-muted"
           >
             <svg
-              class="fill-current h-4 w-4"
+              class="h-4 w-4 fill-current"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
             >

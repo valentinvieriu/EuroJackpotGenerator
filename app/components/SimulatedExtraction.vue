@@ -1,22 +1,22 @@
 <template>
-  <div class="p-4 casino-card-premium rounded-lg">
+  <div class="casino-card-premium rounded-lg p-4">
     <h3
-      class="text-xl font-semibold mb-4 text-center text-casino-gold text-premium-glow tracking-wide"
+      class="text-casino-gold text-premium-glow mb-4 text-center text-xl font-semibold tracking-wide"
     >
       Simulated Extraction
     </h3>
-    <div class="flex flex-col md:flex-row justify-around items-center gap-6">
+    <div class="flex flex-col items-center justify-around gap-6 md:flex-row">
       <div class="text-center">
         <h4
-          class="font-semibold text-lg mb-3 text-content-primary uppercase tracking-wider"
+          class="mb-3 text-lg font-semibold tracking-wider text-content-primary uppercase"
         >
           Main Numbers
         </h4>
-        <div class="flex flex-wrap gap-3 justify-center">
+        <div class="flex flex-wrap justify-center gap-3">
           <TransitionGroup
             name="ball"
             tag="div"
-            class="flex flex-wrap gap-3 justify-center"
+            class="flex flex-wrap justify-center gap-3"
             appear
           >
             <TicketNumber
@@ -31,15 +31,15 @@
       </div>
       <div class="text-center">
         <h4
-          class="font-semibold text-lg mb-3 text-content-primary uppercase tracking-wider"
+          class="mb-3 text-lg font-semibold tracking-wider text-content-primary uppercase"
         >
           Euro Numbers
         </h4>
-        <div class="flex flex-wrap gap-3 justify-center">
+        <div class="flex flex-wrap justify-center gap-3">
           <TransitionGroup
             name="ball"
             tag="div"
-            class="flex flex-wrap gap-3 justify-center"
+            class="flex flex-wrap justify-center gap-3"
             appear
           >
             <TicketNumber

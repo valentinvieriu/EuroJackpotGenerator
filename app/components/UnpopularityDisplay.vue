@@ -1,8 +1,8 @@
 <template>
   <div class="space-y-4">
     <!-- Educational Header -->
-    <div class="text-xs text-content-muted bg-surface-primary/20 rounded p-2">
-      <div class="font-medium mb-1">🎯 How Unpopularity Works</div>
+    <div class="rounded bg-surface-primary/20 p-2 text-xs text-content-muted">
+      <div class="mb-1 font-medium">🎯 How Unpopularity Works</div>
       <p class="text-xs">
         This method generates combinations that avoid common human biases,
         potentially reducing prize sharing if you win.
@@ -13,34 +13,34 @@
 
     <!-- Bias Factors Explanation -->
     <div>
-      <div class="text-xs text-content-muted mb-3 font-medium">
+      <div class="mb-3 text-xs font-medium text-content-muted">
         Common Patterns We Avoid:
       </div>
       <div class="grid grid-cols-1 gap-2 text-xs">
-        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-error mt-0.5">🎂</span>
+        <div class="flex items-start gap-2 rounded bg-surface-primary/30 p-2">
+          <span class="mt-0.5 text-error">🎂</span>
           <div>
-            <div class="text-content-secondary font-medium">Birthday Bias</div>
+            <div class="font-medium text-content-secondary">Birthday Bias</div>
             <div class="text-content-muted">
               Numbers 1-31 are over-chosen due to birthday dates
             </div>
           </div>
         </div>
 
-        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-brand-gold-400 mt-0.5">🍀</span>
+        <div class="flex items-start gap-2 rounded bg-surface-primary/30 p-2">
+          <span class="mt-0.5 text-brand-gold-400">🍀</span>
           <div>
-            <div class="text-content-secondary font-medium">Lucky Numbers</div>
+            <div class="font-medium text-content-secondary">Lucky Numbers</div>
             <div class="text-content-muted">
               Numbers like 3, 7, 11, 13, 17, 21 are popular choices
             </div>
           </div>
         </div>
 
-        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-premium-sapphire-400 mt-0.5">📈</span>
+        <div class="flex items-start gap-2 rounded bg-surface-primary/30 p-2">
+          <span class="mt-0.5 text-premium-sapphire-400">📈</span>
           <div>
-            <div class="text-content-secondary font-medium">
+            <div class="font-medium text-content-secondary">
               Sequences & Patterns
             </div>
             <div class="text-content-muted">
@@ -49,10 +49,10 @@
           </div>
         </div>
 
-        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-premium-emerald-400 mt-0.5">🎯</span>
+        <div class="flex items-start gap-2 rounded bg-surface-primary/30 p-2">
+          <span class="mt-0.5 text-premium-emerald-400">🎯</span>
           <div>
-            <div class="text-content-secondary font-medium">
+            <div class="font-medium text-content-secondary">
               Visual Patterns
             </div>
             <div class="text-content-muted">
@@ -61,10 +61,10 @@
           </div>
         </div>
 
-        <div class="flex items-start gap-2 p-2 bg-surface-primary/30 rounded">
-          <span class="text-premium-pearl-400 mt-0.5">📅</span>
+        <div class="flex items-start gap-2 rounded bg-surface-primary/30 p-2">
+          <span class="mt-0.5 text-premium-pearl-400">📅</span>
           <div>
-            <div class="text-content-secondary font-medium">
+            <div class="font-medium text-content-secondary">
               Month-like Euro Numbers
             </div>
             <div class="text-content-muted">
@@ -77,17 +77,17 @@
 
     <!-- Examples Section -->
     <div>
-      <div class="text-xs text-content-muted mb-3 font-medium">Examples:</div>
+      <div class="mb-3 text-xs font-medium text-content-muted">Examples:</div>
       <div class="space-y-2">
         <!-- Popular Example -->
-        <div class="p-3 bg-error-dark/20 border border-error/30 rounded">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-error text-lg">😰</span>
+        <div class="rounded border border-error/30 bg-error-dark/20 p-3">
+          <div class="mb-1 flex items-center gap-2">
+            <span class="text-lg text-error">😰</span>
             <span class="text-xs font-medium text-error-light"
               >Popular (avoid):</span
             >
           </div>
-          <div class="text-xs text-content-secondary mb-1">
+          <div class="mb-1 text-xs text-content-secondary">
             <strong>5 + 2:</strong> 1, 2, 3, 4, 5 + 7, 11
           </div>
           <div class="text-xs text-content-muted">
@@ -97,14 +97,14 @@
         </div>
 
         <!-- Unpopular Example -->
-        <div class="p-3 bg-success-dark/20 border border-success/30 rounded">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-premium-emerald-400 text-lg">😊</span>
+        <div class="rounded border border-success/30 bg-success-dark/20 p-3">
+          <div class="mb-1 flex items-center gap-2">
+            <span class="text-lg text-premium-emerald-400">😊</span>
             <span class="text-xs font-medium text-success-light"
               >Unpopular (preferred):</span
             >
           </div>
-          <div class="text-xs text-content-secondary mb-1">
+          <div class="mb-1 text-xs text-content-secondary">
             <strong>5 + 2:</strong> 6, 19, 28, 37, 49 + 1, 12
           </div>
           <div class="text-xs text-content-muted">
@@ -117,7 +117,7 @@
 
     <!-- Scoring Details -->
     <div>
-      <div class="text-xs text-content-muted mb-3 font-medium">
+      <div class="mb-3 text-xs font-medium text-content-muted">
         Scoring Factors:
       </div>
       <div class="space-y-1 text-xs text-content-muted">
@@ -167,19 +167,19 @@
 
     <!-- More Examples -->
     <div>
-      <div class="text-xs text-content-muted mb-3 font-medium">
+      <div class="mb-3 text-xs font-medium text-content-muted">
         More Examples:
       </div>
       <div class="space-y-2">
         <!-- Medium popularity example -->
-        <div class="p-3 bg-warning-dark/20 border border-warning/30 rounded">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-brand-gold-400 text-lg">😐</span>
+        <div class="rounded border border-warning/30 bg-warning-dark/20 p-3">
+          <div class="mb-1 flex items-center gap-2">
+            <span class="text-lg text-brand-gold-400">😐</span>
             <span class="text-xs font-medium text-warning-light"
               >Medium popularity:</span
             >
           </div>
-          <div class="text-xs text-content-secondary mb-1">
+          <div class="mb-1 text-xs text-content-secondary">
             <strong>5 + 2:</strong> 15, 22, 33, 41, 50 + 4, 9
           </div>
           <div class="text-xs text-content-muted">
@@ -189,14 +189,14 @@
         </div>
 
         <!-- Very unpopular example -->
-        <div class="p-3 bg-success-dark/30 border border-success/40 rounded">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-premium-emerald-400 text-lg">🎯</span>
+        <div class="rounded border border-success/40 bg-success-dark/30 p-3">
+          <div class="mb-1 flex items-center gap-2">
+            <span class="text-lg text-premium-emerald-400">🎯</span>
             <span class="text-xs font-medium text-success-light"
               >Very unpopular:</span
             >
           </div>
-          <div class="text-xs text-content-secondary mb-1">
+          <div class="mb-1 text-xs text-content-secondary">
             <strong>5 + 2:</strong> 32, 38, 41, 47, 50 + 2, 10
           </div>
           <div class="text-xs text-content-muted">
@@ -209,7 +209,7 @@
 
     <!-- Algorithm Process -->
     <div>
-      <div class="text-xs text-content-muted mb-3 font-medium">
+      <div class="mb-3 text-xs font-medium text-content-muted">
         Algorithm Process:
       </div>
       <div class="space-y-1 text-xs text-content-muted">
@@ -239,9 +239,9 @@
 
     <!-- Important Disclaimer -->
     <div
-      class="text-xs text-warning-light bg-warning-dark/20 border border-warning/30 rounded p-2"
+      class="rounded border border-warning/30 bg-warning-dark/20 p-2 text-xs text-warning-light"
     >
-      <div class="font-medium mb-1">⚠️ Educational Purpose</div>
+      <div class="mb-1 font-medium">⚠️ Educational Purpose</div>
       <div>
         This method demonstrates mathematical concepts about probability and
         human psychology. It may slightly improve your expected prize share
