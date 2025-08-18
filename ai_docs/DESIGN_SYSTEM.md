@@ -1,437 +1,201 @@
-# 🎨 Casino Theme Design System - Color Guidelines
+# 🎨 Casino Theme Design System — Token-First (Tailwind v4)
 
-## 🎯 Design Philosophy
-
-Our premium casino theme is built on **semantic color tokens** that prioritize:
-
-- **Purpose over appearance** - Colors describe function, not visual properties
-- **Sophisticated hierarchy** - Clear elevation and importance through color
-- **Premium aesthetics** - Luxury casino experience with modern sensibilities
-- **Accessibility first** - WCAG compliant contrast ratios
-- **Scalable system** - Easy to extend and maintain
+> **Purpose:** A practical, enforceable design system tightly aligned with our Architecture (dumb components + store-driven logic) and PRD (educational simulator with premium, accessible UI). Components never hardcode values; they consume tokens/utilities only.
 
 ---
 
-## 🎨 Color Token Architecture
+## 🎯 Principles
 
-### **Naming Convention**
-
-```
---color-{category}-{name}-{variant}
-```
-
-**Categories:**
-
-- `surface` - Backgrounds and containers
-- `content` - Text and icons
-- `brand` - Primary brand identity
-- `premium` - High-value accent colors
-- `interactive` - Buttons and actions
-- `ball/star` - Game-specific elements
-- `border` - Separators and outlines
-
-**Variants:**
-
-- Numbered scale: `50, 100, 200, 300, 400, 500, 600`
-- Descriptive: `light, primary, dark, hover, active, disabled`
+- **Token-first & semantic:** Colors and scales are named by **role** (surface, content, brand) — not by hex.
+- **Predictable hierarchy:** Elevation, depth, and state are consistent and repeatable.
+- **Accessible by default:** AA/AAA where applicable, clear focus, reduced-motion-friendly.
+- **SSR-safe & scalable:** Same tokens server/client; no runtime-calculated styles in components.
+- **Dumb components:** Presentation-only. No business logic or API calls (see `ARCHITECTURE.md`).
 
 ---
 
-## 🏗️ Color System Structure
+## 🧩 Tailwind v4 Token Mapping (what actually generates utilities)
 
-### **1. Surface Colors - Spatial Hierarchy**
+Tokens live in `@theme` inside **`app/assets/css/theme.css`**.
 
-Creates depth and elevation through 12 carefully crafted surface levels:
+| Family (token prefix)                    | Examples in CSS Tokens                              | Utilities you get                         |
+| ---------------------------------------- | --------------------------------------------------- | ----------------------------------------- |
+| **Colors** `--color-*`                   | `--color-surface-primary`, `--color-brand-gold-400` | `bg-*`, `text-*`, `border-*`, `outline-*` |
+| **Spacing** `--spacing-*`                | `--spacing-6: 1.5rem`                               | `p-*`, `m-*`, `gap-*`, `space-*`          |
+| **Radius** `--radius-*`                  | `--radius-2xl: 1rem`                                | `rounded-*`                               |
+| **Typography** `--text-*`, `--leading-*` | `--text-5xl: 3rem`                                  | `text-*`, `leading-*`                     |
+| **Shadows** `--shadow-*`                 | `--shadow-lg: …`                                    | `shadow-*`                                |
+| **Motion** `--duration-*`, `--ease-*`    | `--duration-300`, `--ease-standard`                 | `duration-*`, `ease-*`, `transition-*`    |
+| **Z-index** `--z-*`                      | `--z-50`, `--z-max`                                 | `z-*`                                     |
+| **Blur** `--blur-*`                      | `--blur-md: 12px` (**length**)                      | `blur-*`                                  |
 
-```css
-/* Base Foundations */
-surface-primary      → Main app background (deepest)
-surface-secondary    → Elevated panels
-surface-tertiary     → Alternative deep background
-
-/* Interactive Surfaces */
-surface-card         → Card/component backgrounds
-surface-card-hover   → Hover state for cards
-surface-floating     → Dropdowns, tooltips, floating elements
-
-/* Overlay System */
-surface-overlay      → Modal content
-surface-overlay-backdrop → Modal backdrops with transparency
-surface-glass        → Glass morphism effects
-
-/* Premium Contexts */
-surface-premium      → Premium feature sections
-surface-vip          → VIP member areas (burgundy-tinted)
-surface-jackpot      → Jackpot displays (emerald-tinted)
-
-/* Material Elevation */
-surface-elevated-1   → 1dp Material elevation
-surface-elevated-2   → 2dp Material elevation
-surface-elevated-3   → 3dp Material elevation
-surface-elevated-4   → 4dp Material elevation
-```
-
-**Usage Guidelines:**
-
-- Always start with `surface-primary` as your base
-- Use elevation levels to show component hierarchy
-- Reserve VIP/jackpot surfaces for high-value content
-- Apply glass effects sparingly for modern touches
-
-### **2. Brand Colors - Premium Identity**
-
-Seven-step gold progression plus luxury metallics:
-
-```css
-/* Primary Gold Scale */
-brand-gold-50        → Champagne highlights, subtle accents
-brand-gold-100       → Light gold, disabled states
-brand-gold-200       → Soft gold accents, borders
-brand-gold-300       → Medium gold, secondary elements
-brand-gold-400       → Classic gold, primary brand (DEFAULT)
-brand-gold-500       → Rich gold, important accents
-brand-gold-600       → Deep gold, shadows, active states
-
-/* Luxury Metallics */
-brand-rose-gold-300  → Light rose gold, premium features
-brand-rose-gold-400  → Classic rose gold, special occasions
-brand-rose-gold-500  → Deep rose gold, VIP elements
-
-brand-platinum-300   → Light platinum, subtle luxury
-brand-platinum-400   → Classic platinum, secondary actions
-brand-platinum-500   → Deep platinum, premium disabled states
-```
-
-**Usage Guidelines:**
-
-- Use gold-400 as your primary brand color
-- Gold-200/300 for subtle accents and secondary elements
-- Gold-500/600 for emphasis and active states
-- Rose gold for premium/VIP features
-- Platinum for sophisticated secondary actions
-
-### **3. Premium Accent Colors - High-Value Elements**
-
-Sophisticated accent palette for special contexts:
-
-```css
-/* Emerald - Success & Jackpot */
-premium-emerald-300  → Success messages, positive feedback
-premium-emerald-400  → Jackpot displays, winning states
-premium-emerald-500  → High-value indicators, money symbols
-
-/* Burgundy - VIP & Exclusive */
-premium-burgundy-300 → VIP text, exclusive features
-premium-burgundy-400 → VIP sections, premium warnings
-premium-burgundy-500 → High-stakes elements, urgent VIP actions
-
-/* Pearl - Iridescent Effects */
-premium-pearl-300    → Subtle highlights, shimmer effects
-premium-pearl-400    → Iridescent accents, special touches
-premium-pearl-500    → Premium texture overlays
-
-/* Sapphire - Premium Interactive */
-premium-sapphire-300 → Premium feature toggles
-premium-sapphire-400 → High-value interactive elements
-premium-sapphire-500 → Special action buttons, rare interactions
-```
-
-**Usage Guidelines:**
-
-- Emerald for anything money/success related
-- Burgundy exclusively for VIP/exclusive content
-- Pearl for subtle premium effects and highlights
-- Sapphire for high-value interactive elements
-
-### **4. Interactive Colors - Button & Action States**
-
-Complete state system for all interactive elements:
-
-```css
-/* Primary Interactive (VIP Orange) */
-interactive-primary           → Base CTA buttons
-interactive-primary-hover     → Hover state
-interactive-primary-active    → Active/pressed state
-interactive-primary-disabled  → Disabled state
-interactive-primary-light     → Light variant
-interactive-primary-glow      → Glow effect overlay
-
-/* Secondary Interactive (Gold) */
-interactive-secondary         → Secondary actions
-interactive-secondary-hover   → Gold hover state
-interactive-secondary-active  → Gold active state
-interactive-secondary-disabled → Gold disabled state
-interactive-secondary-glow    → Gold glow effect
-
-/* Tertiary Interactive (Platinum) */
-interactive-tertiary          → Subtle actions
-interactive-tertiary-hover    → Platinum hover
-interactive-tertiary-active   → Platinum active
-interactive-tertiary-disabled → Platinum disabled
-
-/* Success Interactive (Emerald) */
-interactive-success           → Success actions
-interactive-success-hover     → Success hover
-interactive-success-active    → Success active
-interactive-success-glow      → Success glow
-
-/* Danger Interactive (Burgundy) */
-interactive-danger           → Warning/delete actions
-interactive-danger-hover     → Danger hover
-interactive-danger-active    → Danger active
-```
-
-**Usage Guidelines:**
-
-- Primary (orange) for main CTAs and important actions
-- Secondary (gold) for brand-related actions
-- Tertiary (platinum) for subtle, low-priority actions
-- Success (emerald) for positive confirmations
-- Danger (burgundy) for destructive actions
+> **Important:** Blur tokens must be **lengths** (e.g., `12px`), not `blur(12px)`. We keep bespoke casino blurs (`--blur-casino-*`) for custom CSS where needed.
 
 ---
 
-## 🎯 Usage Patterns
+## 🌈 Color System
 
-### **Component Hierarchy**
+### Surface & Content
 
-#### **Primary Components** (High visibility)
+- `color-surface-*`: spatial hierarchy (`primary`, `secondary`, `card`, `floating`, `overlay`, `elevated-{1..4}`, `premium`, `vip`, `jackpot`)
+- `color-content-*`: `primary` / `secondary` / `muted` / `inverse`
 
-- Use: `interactive-primary`, `brand-gold-400`, `premium-emerald-400`
-- Examples: Main CTAs, jackpot displays, winning states
-- Shadows: `shadow-premium`, `shadow-glow-*`
+**Usage defaults**
 
-#### **Secondary Components** (Supporting)
+- App root: `bg-surface-primary text-content-primary`
+- Cards: `bg-surface-card shadow-lg rounded-2xl` or `.casino-card`
+- Overlays: `bg-surface-overlay` + backdrop blurred container
 
-- Use: `interactive-secondary`, `brand-gold-300`, `surface-elevated-2`
-- Examples: Secondary buttons, navigation, cards
-- Shadows: `shadow-lg`, `shadow-floating`
+### Brand & Accents
 
-#### **Tertiary Components** (Background)
+- Brand metallics: `brand-gold-*`, `brand-rose-gold-*`, `brand-platinum-*`
+- Premium accents: `premium-emerald-*`, `premium-burgundy-*`, `premium-pearl-*`, `premium-sapphire-*`
 
-- Use: `interactive-tertiary`, `brand-platinum-300`, `surface-secondary`
-- Examples: Subtle actions, disabled states, backgrounds
-- Shadows: `shadow-sm`, `shadow-md`
+**Common combos**
 
-### **State Progression**
+- Jackpot banner: `bg-surface-jackpot text-premium-emerald-300`
+- VIP section: `bg-surface-vip text-premium-burgundy-300`
+- Sophisticated: `bg-surface-premium text-brand-platinum-300`
 
-#### **Interactive States**
+### Opacity with custom tokens
 
-1. **Rest**: Base color
-2. **Hover**: Darker/more saturated variant
-3. **Active**: Darkest variant in family
-4. **Disabled**: Reduced saturation + 50% opacity
-5. **Focus**: Add glow ring, maintain background
+Slash opacity like `border-casino-blue-light/50` is **not reliable** for token colors. Prefer:
 
-#### **Visual Feedback**
-
-- **Success**: Emerald colors + glow
-- **Warning**: Gold colors + attention animation
-- **Error**: Burgundy colors + pulse effect
-- **Information**: Sapphire colors + subtle highlight
+- Element/state opacity: `opacity-50` (affects the whole element)
+- **Arbitrary color value** for precise alpha:
+  `border-[oklch(0.62_0.05_229_/_0.5)]`
+  or `border-[color-mix(in oklab,var(--color-casino-blue-light) 50%, transparent)]`
 
 ---
 
-## 🔍 Color Relationships
+## 🧱 Scales
 
-### **Harmonious Combinations**
-
-#### **Gold + Navy** (Primary Brand)
-
-```css
-background: surface-primary
-foreground: brand-gold-400
-borders: brand-gold-300
-```
-
-#### **Emerald + Navy** (Success/Money)
-
-```css
-background: surface-jackpot
-foreground: premium-emerald-300
-accents: premium-emerald-400
-```
-
-#### **Burgundy + Navy** (VIP/Premium)
-
-```css
-background: surface-vip
-foreground: premium-burgundy-300
-borders: premium-burgundy-400
-```
-
-#### **Platinum + Navy** (Sophisticated)
-
-```css
-background: surface-premium
-foreground: brand-platinum-300
-accents: brand-platinum-400
-```
-
-### **Contrast Requirements**
-
-All color combinations meet WCAG AA standards:
-
-- **Text on surface-primary**: 4.5:1 minimum
-- **Interactive elements**: 3:1 minimum
-- **Focus indicators**: 3:1 minimum
-- **Brand gold on navy**: 7:1 (AAA compliant)
+- **Spacing**: `--spacing-*` → `p-*`, `m-*`, `gap-*` (e.g., `py-12 md:py-16`)
+- **Radius**: `--radius-lg`, `--radius-2xl`, `--radius-full` → `rounded-*`
+- **Type**: `--text-sm..8xl`, `--leading-tight..loose` → `text-*`, `leading-*`
+- **Shadows**: `--shadow-sm..2xl` → `shadow-*` (use `.casino-card`, `.hover-glow` for premium)
+- **Motion**: `--duration-150|300|500`, `--ease-standard|expressive`
+- **Blur**: `--blur-sm|md|lg|xl` (lengths) → `blur-*`
 
 ---
 
-## 🚀 Future Expansion Guidelines
+## 🌙 Theming
 
-### **Adding New Semantic Categories**
+- **Dark mode**: `[data-theme='dark']` overrides surfaces, content, borders, and glass shadows.
+- **Seasonal**: `[data-theme='halloween']`, `[data-theme='christmas']` (opt-in via `data-theme`).
 
-1. **Identify Purpose**: What functional role does this color serve?
-2. **Choose Base Hue**: Select OKLCH hue value (0-360)
-3. **Create Scale**: Generate 3-7 variants with consistent lightness progression
-4. **Test Contrast**: Ensure accessibility compliance
-5. **Document Usage**: Add clear guidelines for when to use
+> Components **never** pick colors by hex — they rely on tokens/utilities so themes swap cleanly.
 
-#### **Example: Tournament System**
+---
 
-```css
-/* Tournament Rankings */
---color-tournament-bronze-300: oklch(0.7 0.1 45);
---color-tournament-silver-300: oklch(0.8 0.02 220);
---color-tournament-gold-300: oklch(0.85 0.12 85);
---color-tournament-platinum-300: oklch(0.88 0.02 280);
+## 🧰 Utilities & Component Classes
+
+We ship premium utilities in `theme.css`:
+
+- **Cards**: `.casino-card`, `.casino-card-premium`
+- **Buttons**: `.btn-casino-gold`, `.btn-casino-blue`, with `.focus-casino` / `.focus-gold`
+- **Text**: `.text-casino-gold`, `.text-premium-glow`, `.font-heading`, `.font-body`, `.font-numbers`, `.font-cta`
+- **Overlays & Effects**: `.glass-luxury`, `.overlay-casino`, `.overlay-premium`, glow/ripple/hover-lift animations
+
+> These classes encapsulate multi-property recipes (gradients, borders, shadows) while still using tokens under the hood.
+
+---
+
+## ♿ Accessibility
+
+- Contrast targets:
+  - Text on `surface-primary`: **≥ 4.5:1**
+  - Interactive/focus rings: **≥ 3:1**
+- `prefers-reduced-motion`: respected globally
+- Focus: `.focus-casino` / `.focus-gold` box-shadow rings, not color-only
+
+---
+
+## ✅ Usage Patterns (Do / Don’t)
+
+**Do**
+
+- `bg-surface-primary text-content-primary`
+- `rounded-2xl shadow-lg p-6`
+- `transition-all duration-150 ease-standard`
+- `border-casino-blue-light` (solid) or `border-[oklch(…/0.5)]` (alpha)
+
+**Don’t**
+
+- `border-casino-blue-light/50` (slash opacity on token colors)
+- Hardcoded `#rrggbb` / `rgb()` in components
+- Runtime-computed inline styles in components (SSR drift)
+- Business logic or API calls in components (stores only)
+
+---
+
+## 🧪 Examples
+
+**Hero headline**
+
+```html
+<h1 class="text-5xl md:text-6xl font-heading text-casino-gold">
+  EuroJackpot Simulator
+</h1>
 ```
 
-### **Seasonal/Event Themes**
+**Primary CTA**
 
-Override specific tokens for temporary themes:
-
-```css
-/* Halloween Theme */
-[data-theme='halloween'] {
-  --color-interactive-primary: oklch(0.65 0.2 30); /* Orange */
-  --color-premium-emerald-400: oklch(0.3 0.15 120); /* Dark green */
-  --color-surface-primary: oklch(0.08 0.03 280); /* Purple tint */
-}
-
-/* Christmas Theme */
-[data-theme='christmas'] {
-  --color-interactive-primary: oklch(0.45 0.18 15); /* Red */
-  --color-premium-emerald-400: oklch(0.4 0.15 145); /* Green */
-  --color-brand-gold-400: oklch(0.88 0.08 85); /* Softer gold */
-}
+```html
+<button class="btn-casino-gold focus-casino px-6 py-3 rounded-2xl">
+  Generate Random Tickets
+</button>
 ```
 
-### **Maintaining Color Harmony**
+**Card**
 
-#### **OKLCH Benefits**
+```html
+<div class="casino-card rounded-2xl p-6">
+  <!-- content -->
+</div>
+```
 
-- **Perceptual uniformity**: Equal lightness values appear equally bright
-- **Predictable manipulation**: Adjusting chroma/hue maintains harmony
-- **Wide gamut support**: Access to more vivid colors than RGB
+**Overlay container (modal content)**
 
-#### **Scale Generation Formula**
+```html
+<div class="bg-surface-overlay backdrop-blur-xl rounded-2xl p-6 shadow-2xl">
+  <!-- modal content -->
+</div>
+```
 
-```javascript
-// Generate harmonious color scale
-function generateScale(baseHue, baseChroma) {
-  return {
-    50: `oklch(0.98 ${baseChroma * 0.2} ${baseHue})`,
-    100: `oklch(0.95 ${baseChroma * 0.4} ${baseHue})`,
-    200: `oklch(0.90 ${baseChroma * 0.6} ${baseHue})`,
-    300: `oklch(0.82 ${baseChroma * 0.8} ${baseHue})`,
-    400: `oklch(0.75 ${baseChroma} ${baseHue})`, // Base
-    500: `oklch(0.65 ${baseChroma * 1.1} ${baseHue})`,
-    600: `oklch(0.55 ${baseChroma * 1.2} ${baseHue})`,
-  }
-}
+**Subtle info alert**
+
+```html
+<div class="alert alert-info">
+  <span class="alert-icon">ℹ️</span>
+  <div class="alert-content">
+    <div class="alert-title">Educational Mode</div>
+    <p class="alert-desc">Simulations do not predict real draws.</p>
+  </div>
+</div>
 ```
 
 ---
 
-## 🔧 Developer Tools
+## 🔒 Alignment with Architecture & PRD
 
-### **VSCode Snippets**
+- **Dumb components** consume tokens/utilities only; **all** logic stays in Pinia stores.
+- **SSR-safe**: token values are static; no client-only computed styles in components.
+- **Responsiveness & performance**: transitions use `ease-standard` and modest durations; animations are optional/accessible.
+- **Education focus**: alerts, jackpot/VIP sections, and progress feedback use semantic tokens for consistent messaging.
 
-Add to `.vscode/tailwind.code-snippets`:
+---
 
-```json
-{
-  "Casino Surface": {
-    "prefix": "bg-surface",
-    "body": [
-      "bg-surface-${1|primary,secondary,card,floating,premium,vip,jackpot|}"
-    ],
-    "description": "Casino theme surface background"
-  },
-  "Casino Interactive": {
-    "prefix": "bg-interactive",
-    "body": [
-      "bg-interactive-${1|primary,secondary,tertiary,success,danger|} hover:bg-interactive-${1|primary,secondary,tertiary,success,danger|}-hover"
-    ],
-    "description": "Casino theme interactive element"
-  }
-}
+## ✅ Quality Checklist (enforced)
+
+- [ ] Uses **token-based utilities only** in components (no hardcoded values)
+- [ ] Meets **contrast** targets
+- [ ] Includes **focus-visible** state
+- [ ] Respects **reduced motion**
+- [ ] Works in **dark mode** if relevant
+- [ ] Uses spacing/radius/type tokens for scale consistency
+- [ ] No color opacity via `/<number>` on token colors (use `opacity-*` or arbitrary color)
+
 ```
 
-### **Design Token Export**
-
-For design tools (Figma, Sketch):
-
-```javascript
-// Export color tokens as JSON
-export const casinoTokens = {
-  surface: {
-    primary: 'oklch(0.13 0.02 229)',
-    secondary: 'oklch(0.20 0.03 229)',
-    // ... rest of tokens
-  },
-  brand: {
-    gold: {
-      50: 'oklch(0.98 0.02 85)',
-      // ... gold scale
-    },
-  },
-}
 ```
-
----
-
-## 📊 Performance Considerations
-
-### **CSS Variable Benefits**
-
-- **Runtime theming**: Switch themes without recompiling CSS
-- **Reduced bundle size**: One stylesheet for all themes
-- **Better caching**: CSS variables cached separately from selectors
-
-### **Optimization Tips**
-
-1. **Group related tokens**: Keep surface colors together in CSS
-2. **Use CSS layers**: Separate theme from utilities
-3. **Minimize custom properties**: Only expose necessary tokens
-4. **Leverage inheritance**: Child elements inherit parent variables
-
----
-
-## ✅ Quality Checklist
-
-### **Before Adding New Colors**
-
-- [ ] Purpose clearly defined
-- [ ] Follows naming convention
-- [ ] WCAG AA contrast compliance
-- [ ] Tested in dark mode
-- [ ] Added to ESLint rules
-- [ ] Documentation updated
-- [ ] Design team approval
-
-### **Theme Health Check**
-
-- [ ] All interactive states defined
-- [ ] Consistent lightness progression
-- [ ] No hardcoded hex values in components
-- [ ] Accessibility audit passed
-- [ ] Visual regression tests passing
-- [ ] Cross-browser compatibility verified
-
----
-
-**Congratulations!** 🎉 You now have a sophisticated, scalable color system that can evolve with your casino application while maintaining premium aesthetics and accessibility standards.
