@@ -233,4 +233,4 @@ We ship premium utilities in `theme.css`:
 - [ ] **Arbitrary values** (`[...]`) used sparingly; avoid dynamic string interpolation of class names; safelist if needed for runtime variants.
 - [ ] **Blur tokens** are **lengths**; bespoke blurs (`--blur-casino-*`) only in CSS utilities, not as `blur-[...]` when a token exists.
 - [ ] **Transitions** use tokenized durations/easings (`duration-*`, `ease-*`).
-- [ ] **No business logic in components**; style-only utilities and recipe classes (`.casino-card`, `.btn-*`) are allowed.
+- [ ] **No business logic in components**; style-only utilities and recipe classes (`.casino-card`, `.btn-*`) are allowed.Components render UI and dispatch store actions only. This preserves token-only styling, SSR stability, and theme consistency.
