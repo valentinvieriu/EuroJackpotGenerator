@@ -126,12 +126,20 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 
 ### Usability
 
-- Responsive design optimized for desktop and mobile devices
-- Clear visual hierarchy with intuitive navigation and smooth animations
-- Accessibility support including keyboard navigation and audio controls
-- Immediate feedback for all user actions with premium audio-visual responses
-- Performance-optimised animations with mobile-specific tuning
-- Interactive background elements that enhance engagement without distraction
+- **Design System Foundation**: Token-first design approach ensuring consistent visual hierarchy, semantic colour usage, and accessible interfaces across all components
+- Responsive design optimised for desktop and mobile devices with consistent spacing and typography scales
+- Clear visual hierarchy with intuitive navigation and smooth animations following established motion patterns
+- Accessibility support including keyboard navigation, focus management, contrast compliance (≥4.5:1), and reduced-motion preferences
+- Immediate feedback for all user actions with premium audio-visual responses aligned to design standards
+- Performance-optimised animations with mobile-specific tuning and SSR-safe styling
+- Interactive background elements that enhance engagement without distraction whilst maintaining design consistency
+
+### Design Quality
+
+- Consistent application of design system tokens and semantic naming conventions
+- Component implementations that support multiple themes without hardcoded values
+- Universal accessibility compliance with WCAG AA standards minimum
+- SSR-safe styling approaches preventing hydration mismatches
 
 ### Security & Data
 
@@ -193,3 +201,4 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 
 - **[Architecture Guide](./ARCHITECTURE.md)** - Technical implementation details and system design
 - **[Development Guide](./COMMON_GUIDE.md)** - LLM integration guide and development workflows
+- **[Design System](./DESIGN_SYSTEM.md)** - UI/UX implementation standards, design tokens, and accessibility guidelines

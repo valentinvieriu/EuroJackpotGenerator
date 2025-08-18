@@ -147,7 +147,7 @@ const [isLoading, setIsLoading] = useState(false)
 
 **Strict Responsibility Boundaries**:
 
-- **UI Components**: Event handling, reactive rendering, user feedback **ONLY**
+- **UI Components**: Event handling, reactive rendering, user feedback **ONLY** + **Design System Compliance** (token-first styling, semantic naming, accessibility standards, SSR-safe approaches)
 - **Pinia Stores**: **ALL** business logic, **ALL** API calls, **ALL** complex state management
 - **Utilities**: Pure functions, calculations, data transformations (called by stores, not components)
 
@@ -219,6 +219,8 @@ const handleStartSimulation = () => {
 - Manage complex state beyond simple UI state
 - Contain business logic or validation rules
 - Directly manipulate data structures
+- **Use hardcoded styles, colours, or spacing values** (must use design system tokens)
+- **Implement runtime-computed styles** that cause SSR hydration issues
 
 ### Overlay UI Pattern
 
@@ -237,7 +239,7 @@ const handleStartSimulation = () => {
 
 ### Frontend Architecture
 
-**State-Driven UI**: All components react to Pinia store state changes, creating predictable data flow and simplifying debugging.
+**State-Driven UI**: All components react to Pinia store state changes, creating predictable data flow and simplifying debugging. **Design System Foundation**: Components implement consistent visual patterns through token-based styling (see [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)).
 
 **Key Components**:
 
@@ -405,7 +407,7 @@ The application supports four distinct number generation methods, each serving d
 
 ### Animation & Audio Architecture
 
-**Premium User Experience Enhancement**: The application implements sophisticated animation and audio systems to create an engaging, premium casino-like experience whilst maintaining educational focus.
+**Premium User Experience Enhancement**: The application implements sophisticated animation and audio systems to create an engaging, premium casino-like experience whilst maintaining educational focus. **Design System Alignment**: All visual effects follow design system motion patterns, accessibility standards, and performance guidelines.
 
 **Audio Engine Architecture**:
 
@@ -504,3 +506,4 @@ The application supports four distinct number generation methods, each serving d
 
 - **[Product Requirements](./PRD.md)** - Business context and feature specifications
 - **[Development Guide](./COMMON_GUIDE.md)** - Setup instructions, testing commands, and development workflows
+- **[Design System](./DESIGN_SYSTEM.md)** - UI implementation standards, design tokens, and component styling patterns

@@ -46,7 +46,7 @@ npm run format   # Format code
 1. **State Management**: 3-layer architecture (URL → Pinia → SSR-safe) with mode state and favorite numbers persistence
 1. **Business Logic**: Located in `stores/` and `app/utils/` including custom number generation algorithms and popularity scoring
 1. **API Endpoints**: Server logic in `server/api/` including frequency analysis endpoints
-1. **Component Patterns**: Hero section with stepper, overlay modals, accordion UI, visual selectors, deletion handlers with state cleanup, mode transitions
+1. **Component Patterns**: Hero section with stepper, overlay modals, accordion UI, visual selectors, deletion handlers with state cleanup, mode transitions (see [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) for styling standards)
 1. **Animation Systems**: Canvas-based background animations (`BouncingBallsCanvas.vue`) with Web Worker optimization and audio feedback (`audioUtils.ts`)
 1. **Testing**: Focus on business logic, not UI rendering or animation performance
 
@@ -66,6 +66,13 @@ _For detailed patterns and examples, see [ARCHITECTURE.md](./ARCHITECTURE.md)_
 - **Don't Test**: UI rendering, CSS, simple event handlers, accordion animations, canvas animations, audio synthesis
 - **Requirement**: New features must include business logic tests including edge cases for state cleanup
 
+### Styling Standards
+
+- **Token-First Approach**: Use design system tokens exclusively, never hardcode colours, spacing, or typography
+- **Semantic Naming**: Apply role-based styling (surface, content, interactive) rather than appearance-based classes
+- **Accessibility Compliance**: Ensure contrast ratios, focus management, and reduced-motion preferences
+- **SSR-Safe Styling**: Avoid runtime-computed styles that cause hydration mismatches
+
 _For detailed testing strategies and examples, see testing sections in [ARCHITECTURE.md](./ARCHITECTURE.md)_
 
 ## Development Workflows
@@ -77,6 +84,7 @@ _For detailed testing strategies and examples, see testing sections in [ARCHITEC
 1. **Business Logic**: Implement in Pinia stores with tests (including state cleanup patterns and mode management)
 1. **API Layer**: Create server endpoints with validation
 1. **UI Components**: Thin presentation layer only (hero section with stepper, overlay modals, accordion patterns, deletion handlers, mode transitions)
+1. **Design System Integration**: Apply design system tokens, accessibility standards, and semantic styling patterns to all UI components
 1. **Animation & Audio**: Add canvas animations and audio feedback without blocking core functionality (Web Workers for performance)
 1. **Quality Check**: Run tests, lint, and format before completion
 
