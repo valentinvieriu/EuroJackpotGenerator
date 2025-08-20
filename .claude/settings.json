@@ -7,31 +7,49 @@
       "Write",
       "MultiEdit",
       "Edit",
-      "Bash",
       "Read",
       "Glob",
       "Grep",
       "LS",
       "WebFetch",
+      "WebSearch",
+      "Task",
+      "ExitPlanMode",
       "TodoRead",
-      "TodoWrite"
+      "TodoWrite",
+      "Bash(rg:*)",
+      "Bash(fd:*)",
+      "Bash(bat:--style=plain --paging=never *)",
+      "Bash(eza:*)",
+      "Bash(jq:*)",
+      "Bash(yq:*)",
+      "Bash(delta:*)",
+      "Bash(git:status*)",
+      "Bash(git:add*)",
+      "Bash(git:commit*)",
+      "Bash(git:log*)",
+      "Bash(git:push*)",
+      "Bash(git:diff*)",
+      "Bash(git:show*)",
+      "Bash(npm:install*)",
+      "Bash(npm:run*)",
+      "Bash(npm:test*)",
+      "Bash(wrangler:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)"
     ],
-    "deny": ["Bash(awk:*)"]
-  },
-  "features": {
-    "extendedThinking": true,
-    "toolUse": true,
-    "codeExecution": true,
-    "autoUpdates": true
-  },
-  "preferences": {
-    "verbosity": "concise",
-    "codeStyle": "modern-es",
-    "testFirst": true,
-    "lintBeforeCommit": true
-  },
-  "mcpServers": {
-    "enableAllProjectMcpServers": true
+    "deny": [
+      "Bash(awk:*)",
+      "Bash(rm:*)",
+      "Bash(sudo:*)",
+      "Bash(curl:*| sh*)",
+      "Bash(chmod:+x *)",
+      "Bash(npm:install -g*)",
+      "Bash(npm:publish*)",
+      "Bash(git:reset --hard*)",
+      "Bash(git:push --force*)"
+    ]
   },
   "enabledMcpjsonServers": ["context7", "nuxt"],
   "hooks": {

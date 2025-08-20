@@ -96,3 +96,109 @@ _For detailed testing strategies and examples, see testing sections in [ARCHITEC
 1. **Verify**: Ensure fix doesn't introduce regressions
 
 _For detailed workflow examples and best practices, see development sections in [ARCHITECTURE.md](./ARCHITECTURE.md)_
+
+## Preferred CLI Tools
+
+Use these tools by default. If unsure about a flag, run `<tool> --help` first.
+
+### ripgrep (`rg`) — primary code search
+
+#### Basic Search
+
+When: find patterns, symbols, TODOs across the repo.
+Examples:
+
+- `rg -n "useState\\(" --type tsx`
+- `rg -n "TODO|FIXME" -S -C2`
+  Notes: Respects `.gitignore`. Prefer `--type`/`-g` over broad `-uu`.
+
+#### Search & Replace
+
+Always preview before writing. `rg` **does not** edit files; it prints results with the replacement applied. After preview, use `/apply-replace` (below).
+
+**General tips**
+
+- Prefer file globs: `-g '*.{ts,vue}'` and skip heavy dirs: `-g '!node_modules/**' -g '!.git/**'`
+- Show file & line numbers: `-nH`
+- Print a bit of context while previewing: `-C2` (2 lines)
+
+**Common previews**
+
+```bash
+# 1) console.log(...) → logger.info(...)
+rg -nH -g '*.{ts,vue}' 'console\.log\(([^)]*)\)' --replace 'logger.info($1)'
+
+# 2) Make named imports type-only (simple case)
+# (Beware: only safe if the specifiers are types!)
+rg -nH -g '*.ts' 'import\s+\{([^}]+)\}\s+from' --replace 'import type {$1} from'
+
+# 3) defineProps<{T}> → defineProps<T>
+rg -nH -g '*.{ts,vue}' 'defineProps<\{([^>]+)\}>' --replace 'defineProps<$1>'
+
+# 4) defineEmits<{...}> → defineEmits<...>
+rg -nH -g '*.{ts,vue}' 'defineEmits<\{([^>]+)\}>' --replace 'defineEmits<$1>'
+
+# 5) '@/path' → 'src/path'
+rg -nH -g '*.{ts,vue}' '@/([^\s"'\''>]+)' --replace 'src/$1'
+
+# 6) Strip .vue from import specifiers
+rg -nH -g '*.{ts,vue}' 'from\s+([\"\'])([^"\']+)\.vue\1' --replace 'from $1$2$1'
+
+# 7) Vue event shorthand @evt= → v-on:evt=
+rg -nH -g '*.vue' '@(?P<evt>[A-Za-z0-9_-]+)=' --replace 'v-on:$evt='
+
+# 8) Find TODOs only in ts/vue
+rg -nH -g '*.{ts,vue}' -g '!node_modules/**' 'TODO'
+
+# 9) Find typed refs with context
+rg -nH -C2 -g '*.{ts,vue}' 'ref<[^>]+>\('
+```
+
+### fd — fast file finding
+
+When: list matching files/dirs, pipe into other steps.
+Examples:
+
+- `fd -t f -e ts src/components`
+- `fd -t d "migrations?"`
+
+### bat — readable previews (no ANSI noise)
+
+When: show code snippets for decisions/reviews.
+Examples:
+
+- `bat --style=plain --paging=never -n package.json`
+- `bat --style=plain --line-range 1:80 src/App.tsx`
+
+### jq — JSON transforms (safe write pattern)
+
+When: adjust configs deterministically.
+Examples:
+
+- `jq '.scripts.test="vitest"' package.json | sponge package.json`
+- `jq -S . .eslintrc.json > tmp && mv tmp .eslintrc.json`
+  Notes: Prefer temp-file or `sponge` to avoid truncation.
+
+### yq — YAML transforms
+
+When: CI/CD, K8s, workflow edits.
+Examples (v4 syntax):
+
+- `yq '.jobs.build.steps += [{"run":"pnpm test"}]' -i .github/workflows/ci.yml`
+- `yq 'del(.services.db.environment.PASSWORD)' -i docker-compose.yml`
+
+### eza — clear tree views
+
+When: quick structure/context.
+Examples:
+
+- `eza -T --level=2 src`
+- `eza -lah --git`
+
+### delta — readable diffs
+
+When: review/critique changes.
+Examples:
+
+- `git -c core.pager=delta diff`
+- `git show HEAD~1 | delta`

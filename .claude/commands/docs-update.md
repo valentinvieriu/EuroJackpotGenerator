@@ -1,5 +1,5 @@
 RUN:
-git ls-files
+eza -T --git-ignore .
 
 READ:
 @ai_docs/PRD.md
