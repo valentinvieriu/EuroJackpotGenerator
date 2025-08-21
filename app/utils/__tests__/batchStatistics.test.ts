@@ -32,13 +32,13 @@ describe('batchStatistics', () => {
     ] as any
     const winningMain = [1, 2, 3, 4, 5]
     const winningEuro = [1, 2]
-    const oddsMap = new Map<number, number>([[1, 1000]]) // class 1 payout
+    const payoutMap = new Map<number, number>([[1, 1000]]) // class 1 payout
     const linesCost = combinationCount(5, 2) * 2
     const result = simulateSingleDraw(
       tickets,
       winningMain,
       winningEuro,
-      oddsMap,
+      payoutMap,
       linesCost,
       0
     )
@@ -97,10 +97,10 @@ describe('batchStatistics', () => {
     expect(res.totalWinnings).toBe(20)
     expect(res.netProfit).toBe(-4) // 20 - 24
 
-    // Core Economics
-    expect(res.stakePerSimulation).toBe(12) // 24 / 2
-    expect(res.expectedPayout).toBe(10) // 20 / 2
-    expect(res.expectedProfit).toBe(-2) // -4 / 2
+    // Core Economics (per play)
+    expect(res.stakePerPlay).toBe(12) // 24 / 2
+    expect(res.expectedPayoutPerPlay).toBe(10) // 20 / 2
+    expect(res.expectedProfitPerPlay).toBe(-2) // -4 / 2
     expect(res.returnToPlayer).toBe(10 / 12) // ~0.833
     expect(res.houseEdge).toBe(1 - 10 / 12) // ~0.167
     expect(res.expectedLossPerEuro).toBe(1 - 10 / 12) // Same as house edge
@@ -112,20 +112,20 @@ describe('batchStatistics', () => {
     expect(res.averageNetWhenHit).toBe(8) // 20 - 12
 
     // Why Win Rate ≠ Profit
-    expect(res.neededAveragePayoutToBreakEven).toBe(12) // Need to win stake back
-    expect(res.payoutShortfall).toBe(2) // 12 - 10
+    expect(res.neededAveragePayoutToBreakEven).toBe(12)
+    expect(res.payoutShortfall).toBe(2)
     // New break-even diagnostics
     expect(res.payoutMultiplierNeeded).toBe(1.2) // 12/10 = 1.2x needed
     expect(res.breakEvenHitRateAtCurrentPrize).toBe(60) // (12/20)*100 = 60% hit rate needed
     expect(res.breakEvenAvgPrizeAtCurrentHitRate).toBe(24) // 12/(50/100) = €24 avg prize needed
+    expect(res.expectedPlaysPerHit).toBe(2) // 100/50 = 2 plays per hit
     expect(res.netIfEveryPlayHit).toBe(8) // 20 - 12 (loss even at 100% hit rate)
 
-    // Legacy metrics for backward compatibility
+    // Legacy/derived metrics
     expect(res.averageWinningsPerSimulation).toBe(10) // 20 / 2
     expect(res.expectedNetReturn).toBe(-2) // -4 / 2
     expect(res.returnRatePerEuro).toBe(20 / 24) // ~0.833
     expect(res.averagePrizePerWin).toBe(20) // 20 winnings / 1 win = 20
-    expect(res.worstCaseScenario).toBe(8) // 20 - 12 = 8 (profit even at 100% win rate)
     expect(res.averageLossPerLosingSimulation).toBe(12) // actual loss for the losing simulation
   })
 
@@ -149,10 +149,10 @@ describe('batchStatistics', () => {
     const totalCost = 20
     const res = calculateBatchStatistics(individual, totalCost)
 
-    // Core Economics - all-losing scenario
-    expect(res.stakePerSimulation).toBe(10) // 20 / 2
-    expect(res.expectedPayout).toBe(0) // No winnings
-    expect(res.expectedProfit).toBe(-10) // Full loss
+    // Core Economics (per play) - all-losing scenario
+    expect(res.stakePerPlay).toBe(10) // 20 / 2
+    expect(res.expectedPayoutPerPlay).toBe(0) // No winnings
+    expect(res.expectedProfitPerPlay).toBe(-10) // Full loss
     expect(res.returnToPlayer).toBe(0) // 0% RTP
     expect(res.houseEdge).toBe(1) // 100% house edge
     expect(res.expectedLossPerEuro).toBe(1) // Lose full euro
@@ -161,23 +161,24 @@ describe('batchStatistics', () => {
     expect(res.hitRate).toBe(0) // 0% hit rate
     expect(res.profitRate).toBe(0) // 0% profit rate
     expect(res.averagePayoutWhenHit).toBe(0) // No wins, so no average payout
-    expect(res.averageNetWhenHit).toBe(-10) // 0 payout - 10 stake = -10 loss per "hit"
+    expect(res.averageNetWhenHit).toBe(-10) // 0 payout - 10 stake
 
     // Why Win Rate ≠ Profit
     expect(res.neededAveragePayoutToBreakEven).toBe(10) // Need €10 to break even
     expect(res.payoutShortfall).toBe(10) // Full shortfall (10 - 0)
-    // New break-even diagnostics - all-losing scenario
-    expect(res.payoutMultiplierNeeded).toBe(Infinity) // 10/0 = Infinity (no payout to multiply)
-    expect(res.breakEvenHitRateAtCurrentPrize).toBe(Infinity) // 10/0 = Infinity (no prize to calculate hit rate)
-    expect(res.breakEvenAvgPrizeAtCurrentHitRate).toBe(Infinity) // 10/0 = Infinity (0% hit rate)
+    // New break-even diagnostics - all-losing scenario (now nullable)
+    expect(res.payoutMultiplierNeeded).toBe(null) // Infinity sanitized to null
+    expect(res.breakEvenHitRateAtCurrentPrize).toBe(null) // Infinity sanitized to null
+    expect(res.breakEvenAvgPrizeAtCurrentHitRate).toBe(null) // Infinity sanitized to null
     expect(res.netIfEveryPlayHit).toBe(-10) // Even if every play hit with €0, still lose €10 stake
+    expect(res.expectedPlaysPerHit).toBe(null) // Infinity sanitized to null (0% hit rate)
 
     // Legacy metrics
     expect(res.averageWinningsPerSimulation).toBe(0)
     expect(res.expectedNetReturn).toBe(-10)
     expect(res.returnRatePerEuro).toBe(0)
     expect(res.averagePrizePerWin).toBe(0) // No wins, so no average prize
-    expect(res.worstCaseScenario).toBe(-10) // 0 - 10 = -10 (loss even at 100% win rate)
+    // removed: worstCaseScenario
   })
 
   it('calculateBatchStatistics handles edge case: zero cost', () => {
@@ -193,13 +194,13 @@ describe('batchStatistics', () => {
     const totalCost = 0
     const res = calculateBatchStatistics(individual, totalCost)
 
-    // Core Economics with zero cost
-    expect(res.stakePerSimulation).toBe(0)
-    expect(res.expectedPayout).toBe(10)
-    expect(res.expectedProfit).toBe(10)
+    // Core Economics (per play) with zero cost
+    expect(res.stakePerPlay).toBe(0)
+    expect(res.expectedPayoutPerPlay).toBe(10)
+    expect(res.expectedProfitPerPlay).toBe(10)
     expect(res.returnToPlayer).toBe(0) // Division by zero protection
-    expect(res.houseEdge).toBe(1) // 1 - 0
-    expect(res.expectedLossPerEuro).toBe(1)
+    expect(res.houseEdge).toBe(0) // 0 when stake is 0
+    expect(res.expectedLossPerEuro).toBe(0) // 0 when stake is 0
 
     // Hit Quality
     expect(res.hitRate).toBe(100) // 1 hit out of 1
@@ -214,6 +215,7 @@ describe('batchStatistics', () => {
     expect(res.payoutMultiplierNeeded).toBe(0) // 0/10 = 0 (no multiplier needed)
     expect(res.breakEvenHitRateAtCurrentPrize).toBe(0) // (0/10)*100 = 0% hit rate needed
     expect(res.breakEvenAvgPrizeAtCurrentHitRate).toBe(0) // 0/(100/100) = €0 avg prize needed
+    expect(res.expectedPlaysPerHit).toBe(1) // 100/100 = 1 play per hit
     expect(res.netIfEveryPlayHit).toBe(10)
   })
 
@@ -230,10 +232,10 @@ describe('batchStatistics', () => {
     const totalCost = 20000 // 1000 * €20
     const res = calculateBatchStatistics(individual as any, totalCost)
 
-    // Core Economics - shows the mathematical reality
-    expect(res.stakePerSimulation).toBe(20) // €20 stake per simulation
-    expect(res.expectedPayout).toBe(1.2) // €1.20 expected payout (300 * €4 / 1000)
-    expect(res.expectedProfit).toBe(-18.8) // €-18.80 expected loss per simulation
+    // Core Economics (per play) - shows the mathematical reality
+    expect(res.stakePerPlay).toBe(20) // €20 stake per play
+    expect(res.expectedPayoutPerPlay).toBe(1.2) // €1.20 expected payout
+    expect(res.expectedProfitPerPlay).toBe(-18.8) // €-18.80 expected loss per play
     expect(res.returnToPlayer).toBeCloseTo(0.06, 2) // 6% RTP (1.2/20)
     expect(res.houseEdge).toBeCloseTo(0.94, 2) // 94% house edge
     expect(res.expectedLossPerEuro).toBeCloseTo(0.94, 2) // 94 cents lost per euro invested
@@ -249,14 +251,15 @@ describe('batchStatistics', () => {
     expect(res.payoutShortfall).toBe(18.8) // €18.80 shortfall (20 - 1.2)
     // New break-even diagnostics - realistic lottery scenario
     expect(res.payoutMultiplierNeeded).toBeCloseTo(16.67, 1) // 20/1.2 = 16.67x needed
-    expect(res.breakEvenHitRateAtCurrentPrize).toBe(500) // (20/4)*100 = 500% hit rate needed (impossible)
+    expect(res.breakEvenHitRateAtCurrentPrize).toBe(null) // 500% sanitized to null (impossible)
     expect(res.breakEvenAvgPrizeAtCurrentHitRate).toBeCloseTo(66.67, 1) // 20/(30/100) = €66.67 avg prize needed
     expect(res.netIfEveryPlayHit).toBe(-16) // Even at 100% hit rate, lose €16 per simulation
+    expect(res.expectedPlaysPerHit).toBeCloseTo(3.33, 1) // 100/30 = 3.33 plays per hit
 
     // Legacy metrics for backward compatibility
     expect(res.winDistribution.winPercentage).toBe(30) // 30% win rate sounds good
     expect(res.averagePrizePerWin).toBe(4) // But average prize is only €4
-    expect(res.worstCaseScenario).toBe(-16) // Even winning every time loses €16 per simulation
+    // removed: worstCaseScenario
     expect(res.expectedNetReturn).toBe(-18.8) // Actual expected loss per simulation
     expect(res.returnRatePerEuro).toBe(0.06) // Only 6% return per euro invested
   })

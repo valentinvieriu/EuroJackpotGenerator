@@ -84,19 +84,19 @@
       <div class="mb-6">
         <div class="casino-card rounded-lg p-4">
           <h3 class="mb-3 text-lg font-semibold text-brand-gold-light">
-            Core Economics (per simulation)
+            Core Economics (per play)
           </h3>
           <div class="grid grid-cols-2 gap-4 md:grid-cols-3">
             <div class="text-center">
               <div class="text-xs text-content-muted">Stake (cost)</div>
               <div class="text-lg font-bold text-error">
-                €{{ results.stakePerSimulation.toFixed(2) }}
+                €{{ results.stakePerPlay.toFixed(2) }}
               </div>
             </div>
             <div class="text-center">
               <div class="text-xs text-content-muted">Expected payout</div>
               <div class="text-lg font-bold text-content-secondary">
-                €{{ results.expectedPayout.toFixed(2) }}
+                €{{ results.expectedPayoutPerPlay.toFixed(2) }}
               </div>
             </div>
             <div class="text-center">
@@ -104,11 +104,13 @@
               <div
                 class="text-lg font-bold"
                 :class="
-                  results.expectedProfit >= 0 ? 'text-success' : 'text-error'
+                  results.expectedProfitPerPlay >= 0
+                    ? 'text-success'
+                    : 'text-error'
                 "
               >
-                {{ results.expectedProfit >= 0 ? '+' : '' }}€{{
-                  results.expectedProfit.toFixed(2)
+                {{ results.expectedProfitPerPlay >= 0 ? '+' : '' }}€{{
+                  results.expectedProfitPerPlay.toFixed(2)
                 }}
               </div>
             </div>
@@ -135,7 +137,7 @@
             class="mt-3 border-t border-casino-blue-light/30 pt-2 text-center text-xs text-content-muted"
           >
             On average you lose €{{
-              Math.abs(results.expectedProfit).toFixed(1)
+              Math.abs(results.expectedProfitPerPlay).toFixed(1)
             }}
             each play. RTP ~{{ (results.returnToPlayer * 100).toFixed(0) }}%
             (house edge ~{{ (results.houseEdge * 100).toFixed(0) }}%)
@@ -159,21 +161,33 @@
               </span>
             </div>
             <div class="flex justify-between">
-              <span class="text-content-secondary"
-                >Profit rate (payout ≥ €{{
-                  results.stakePerSimulation.toFixed(0)
-                }}):</span
-              >
+              <span class="text-content-secondary">
+                Profit rate (payout ≥ €{{ results.stakePerPlay.toFixed(0) }}
+                per play):
+              </span>
               <span class="font-medium" :class="profitRateColor">
                 {{ results.profitRate.toFixed(1) }}%
               </span>
             </div>
             <div class="flex justify-between">
               <span class="text-content-secondary"
-                >Avg payout when you hit:</span
+                >Avg payout per winning simulation:</span
               >
               <span class="font-medium text-content-secondary">
                 €{{ results.averagePayoutWhenHit.toFixed(2) }}
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-content-secondary"
+                >Expected plays per hit:</span
+              >
+              <span class="font-medium text-content-secondary">
+                {{
+                  results.expectedPlaysPerHit !== null &&
+                  Number.isFinite(results.expectedPlaysPerHit)
+                    ? `~${results.expectedPlaysPerHit.toFixed(1)}`
+                    : '∞'
+                }}
               </span>
             </div>
             <div
@@ -197,9 +211,9 @@
           >
             Many 'wins' are still net losses. Even when you hit, you typically
             get ~€{{ results.averagePayoutWhenHit.toFixed(0) }} on a €{{
-              results.stakePerSimulation.toFixed(0)
+              results.stakePerPlay.toFixed(0)
             }}
-            ticket (≈€{{ Math.abs(results.averageNetWhenHit).toFixed(0) }} loss)
+            play (≈€{{ Math.abs(results.averageNetWhenHit).toFixed(0) }} net)
           </div>
         </div>
 
@@ -230,7 +244,7 @@
                 >Payout multiplier needed:</span
               >
               <span class="font-medium text-warning">
-                {{ results.payoutMultiplierNeeded.toFixed(1) }}×
+                {{ fmtMultiplier(results.payoutMultiplierNeeded) }}
               </span>
             </div>
             <div class="flex justify-between">
@@ -239,9 +253,7 @@
               >
               <span class="font-medium text-warning">
                 {{
-                  results.breakEvenHitRateAtCurrentPrize > 100
-                    ? 'Impossible'
-                    : results.breakEvenHitRateAtCurrentPrize.toFixed(1) + '%'
+                  fmtPct1OrImpossible(results.breakEvenHitRateAtCurrentPrize)
                 }}
               </span>
             </div>
@@ -250,7 +262,7 @@
                 >Break-even avg prize needed:</span
               >
               <span class="font-medium text-warning">
-                €{{ results.breakEvenAvgPrizeAtCurrentHitRate.toFixed(0) }}
+                {{ fmtMoney0(results.breakEvenAvgPrizeAtCurrentHitRate) }}
               </span>
             </div>
             <div
@@ -274,12 +286,27 @@
             class="mt-3 border-t border-casino-blue-light/30 pt-2 text-xs text-content-muted"
           >
             Break-even isn't about hitting often; it's about average payout.
-            With avg payout of ~€{{ results.expectedPayout.toFixed(1) }}, you'd
-            need ~{{
-              (
-                results.neededAveragePayoutToBreakEven / results.expectedPayout
-              ).toFixed(1)
-            }}× higher payouts to break even.
+            <template
+              v-if="results.expectedPayoutPerPlay >= results.stakePerPlay"
+            >
+              At your current average payout (~€{{
+                results.expectedPayoutPerPlay.toFixed(1)
+              }}) you are at or above break-even per play.
+            </template>
+            <template v-else>
+              With avg payout of ~€{{
+                results.expectedPayoutPerPlay.toFixed(1)
+              }}, you'd need
+              {{
+                fmtMultiplier(
+                  results.expectedPayoutPerPlay > 0
+                    ? results.neededAveragePayoutToBreakEven /
+                        results.expectedPayoutPerPlay
+                    : Infinity
+                )
+              }}
+              higher payouts to break even.
+            </template>
           </div>
         </div>
       </div>
@@ -400,7 +427,9 @@
                     )
                   "
                 >
-                  {{ results.winDistribution.winsByClass[classNum] || 0 }}
+                  {{
+                    results.winDistribution.winsByClass[String(classNum)] || 0
+                  }}
                 </span>
                 <div
                   class="h-2 w-16 overflow-hidden rounded-full bg-surface-primary"
@@ -423,11 +452,17 @@
           <div class="space-y-3">
             <div class="casino-card rounded-lg border border-success/30 p-3">
               <div class="text-sm font-medium text-success-light">
-                Best Performing Class
+                Most common winning class
               </div>
-              <div class="text-xs text-success-light">
+              <div
+                v-if="bestPerformingClass"
+                class="text-xs text-success-light"
+              >
                 Class {{ bestPerformingClass.classNum }} with
                 {{ bestPerformingClass.count }} wins
+              </div>
+              <div v-else class="text-xs text-content-muted">
+                No wins recorded
               </div>
             </div>
             <div class="casino-card rounded-lg border border-warning/30 p-3">
@@ -438,8 +473,8 @@
                 Lottery:
                 {{ formatReturnRate(results.returnRatePerEuro) }} return per
                 euro<br />
-                Casino games: ~95-99% return per euro<br />
-                Savings account: ~100%+ return per euro
+                Casino games (typical RTP): ~95–99%<br />
+                Principal-protected savings: ~100% over short horizons
               </div>
             </div>
             <div class="casino-card rounded-lg p-3">
@@ -460,12 +495,14 @@
     >
       <button
         v-if="results.individualResults"
+        type="button"
         class="rounded px-2 py-1 text-sm text-brand-gold underline transition duration-150 hover:text-brand-gold-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
         @click="exportResults"
       >
         Export Detailed Results
       </button>
       <button
+        type="button"
         class="btn-casino-gold focus-gold rounded-md px-4 py-2 font-cta"
         @click="$emit('reset')"
       >
@@ -522,6 +559,16 @@ const formatReturnRate = (rate: number): string => {
   return formatReturnRatePercentage(rate)
 }
 
+// Safe formatting functions to handle Infinity/NaN/null values
+const fmtMoney0 = (n: number | null): string =>
+  n !== null && Number.isFinite(n) ? `€${n.toFixed(0)}` : '—'
+const fmtPct1OrImpossible = (n: number | null): string =>
+  n !== null && Number.isFinite(n) && n <= 100
+    ? `${n.toFixed(1)}%`
+    : 'Impossible'
+const fmtMultiplier = (n: number | null): string =>
+  n !== null && Number.isFinite(n) ? `${n.toFixed(1)}×` : '—'
+
 const bestPerformingClass = computed(() => {
   let bestClass = 12
   let maxCount = 0
@@ -533,7 +580,7 @@ const bestPerformingClass = computed(() => {
       }
     }
   )
-  return { classNum: bestClass, count: maxCount }
+  return maxCount > 0 ? { classNum: bestClass, count: maxCount } : null
 })
 
 /**
@@ -545,22 +592,22 @@ const formatProbabilityAsOdds = (probability: number): string => {
   return `1 in ${odds.toLocaleString()}`
 }
 
-const getClassDescription = (classNum: number): string => {
-  const descriptions: Record<number, string> = {
-    1: '(5+2 Jackpot)',
-    2: '(5+1)',
-    3: '(5+0)',
-    4: '(4+2)',
-    5: '(4+1)',
-    6: '(3+2)',
-    7: '(4+0)',
-    8: '(2+2)',
-    9: '(3+1)',
-    10: '(3+0)',
-    11: '(1+2)',
-    12: '(2+1)',
-  }
+const descriptions: Record<number, string> = {
+  1: '(5+2 Jackpot)',
+  2: '(5+1)',
+  3: '(5+0)',
+  4: '(4+2)',
+  5: '(4+1)',
+  6: '(3+2)',
+  7: '(4+0)',
+  8: '(2+2)',
+  9: '(3+1)',
+  10: '(3+0)',
+  11: '(1+2)',
+  12: '(2+1)',
+}
 
+const getClassDescription = (classNum: number): string => {
   const description = descriptions[classNum] || ''
   const probability = getWinClassProbability(classNum)
   const odds = formatProbabilityAsOdds(probability)
@@ -569,7 +616,7 @@ const getClassDescription = (classNum: number): string => {
 }
 
 const getClassBarColor = (classNum: number): string => {
-  const count = props.results.winDistribution.winsByClass[classNum] || 0
+  const count = props.results.winDistribution.winsByClass[String(classNum)] || 0
   if (count === 0) return 'bg-surface-tertiary'
   switch (classNum) {
     case 1:
@@ -589,21 +636,22 @@ const getClassBarColor = (classNum: number): string => {
   }
 }
 
-const getClassPercentage = (classNum: number): number => {
-  const count = props.results.winDistribution.winsByClass[classNum] || 0
-  const maxCount = Math.max(
-    ...Object.values(props.results.winDistribution.winsByClass).filter(
-      (v) => typeof v === 'number'
-    ),
-    1
+const classMaxCount = computed(() => {
+  const vals = Object.values(props.results.winDistribution.winsByClass).filter(
+    (v): v is number => typeof v === 'number'
   )
-  return (count / maxCount) * 100
+  return Math.max(...vals, 1)
+})
+
+const getClassPercentage = (classNum: number): number => {
+  const count = props.results.winDistribution.winsByClass[String(classNum)] || 0
+  return (count / classMaxCount.value) * 100
 }
 
 const getEducationalInsight = (): string => {
   const winRate = props.results.winDistribution.winPercentage
   const avgPrize = props.results.averagePrizePerWin
-  const costPerSim = props.results.totalCost / props.results.totalSimulations
+  const costPerSim = props.results.stakePerPlay
 
   if (avgPrize < costPerSim) {
     return `Despite ${winRate.toFixed(1)}% win rate, losses occur because average prize (€${avgPrize.toFixed(2)}) < ticket cost (€${costPerSim.toFixed(2)}). This demonstrates how lottery economics work by design.`

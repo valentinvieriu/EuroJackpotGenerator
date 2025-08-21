@@ -2,6 +2,8 @@
   <div>
     <div
       v-if="error"
+      role="alert"
+      aria-live="assertive"
       class="mb-4 rounded-md border border-error bg-error-dark/50 p-3 text-center text-error"
     >
       {{ error }}
@@ -62,8 +64,8 @@ const props = defineProps({
 
 // Use centralized error handling
 const { addError: addTransientError } = useTransientErrors()
-const error = computed(() => simStore.state.error || '')
 const simStore = useSimulationStore()
+const error = computed(() => simStore.state.error || '')
 const viewState = computed(() => {
   const s = simStore.state
   const p = s.progress
