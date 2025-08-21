@@ -20,7 +20,19 @@ const finiteOrNull = (n: number): number | null =>
   Number.isFinite(n) ? n : null
 
 const finitePercentageOrNull = (n: number): number | null =>
-  Number.isFinite(n) && n <= 100 ? n : null
+  Number.isFinite(n) && n >= 0 && n <= 100 ? n : null
+
+/**
+ * Clamps tiny values to zero to prevent "-0.00" display noise
+ */
+export const clampTiny = (n: number, eps = 1e-10): number =>
+  Math.abs(n) < eps ? 0 : n
+
+/**
+ * Type-safe win class key for better compiler checking
+ */
+type WinClassKey = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12}`
+type WinClassMap = Record<WinClassKey, number>
 
 export function calculateBatchStatistics(
   individualResults: IndividualSimulationResult[],
@@ -151,20 +163,32 @@ export function calculateBatchStatistics(
 export function calculateWinDistribution(
   individualResults: IndividualSimulationResult[]
 ): WinDistribution {
-  const winsByClass: Record<string, number> = {}
-  for (let i = 1; i <= 12; i++) winsByClass[String(i)] = 0
+  const winsByClass: WinClassMap = {
+    '1': 0,
+    '2': 0,
+    '3': 0,
+    '4': 0,
+    '5': 0,
+    '6': 0,
+    '7': 0,
+    '8': 0,
+    '9': 0,
+    '10': 0,
+    '11': 0,
+    '12': 0,
+  }
 
   let totalWins = 0
 
   for (const result of individualResults) {
-    let hasWin = false
     for (const [classStr, count] of Object.entries(result.winsByClass)) {
       if (count > 0) {
-        winsByClass[classStr] = (winsByClass[classStr] ?? 0) + count
-        hasWin = true
+        const key = classStr as WinClassKey
+        winsByClass[key] = (winsByClass[key] ?? 0) + count
       }
     }
-    if (hasWin) totalWins++
+    // Count a "hit" only if the simulation actually paid > €0
+    if (result.totalWinnings > 0) totalWins++
   }
 
   const totalLosses = individualResults.length - totalWins

@@ -117,27 +117,29 @@
             <div class="text-center">
               <div class="text-xs text-content-muted">RTP</div>
               <div class="text-lg font-bold text-warning">
-                {{ (results.returnToPlayer * 100).toFixed(1) }}%
+                {{ clampTiny(results.returnToPlayer * 100).toFixed(1) }}%
               </div>
             </div>
             <div class="text-center">
               <div class="text-xs text-content-muted">House edge</div>
               <div class="text-lg font-bold text-error-light">
-                {{ (results.houseEdge * 100).toFixed(1) }}%
+                {{ clampTiny(results.houseEdge * 100).toFixed(1) }}%
               </div>
             </div>
             <div class="text-center">
               <div class="text-xs text-content-muted">Loss per €1</div>
               <div class="text-lg font-bold text-error-light">
-                €{{ results.expectedLossPerEuro.toFixed(2) }}
+                €{{ clampTiny(results.expectedLossPerEuro).toFixed(2) }}
               </div>
             </div>
           </div>
           <div
             class="mt-3 border-t border-casino-blue-light/30 pt-2 text-center text-xs text-content-muted"
           >
-            On average you lose €{{
-              Math.abs(results.expectedProfitPerPlay).toFixed(1)
+            On average you
+            {{ results.expectedProfitPerPlay >= 0 ? 'gain' : 'lose' }}
+            €{{
+              Math.abs(clampTiny(results.expectedProfitPerPlay)).toFixed(1)
             }}
             each play. RTP ~{{ (results.returnToPlayer * 100).toFixed(0) }}%
             (house edge ~{{ (results.houseEdge * 100).toFixed(0) }}%)
@@ -522,6 +524,7 @@ import type { BatchSimulationResult } from '~/schemas'
 import { getWinClassProbability } from '~/utils/winProbabilities'
 import { getResultsWinClassColor } from '~/utils/winClassColors'
 import { formatReturnRatePercentage } from '~/utils/simulationMath'
+import { clampTiny } from '~/utils/batchStatistics'
 
 const props = defineProps({
   results: { type: Object as PropType<BatchSimulationResult>, required: true },

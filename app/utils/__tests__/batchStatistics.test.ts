@@ -119,7 +119,7 @@ describe('batchStatistics', () => {
     expect(res.breakEvenHitRateAtCurrentPrize).toBe(60) // (12/20)*100 = 60% hit rate needed
     expect(res.breakEvenAvgPrizeAtCurrentHitRate).toBe(24) // 12/(50/100) = €24 avg prize needed
     expect(res.expectedPlaysPerHit).toBe(2) // 100/50 = 2 plays per hit
-    expect(res.netIfEveryPlayHit).toBe(8) // 20 - 12 (loss even at 100% hit rate)
+    expect(res.netIfEveryPlayHit).toBe(8) // 20 - 12 (profit if every play hits)
 
     // Legacy/derived metrics
     expect(res.averageWinningsPerSimulation).toBe(10) // 20 / 2
