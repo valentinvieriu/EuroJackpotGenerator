@@ -93,3 +93,56 @@ export function calculateProfitabilityMetrics(
 export function getCostPerSimulation(tickets: Ticket[]): number {
   return calculateTotalSimulationCost(tickets)
 }
+
+/**
+ * Format return rate as a percentage for display
+ * @param returnRate The return rate per euro (e.g., 0.179)
+ * @returns Formatted percentage string (e.g., "17.9%")
+ */
+export function formatReturnRatePercentage(returnRate: number): string {
+  return `${(returnRate * 100).toFixed(1)}%`
+}
+
+/**
+ * Determine if expected return indicates a profitable scenario
+ * @param expectedNetReturn The expected net return per simulation
+ * @returns True if profitable, false if losing scenario
+ */
+export function isProfitableExpectation(expectedNetReturn: number): boolean {
+  return expectedNetReturn > 0
+}
+
+/**
+ * Format currency amounts with proper Euro symbol and sign
+ * @param amount The amount in euros
+ * @returns Formatted string (e.g., "€3.57", "-€16.43")
+ */
+export function formatEuroAmount(amount: number): string {
+  const sign = amount >= 0 ? '' : '-'
+  const absAmount = Math.abs(amount)
+  return `${sign}€${absAmount.toFixed(2)}`
+}
+
+/**
+ * Calculate how much better/worse the win rate is compared to break-even
+ * @param actualWinRate Current win rate percentage
+ * @param breakEvenWinRate Required win rate to break even
+ * @returns Object with comparison metrics
+ */
+export function compareWinRates(
+  actualWinRate: number,
+  breakEvenWinRate: number
+): {
+  isAboveBreakEven: boolean
+  differencePercentage: number
+  multiplier: number
+} {
+  const difference = actualWinRate - breakEvenWinRate
+  const multiplier = breakEvenWinRate > 0 ? actualWinRate / breakEvenWinRate : 0
+
+  return {
+    isAboveBreakEven: difference > 0,
+    differencePercentage: Number(difference.toFixed(1)),
+    multiplier: Number(multiplier.toFixed(2)),
+  }
+}

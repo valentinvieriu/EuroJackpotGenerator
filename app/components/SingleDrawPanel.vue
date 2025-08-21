@@ -136,7 +136,6 @@ const simulationResult = computed(() => {
     euroNumbers: [...winningNumbers.euroNumbers] as number[],
   }
 })
-const _latestWinningData = computed(() => simStore.state.singleDraw.oddsData)
 const totalWinnings = computed(
   () => simStore.state.singleDraw.results?.totalWinnings || 0
 )

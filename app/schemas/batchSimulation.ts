@@ -68,7 +68,32 @@ export const batchSimulationResultSchema = z.object({
   totalWinnings: z.number().nonnegative(),
   netProfit: z.number(),
   roiPercentage: z.number(),
-  expectedValue: z.number(),
+  // Core Economics
+  stakePerSimulation: z.number(),
+  expectedPayout: z.number(), // E[payout] per simulation
+  expectedProfit: z.number(), // EV = E[payout] - stake
+  returnToPlayer: z.number(), // RTP = E[payout] / stake
+  houseEdge: z.number(), // 1 - RTP
+  expectedLossPerEuro: z.number(), // ~0.81
+  // Hit Quality
+  hitRate: z.number().min(PERCENTAGE_MIN).max(PERCENTAGE_MAX), // Any prize > €0
+  profitRate: z.number().min(PERCENTAGE_MIN).max(PERCENTAGE_MAX), // Payout >= stake
+  averagePayoutWhenHit: z.number(),
+  averageNetWhenHit: z.number(), // avg payout - stake when hit
+  // Why Win Rate ≠ Profit - Break-even diagnostics
+  neededAveragePayoutToBreakEven: z.number(),
+  payoutShortfall: z.number(),
+  payoutMultiplierNeeded: z.number(), // How much payout needs to increase
+  breakEvenHitRateAtCurrentPrize: z.number(), // % hit rate needed at current avg prize
+  breakEvenAvgPrizeAtCurrentHitRate: z.number(), // Avg prize needed at current hit rate
+  netIfEveryPlayHit: z.number(), // Loss even if 100% hit rate
+  // Legacy fields for backward compatibility
+  averageWinningsPerSimulation: z.number(),
+  expectedNetReturn: z.number(),
+  returnRatePerEuro: z.number(),
+  averagePrizePerWin: z.number(),
+  worstCaseScenario: z.number(),
+  averageLossPerLosingSimulation: z.number(),
   winDistribution: winDistributionSchema,
   statistics: simulationStatisticsSchema,
   individualResults: z.array(individualSimulationResultSchema).optional(),

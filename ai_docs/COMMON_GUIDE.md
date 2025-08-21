@@ -1,204 +1,97 @@
-# EuroJackpot Simulator - LLM Development Guide
+# EuroJackpot Simulator — Compact Dev Guide
 
-## Project Overview
+**What**: Educational lottery simulation demonstrating EuroJackpot system ticket mathematics through Monte Carlo analysis. Helps users understand costs, probabilities, ROI, and statistical distributions by running realistic simulations with official win-class structures. Built to teach probability theory and debunk lottery misconceptions through interactive data visualization.
 
-**EuroJackpot Simulator** is a production educational lottery simulation application built with **Nuxt 4 + Vue 3**, deployed on **Cloudflare Workers**. This sophisticated codebase simulates EuroJackpot system tickets with Monte Carlo analysis for educational purposes.
+**Stack**
 
-**Key Capabilities**: Complex refactoring, performance optimization, advanced TypeScript patterns, architectural decisions, debugging edge cases, and implementing mathematical algorithms.
+- Frontend: Nuxt 4, Vue 3 (Composition API), TypeScript, Pinia
+- Backend: Cloudflare Workers (Nitro), NDJSON streaming
+- Quality: Zod, Vitest, ESLint, Prettier
+- UX: Web Audio API, Canvas, Web Workers
 
-## Technology Stack
+---
 
-**Frontend**: Nuxt 4, Vue 3 Composition API, TypeScript, Pinia state management  
-**Backend**: Cloudflare Workers with Nitro, NDJSON streaming  
-**Quality**: Zod validation, Vitest testing, ESLint/Prettier
-**UX Enhancement**: Web Audio API, Canvas animations, Web Workers
+## Core Principles (short)
 
-## Core Architectural Principles
+1. **Constants**: All constants in `app/utils/constants.ts` — never hardcode.
+2. **Server security**: Ticket generation only in `/server/api/generate`.
+3. **3‑Layer state**: URL ↔ Pinia ↔ SSR‑safe store (see `ARCHITECTURE.md`).
+4. **Thin components**: UI only; business logic in Pinia stores.
+5. **Test logic**: Test stores/utilities/endpoints, not presentation.
 
-1. **Constants Management**: All values in `app/utils/constants.ts` - never hardcode
-1. **Server-Side Security**: Ticket generation in `/server/api/generate` only
-1. **3-Layer State**: URL persistence → Pinia stores → SSR-safe state (see [ARCHITECTURE.md](./ARCHITECTURE.md))
-1. **Thin Components**: UI only, business logic in Pinia stores
-1. **Logic Testing**: Test business logic, not UI rendering
+---
 
-_For detailed architectural information, see [ARCHITECTURE.md](./ARCHITECTURE.md)_
-
-## Quick Start
-
-### Development Setup
+## Quick start
 
 ```bash
 npm install
-npm run dev  # Starts on localhost:3000
+npm run dev # localhost:3000
+npm test # tests
+npm run lint # lint
+npm run format # format
 ```
 
-### Key Commands
+---
 
-```bash
-npm test         # Run tests
-npm run lint     # Check code quality
-npm run format   # Format code
-```
+## Development pattern (condensed)
 
-### Understanding the Codebase
+1. Add Zod schema in `app/schemas/` (URL config included).
+2. Add values to `app/utils/constants.ts`.
+3. Implement business logic in Pinia stores + tests (edge cases, cleanup).
+4. Add validated server endpoint if needed.
+5. Create thin UI; use design tokens and accessibility rules.
+6. Offload heavy UI (canvas, audio) to Web Workers; keep core deterministic.
+7. Run tests, lint, format before commit.
 
-1. **Dual-Mode Architecture**: Simple mode for quick start, custom mode for advanced configuration with progressive disclosure
-1. **State Management**: 3-layer architecture (URL → Pinia → SSR-safe) with mode state and favorite numbers persistence
-1. **Business Logic**: Located in `stores/` and `app/utils/` including custom number generation algorithms and popularity scoring
-1. **API Endpoints**: Server logic in `server/api/` including frequency analysis endpoints
-1. **Component Patterns**: Hero section with stepper, overlay modals, accordion UI, visual selectors, deletion handlers with state cleanup, mode transitions (see [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) for styling standards)
-1. **Animation Systems**: Canvas-based background animations (`BouncingBallsCanvas.vue`) with Web Worker optimization and audio feedback (`audioUtils.ts`)
-1. **Testing**: Focus on business logic, not UI rendering or animation performance
+---
 
-_For detailed patterns and examples, see [ARCHITECTURE.md](./ARCHITECTURE.md)_
+## Where things live (short map)
 
-## Development Standards
+- Business logic: `stores/`, `app/utils/` (generation, scoring, popularity)
+- Schemas: `app/schemas/` (Zod)
+- Server endpoints: `server/api/`
+- Constants: `app/utils/constants.ts`
+- Animations/audio: `components/Canvas.vue`, `audioUtils.ts` (Web Worker offload)
 
-### Code Quality
+---
 
-- **Linting**: ESLint enforced via pre-commit hooks
-- **Formatting**: Prettier with consistent styling
-- **Workflow**: Always run `npm run format` and `npm run lint` before committing
+## Testing & Quality
 
-### Testing Philosophy
+- **Test**: stores, utilities, schemas, endpoints, state cleanup patterns.
+- **Don't test**: visual animations, audio synthesis, trivial event handlers.
+- **Precommit**: run lint/format.
 
-- **Test**: Business logic in stores, utilities, server endpoints, Zod schemas, favorite number algorithms, deletion state handling
-- **Don't Test**: UI rendering, CSS, simple event handlers, accordion animations, canvas animations, audio synthesis
-- **Requirement**: New features must include business logic tests including edge cases for state cleanup
+---
 
-### Styling Standards
+## Styling & Accessibility
 
-- **Token-First Approach**: Use design system tokens exclusively, never hardcode colours, spacing, or typography
-- **Semantic Naming**: Apply role-based styling (surface, content, interactive) rather than appearance-based classes
-- **Accessibility Compliance**: Ensure contrast ratios, focus management, and reduced-motion preferences
-- **SSR-Safe Styling**: Avoid runtime-computed styles that cause hydration mismatches
+- Token‑first design system (no hardcoded tokens).
+- Semantic role classes and adequate contrast.
+- Respect `prefers-reduced-motion` and SSR safety.
 
-_For detailed testing strategies and examples, see testing sections in [ARCHITECTURE.md](./ARCHITECTURE.md)_
+---
 
-## Development Workflows
+## Debugging checklist
 
-### Feature Development Pattern
+1. Identify layer: URL vs Pinia vs component.
+2. Reproduce with a failing test.
+3. Isolate & fix; run watch/tests.
+4. Verify regression‑free.
 
-1. **Schema First**: Define Zod schemas in `app/schemas/` (including URL config for new state and mode definitions)
-1. **Constants**: Add values to `app/utils/constants.ts` (never hardcode, includes simple mode configuration)
-1. **Business Logic**: Implement in Pinia stores with tests (including state cleanup patterns and mode management)
-1. **API Layer**: Create server endpoints with validation
-1. **UI Components**: Thin presentation layer only (hero section with stepper, overlay modals, accordion patterns, deletion handlers, mode transitions)
-1. **Design System Integration**: Apply design system tokens, accessibility standards, and semantic styling patterns to all UI components
-1. **Animation & Audio**: Add canvas animations and audio feedback without blocking core functionality (Web Workers for performance)
-1. **Quality Check**: Run tests, lint, and format before completion
+---
 
-### Debugging Approach
+## Preferred CLI tools — one‑line cheats
 
-1. **Identify Layer**: URL state vs Pinia stores vs UI state
-1. **Test-Driven**: Write failing test to reproduce issue
-1. **Isolate & Fix**: Use watch mode for rapid feedback
-1. **Verify**: Ensure fix doesn't introduce regressions
+- **rg**: code search & preview. Ex: `rg -n "TODO|FIXME" -S -C2 -g '*.{ts,vue}'`.
+- **fd**: fast file find for piping: `fd -t f -e ts src/components`.
+- **bat**: readable file preview: `bat --style=plain --paging=never package.json`.
+- **jq**: deterministic JSON edits (use temp file or `sponge`).
+- **yq**: YAML edits for CI/CI workflows (v4 syntax).
+- **eza**: tree views, quick repo snapshots: `eza -T --level=2 src`.
+- **delta**: human‑friendly diffs: `git -c core.pager=delta diff`.
 
-_For detailed workflow examples and best practices, see development sections in [ARCHITECTURE.md](./ARCHITECTURE.md)_
+---
 
-## Preferred CLI Tools
+## Quick governance note
 
-Use these tools by default. If unsure about a flag, run `<tool> --help` first.
-
-### ripgrep (`rg`) — primary code search
-
-#### Basic Search
-
-When: find patterns, symbols, TODOs across the repo.
-Examples:
-
-- `rg -n "useState\\(" --type tsx`
-- `rg -n "TODO|FIXME" -S -C2`
-  Notes: Respects `.gitignore`. Prefer `--type`/`-g` over broad `-uu`.
-
-#### Search & Replace
-
-Always preview before writing. `rg` **does not** edit files; it prints results with the replacement applied. After preview, use `/apply-replace` (below).
-
-**General tips**
-
-- Prefer file globs: `-g '*.{ts,vue}'` and skip heavy dirs: `-g '!node_modules/**' -g '!.git/**'`
-- Show file & line numbers: `-nH`
-- Print a bit of context while previewing: `-C2` (2 lines)
-
-**Common previews**
-
-```bash
-# 1) console.log(...) → logger.info(...)
-rg -nH -g '*.{ts,vue}' 'console\.log\(([^)]*)\)' --replace 'logger.info($1)'
-
-# 2) Make named imports type-only (simple case)
-# (Beware: only safe if the specifiers are types!)
-rg -nH -g '*.ts' 'import\s+\{([^}]+)\}\s+from' --replace 'import type {$1} from'
-
-# 3) defineProps<{T}> → defineProps<T>
-rg -nH -g '*.{ts,vue}' 'defineProps<\{([^>]+)\}>' --replace 'defineProps<$1>'
-
-# 4) defineEmits<{...}> → defineEmits<...>
-rg -nH -g '*.{ts,vue}' 'defineEmits<\{([^>]+)\}>' --replace 'defineEmits<$1>'
-
-# 5) '@/path' → 'src/path'
-rg -nH -g '*.{ts,vue}' '@/([^\s"'\''>]+)' --replace 'src/$1'
-
-# 6) Strip .vue from import specifiers
-rg -nH -g '*.{ts,vue}' 'from\s+([\"\'])([^"\']+)\.vue\1' --replace 'from $1$2$1'
-
-# 7) Vue event shorthand @evt= → v-on:evt=
-rg -nH -g '*.vue' '@(?P<evt>[A-Za-z0-9_-]+)=' --replace 'v-on:$evt='
-
-# 8) Find TODOs only in ts/vue
-rg -nH -g '*.{ts,vue}' -g '!node_modules/**' 'TODO'
-
-# 9) Find typed refs with context
-rg -nH -C2 -g '*.{ts,vue}' 'ref<[^>]+>\('
-```
-
-### fd — fast file finding
-
-When: list matching files/dirs, pipe into other steps.
-Examples:
-
-- `fd -t f -e ts src/components`
-- `fd -t d "migrations?"`
-
-### bat — readable previews (no ANSI noise)
-
-When: show code snippets for decisions/reviews.
-Examples:
-
-- `bat --style=plain --paging=never -n package.json`
-- `bat --style=plain --line-range 1:80 src/App.tsx`
-
-### jq — JSON transforms (safe write pattern)
-
-When: adjust configs deterministically.
-Examples:
-
-- `jq '.scripts.test="vitest"' package.json | sponge package.json`
-- `jq -S . .eslintrc.json > tmp && mv tmp .eslintrc.json`
-  Notes: Prefer temp-file or `sponge` to avoid truncation.
-
-### yq — YAML transforms
-
-When: CI/CD, K8s, workflow edits.
-Examples (v4 syntax):
-
-- `yq '.jobs.build.steps += [{"run":"pnpm test"}]' -i .github/workflows/ci.yml`
-- `yq 'del(.services.db.environment.PASSWORD)' -i docker-compose.yml`
-
-### eza — clear tree views
-
-When: quick structure/context.
-Examples:
-
-- `eza -T --level=2 src`
-- `eza -lah --git`
-
-### delta — readable diffs
-
-When: review/critique changes.
-Examples:
-
-- `git -c core.pager=delta diff`
-- `git show HEAD~1 | delta`
+This doc provides standards for **how** to work with the codebase, not **permission** to change it. Add an explicit review step if you want changes applied without human sign‑off.

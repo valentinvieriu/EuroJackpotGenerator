@@ -23,14 +23,78 @@ export function calculateBatchStatistics(
   const totalWinnings = winnings.reduce((sum, w) => sum + w, 0)
   const netProfit = totalWinnings - totalCost
   const roiPercentage = totalCost > 0 ? (netProfit / totalCost) * 100 : 0
-  const expectedValue =
+
+  // Enhanced metrics for better user understanding
+  const averageWinningsPerSimulation =
     totalSimulations > 0 ? totalWinnings / totalSimulations : 0
+  const expectedNetReturn =
+    totalSimulations > 0 ? netProfit / totalSimulations : 0
+  const returnRatePerEuro = totalCost > 0 ? totalWinnings / totalCost : 0
 
   const winDistribution = calculateWinDistribution(individualResults)
+  const costPerSimulation =
+    totalSimulations > 0 ? totalCost / totalSimulations : 0
+
+  // 1) Core Economics (per simulation)
+  const stakePerSimulation = costPerSimulation
+  const expectedPayout = averageWinningsPerSimulation // E[payout]
+  const expectedProfit = expectedNetReturn // EV = E[payout] - stake
+  const returnToPlayer =
+    stakePerSimulation > 0 ? expectedPayout / stakePerSimulation : 0 // RTP
+  const houseEdge = 1 - returnToPlayer // 1 - RTP
+  const expectedLossPerEuro = houseEdge // Same as house edge
+
+  // 2) Hit Quality (separate "any prize" from "profitable")
+  const hitRate = winDistribution.winPercentage // Any prize > €0
+  const profitableSimulations = individualResults.filter(
+    (r) => r.netProfit >= 0
+  ).length
+  const profitRate =
+    totalSimulations > 0 ? (profitableSimulations / totalSimulations) * 100 : 0
+  const averagePayoutWhenHit =
+    winDistribution.totalWins > 0
+      ? totalWinnings / winDistribution.totalWins
+      : 0
+  const averageNetWhenHit = averagePayoutWhenHit - stakePerSimulation
+
+  // 3) Why Win Rate ≠ Profit - Break-even diagnostics
+  const neededAveragePayoutToBreakEven = stakePerSimulation // Need €20 average payout
+  const payoutShortfall = neededAveragePayoutToBreakEven - expectedPayout
+
+  // Real break-even diagnostics (replace the tautological "100% RTP")
+  const payoutMultiplierNeeded =
+    expectedPayout > 0 ? stakePerSimulation / expectedPayout : Infinity
+
+  const hitRateDecimal = hitRate / 100 // Convert percentage to decimal
+  const breakEvenHitRateAtCurrentPrize =
+    averagePayoutWhenHit > 0
+      ? (stakePerSimulation / averagePayoutWhenHit) * 100 // Return as percentage
+      : Infinity
+
+  const breakEvenAvgPrizeAtCurrentHitRate =
+    hitRateDecimal > 0 ? stakePerSimulation / hitRateDecimal : Infinity
+
+  const netIfEveryPlayHit = averagePayoutWhenHit - stakePerSimulation // Loss even at 100% hit rate
+
+  // Legacy calculations for backward compatibility
+  const averagePrizePerWin = averagePayoutWhenHit
+  const worstCaseScenario = netIfEveryPlayHit
+
+  // Fix: Calculate actual average loss for losing simulations
+  const losingSimulations = individualResults.filter(
+    (r) => r.totalWinnings < costPerSimulation
+  )
+  const averageLossPerLosingSimulation = losingSimulations.length
+    ? losingSimulations.reduce(
+        (sum, r) => sum + (costPerSimulation - r.totalWinnings),
+        0
+      ) / losingSimulations.length
+    : 0
+
   const statistics = calculateSimulationStatistics(
     winnings,
     profits,
-    totalSimulations > 0 ? totalCost / totalSimulations : 0
+    costPerSimulation
   )
 
   return {
@@ -39,7 +103,32 @@ export function calculateBatchStatistics(
     totalWinnings,
     netProfit,
     roiPercentage,
-    expectedValue,
+    // Core Economics
+    stakePerSimulation,
+    expectedPayout,
+    expectedProfit,
+    returnToPlayer,
+    houseEdge,
+    expectedLossPerEuro,
+    // Hit Quality
+    hitRate,
+    profitRate,
+    averagePayoutWhenHit,
+    averageNetWhenHit,
+    // Why Win Rate ≠ Profit - Break-even diagnostics
+    neededAveragePayoutToBreakEven,
+    payoutShortfall,
+    payoutMultiplierNeeded,
+    breakEvenHitRateAtCurrentPrize,
+    breakEvenAvgPrizeAtCurrentHitRate,
+    netIfEveryPlayHit,
+    // Legacy fields for backward compatibility
+    averageWinningsPerSimulation,
+    expectedNetReturn,
+    returnRatePerEuro,
+    averagePrizePerWin,
+    worstCaseScenario,
+    averageLossPerLosingSimulation,
     winDistribution,
     statistics,
     individualResults,
@@ -110,7 +199,7 @@ export function calculateSimulationStatistics(
   const percentile75 = calculatePercentile(sortedWinnings, 75)
   const percentile95 = calculatePercentile(sortedWinnings, 95)
 
-  const profitableSimulations = profits.filter((p) => p > 0).length
+  const profitableSimulations = profits.filter((p) => p >= 0).length
   const profitablePercentage =
     profits.length > 0 ? (profitableSimulations / profits.length) * 100 : 0
 

@@ -80,65 +80,206 @@
         </div>
       </div>
 
-      <!-- Expected Value Analysis -->
+      <!-- 1) Core Economics (per simulation) -->
+      <div class="mb-6">
+        <div class="casino-card rounded-lg p-4">
+          <h3 class="mb-3 text-lg font-semibold text-brand-gold-light">
+            Core Economics (per simulation)
+          </h3>
+          <div class="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div class="text-center">
+              <div class="text-xs text-content-muted">Stake (cost)</div>
+              <div class="text-lg font-bold text-error">
+                €{{ results.stakePerSimulation.toFixed(2) }}
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-content-muted">Expected payout</div>
+              <div class="text-lg font-bold text-content-secondary">
+                €{{ results.expectedPayout.toFixed(2) }}
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-content-muted">Expected profit (EV)</div>
+              <div
+                class="text-lg font-bold"
+                :class="
+                  results.expectedProfit >= 0 ? 'text-success' : 'text-error'
+                "
+              >
+                {{ results.expectedProfit >= 0 ? '+' : '' }}€{{
+                  results.expectedProfit.toFixed(2)
+                }}
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-content-muted">RTP</div>
+              <div class="text-lg font-bold text-warning">
+                {{ (results.returnToPlayer * 100).toFixed(1) }}%
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-content-muted">House edge</div>
+              <div class="text-lg font-bold text-error-light">
+                {{ (results.houseEdge * 100).toFixed(1) }}%
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-content-muted">Loss per €1</div>
+              <div class="text-lg font-bold text-error-light">
+                €{{ results.expectedLossPerEuro.toFixed(2) }}
+              </div>
+            </div>
+          </div>
+          <div
+            class="mt-3 border-t border-casino-blue-light/30 pt-2 text-center text-xs text-content-muted"
+          >
+            On average you lose €{{
+              Math.abs(results.expectedProfit).toFixed(1)
+            }}
+            each play. RTP ~{{ (results.returnToPlayer * 100).toFixed(0) }}%
+            (house edge ~{{ (results.houseEdge * 100).toFixed(0) }}%)
+          </div>
+        </div>
+      </div>
+
+      <!-- 2) Hit Quality (separate "any prize" from "profitable") -->
       <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div class="casino-card rounded-lg p-4">
           <h3 class="mb-2 text-lg font-semibold text-brand-gold-light">
-            Expected Value Analysis
+            Hit Quality Analysis
           </h3>
           <div class="space-y-2">
             <div class="flex justify-between">
               <span class="text-content-secondary"
-                >Average winnings per simulation:</span
+                >Hit rate (any prize &gt; €0):</span
               >
-              <span class="font-medium text-content-secondary"
-                >€{{ results.expectedValue.toFixed(2) }}</span
-              >
+              <span class="font-medium" :class="hitRateColor">
+                {{ results.hitRate.toFixed(1) }}%
+              </span>
             </div>
             <div class="flex justify-between">
-              <span class="text-content-secondary">Cost per simulation:</span>
-              <span class="font-medium text-error-light"
-                >€{{ costPerSimulation.toFixed(2) }}</span
+              <span class="text-content-secondary"
+                >Profit rate (payout ≥ €{{
+                  results.stakePerSimulation.toFixed(0)
+                }}):</span
               >
+              <span class="font-medium" :class="profitRateColor">
+                {{ results.profitRate.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-content-secondary"
+                >Avg payout when you hit:</span
+              >
+              <span class="font-medium text-content-secondary">
+                €{{ results.averagePayoutWhenHit.toFixed(2) }}
+              </span>
             </div>
             <div
               class="flex justify-between border-t border-casino-blue-light/30 pt-2"
             >
-              <span class="text-content-secondary"
-                >Expected profit per sim:</span
+              <span class="text-content-secondary">Avg net when you hit:</span>
+              <span
+                class="font-medium"
+                :class="
+                  results.averageNetWhenHit >= 0 ? 'text-success' : 'text-error'
+                "
               >
-              <span class="font-medium" :class="expectedProfitColor">
-                {{ expectedProfitPerSim >= 0 ? '+' : '' }}€{{
-                  expectedProfitPerSim.toFixed(2)
+                {{ results.averageNetWhenHit >= 0 ? '+' : '' }}€{{
+                  results.averageNetWhenHit.toFixed(2)
                 }}
               </span>
             </div>
           </div>
+          <div
+            class="mt-3 border-t border-casino-blue-light/30 pt-2 text-xs text-content-muted"
+          >
+            Many 'wins' are still net losses. Even when you hit, you typically
+            get ~€{{ results.averagePayoutWhenHit.toFixed(0) }} on a €{{
+              results.stakePerSimulation.toFixed(0)
+            }}
+            ticket (≈€{{ Math.abs(results.averageNetWhenHit).toFixed(0) }} loss)
+          </div>
         </div>
 
+        <!-- 3) Why Win Rate ≠ Profit -->
         <div class="casino-card rounded-lg p-4">
           <h3 class="mb-2 text-lg font-semibold text-brand-gold-light">
-            Win Statistics
+            Why Win Rate ≠ Profit
           </h3>
           <div class="space-y-2">
             <div class="flex justify-between">
-              <span class="text-content-secondary">Win rate:</span>
-              <span class="font-medium" :class="winRateColor"
-                >{{ results.winDistribution.winPercentage.toFixed(1) }}%</span
+              <span class="text-content-secondary"
+                >Needed avg payout to break even:</span
               >
+              <span class="font-medium text-success-light">
+                €{{ results.neededAveragePayoutToBreakEven.toFixed(2) }}
+              </span>
             </div>
             <div class="flex justify-between">
-              <span class="text-content-secondary">Winning simulations:</span>
-              <span class="font-medium text-content-secondary">{{
-                results.winDistribution.totalWins.toLocaleString()
-              }}</span>
+              <span class="text-content-secondary"
+                >Current payout shortfall:</span
+              >
+              <span class="font-medium text-error">
+                €{{ results.payoutShortfall.toFixed(2) }}
+              </span>
             </div>
             <div class="flex justify-between">
-              <span class="text-content-secondary">Losing simulations:</span>
-              <span class="font-medium text-error-light">{{
-                results.winDistribution.totalLosses.toLocaleString()
-              }}</span>
+              <span class="text-content-secondary"
+                >Payout multiplier needed:</span
+              >
+              <span class="font-medium text-warning">
+                {{ results.payoutMultiplierNeeded.toFixed(1) }}×
+              </span>
             </div>
+            <div class="flex justify-between">
+              <span class="text-content-secondary"
+                >Break-even hit rate needed:</span
+              >
+              <span class="font-medium text-warning">
+                {{
+                  results.breakEvenHitRateAtCurrentPrize > 100
+                    ? 'Impossible'
+                    : results.breakEvenHitRateAtCurrentPrize.toFixed(1) + '%'
+                }}
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-content-secondary"
+                >Break-even avg prize needed:</span
+              >
+              <span class="font-medium text-warning">
+                €{{ results.breakEvenAvgPrizeAtCurrentHitRate.toFixed(0) }}
+              </span>
+            </div>
+            <div
+              class="flex justify-between border-t border-casino-blue-light/30 pt-2"
+            >
+              <span class="text-content-secondary">If every play hit:</span>
+              <span
+                class="font-medium"
+                :class="
+                  results.netIfEveryPlayHit >= 0 ? 'text-success' : 'text-error'
+                "
+              >
+                {{ results.netIfEveryPlayHit >= 0 ? '+' : '' }}€{{
+                  results.netIfEveryPlayHit.toFixed(2)
+                }}
+                per play
+              </span>
+            </div>
+          </div>
+          <div
+            class="mt-3 border-t border-casino-blue-light/30 pt-2 text-xs text-content-muted"
+          >
+            Break-even isn't about hitting often; it's about average payout.
+            With avg payout of ~€{{ results.expectedPayout.toFixed(1) }}, you'd
+            need ~{{
+              (
+                results.neededAveragePayoutToBreakEven / results.expectedPayout
+              ).toFixed(1)
+            }}× higher payouts to break even.
           </div>
         </div>
       </div>
@@ -291,20 +432,22 @@
             </div>
             <div class="casino-card rounded-lg border border-warning/30 p-3">
               <div class="text-sm font-medium text-warning-light">
-                Hit Rate vs Expected
+                Investment Comparison
               </div>
               <div class="text-xs text-warning-light">
-                {{ winRateVsExpected }}%
-                {{ winRateVsExpected > 0 ? 'above' : 'below' }} statistical
-                expectation
+                Lottery:
+                {{ formatReturnRate(results.returnRatePerEuro) }} return per
+                euro<br />
+                Casino games: ~95-99% return per euro<br />
+                Savings account: ~100%+ return per euro
               </div>
             </div>
             <div class="casino-card rounded-lg p-3">
               <div class="text-sm font-medium text-brand-gold-light">
-                Recommendation
+                Educational Insight
               </div>
               <div class="text-xs text-content-secondary">
-                {{ getRecommendation() }}
+                {{ getEducationalInsight() }}
               </div>
             </div>
           </div>
@@ -336,32 +479,12 @@
 import {
   WIN_RATE_EXCELLENT_THRESHOLD,
   WIN_RATE_GOOD_THRESHOLD,
-  PROFIT_RATE_EXCELLENT_THRESHOLD,
-  PROFIT_RATE_GOOD_THRESHOLD,
-  WIN_CLASS_MIN,
-  WIN_CLASS_MAX,
 } from '~/utils/constants'
 import { computed, type PropType } from 'vue'
 import type { BatchSimulationResult } from '~/schemas'
-import { combinationCount } from '~/utils/combinatorics'
 import { getWinClassProbability } from '~/utils/winProbabilities'
 import { getResultsWinClassColor } from '~/utils/winClassColors'
-
-/**
- * Calculates the expected win rate for a given number of lines per simulation
- * Formula: 1 - (1 - p_any)^L where p_any = 1 - ∏(1 - p_class)
- */
-function calculateExpectedWinRate(linesPerSimulation: number): number {
-  // Per-line probability of *any* win = sum of mutually exclusive class probabilities
-  let pAny = 0
-  for (let winClass = WIN_CLASS_MIN; winClass <= WIN_CLASS_MAX; winClass++) {
-    pAny += getWinClassProbability(winClass)
-  }
-  pAny = Math.min(Math.max(pAny, 0), 1)
-  const expectedWinRate =
-    1 - Math.pow(1 - pAny, Math.max(linesPerSimulation, 0))
-  return expectedWinRate * 100
-}
+import { formatReturnRatePercentage } from '~/utils/simulationMath'
 
 const props = defineProps({
   results: { type: Object as PropType<BatchSimulationResult>, required: true },
@@ -372,13 +495,6 @@ const props = defineProps({
 })
 defineEmits<{ reset: [] }>()
 
-const costPerSimulation = computed(
-  () => props.results.totalCost / props.results.totalSimulations
-)
-const expectedProfitPerSim = computed(
-  () => props.results.expectedValue - costPerSimulation.value
-)
-
 const netProfitColor = computed(() =>
   props.results.netProfit >= 0 ? 'text-premium-emerald-400' : 'text-error'
 )
@@ -388,21 +504,23 @@ const roiColor = computed(() => {
   if (roi > -25) return 'text-brand-gold-400'
   return 'text-error'
 })
-const expectedProfitColor = computed(() =>
-  expectedProfitPerSim.value >= 0 ? 'text-success-light' : 'text-error-light'
-)
-const winRateColor = computed(() => {
-  const rate = props.results.winDistribution.winPercentage
+const hitRateColor = computed(() => {
+  const rate = props.results.hitRate
   if (rate > WIN_RATE_EXCELLENT_THRESHOLD) return 'text-premium-emerald-400'
   if (rate > WIN_RATE_GOOD_THRESHOLD) return 'text-brand-gold-400'
-  return 'text-error'
+  return 'text-content-secondary'
 })
 const profitRateColor = computed(() => {
-  const rate = props.results.statistics.profitablePercentage
-  if (rate > PROFIT_RATE_EXCELLENT_THRESHOLD) return 'text-premium-emerald-400'
-  if (rate > PROFIT_RATE_GOOD_THRESHOLD) return 'text-brand-gold-400'
-  return 'text-error'
+  const rate = props.results.profitRate
+  if (rate > 5) return 'text-premium-emerald-400' // Very rare but possible
+  if (rate > 1) return 'text-brand-gold-400' // Still very rare
+  return 'text-error' // Expected for lotteries
 })
+
+// Format functions for display
+const formatReturnRate = (rate: number): string => {
+  return formatReturnRatePercentage(rate)
+}
 
 const bestPerformingClass = computed(() => {
   let bestClass = 12
@@ -416,23 +534,6 @@ const bestPerformingClass = computed(() => {
     }
   )
   return { classNum: bestClass, count: maxCount }
-})
-
-// Calculate total lines per simulation across all tickets
-const linesPerSimulation = computed(() => {
-  return props.tickets.reduce((total, ticket) => {
-    const mainCount = ticket.mainNumbers.length
-    const euroCount = ticket.euroNumbers.length
-    return total + combinationCount(mainCount, euroCount)
-  }, 0)
-})
-
-const winRateVsExpected = computed(() => {
-  const expectedRate = calculateExpectedWinRate(linesPerSimulation.value)
-  const actualRate = props.results.winDistribution.winPercentage
-  return expectedRate > 0
-    ? ((actualRate - expectedRate) / expectedRate) * 100
-    : 0
 })
 
 /**
@@ -499,15 +600,18 @@ const getClassPercentage = (classNum: number): number => {
   return (count / maxCount) * 100
 }
 
-const getRecommendation = (): string => {
-  const roi = props.results.roiPercentage
-  if (roi > 10)
-    return 'Excellent results! Consider this strategy for real play.'
-  else if (roi > 0)
-    return 'Positive returns. Strategy shows promise with larger sample.'
-  else if (roi > -25)
-    return 'Moderate losses. Consider adjusting number selection strategy.'
-  return 'High losses. Recommend reviewing system configuration.'
+const getEducationalInsight = (): string => {
+  const winRate = props.results.winDistribution.winPercentage
+  const avgPrize = props.results.averagePrizePerWin
+  const costPerSim = props.results.totalCost / props.results.totalSimulations
+
+  if (avgPrize < costPerSim) {
+    return `Despite ${winRate.toFixed(1)}% win rate, losses occur because average prize (€${avgPrize.toFixed(2)}) < ticket cost (€${costPerSim.toFixed(2)}). This demonstrates how lottery economics work by design.`
+  } else if (winRate < 50) {
+    return `Win rate of ${winRate.toFixed(1)}% shows why consistent lottery profits are mathematically unlikely, even with favorable prize structures.`
+  } else {
+    return 'This simulation demonstrates the mathematical realities of lottery participation for educational purposes.'
+  }
 }
 
 const exportResults = (): void => {
