@@ -7,23 +7,40 @@
       {{ error }}
     </div>
 
-    <div v-if="simulationResult" class="mb-6">
-      <SimulatedExtraction :result="simulationResult" />
+    <div v-if="simulationResult || loading" class="mb-6">
+      <SimulatedExtraction :result="simulationResult" :loading="loading" />
     </div>
 
     <div
-      v-if="simulationResult"
-      class="casino-card mb-4 grid grid-cols-1 gap-4 rounded-lg p-4 sm:grid-cols-2"
+      v-if="simulationResult || loading"
+      class="casino-card mb-4 grid min-h-[100px] grid-cols-1 gap-4 rounded-lg p-4 sm:grid-cols-2"
     >
       <div class="text-center">
         <div class="text-sm text-content-muted">Total Winnings</div>
-        <div class="text-xl font-semibold text-brand-gold">
+        <div
+          v-if="loading && !simulationResult"
+          class="text-xl font-semibold text-brand-gold"
+        >
+          <div
+            class="mx-auto h-7 w-20 animate-pulse rounded bg-surface-secondary"
+          ></div>
+        </div>
+        <div v-else class="text-xl font-semibold text-brand-gold">
           €{{ totalWinnings.toFixed(2) }}
         </div>
       </div>
       <div class="text-center">
         <div class="text-sm text-content-muted">Profit / Loss</div>
         <div
+          v-if="loading && !simulationResult"
+          class="text-xl font-semibold text-premium-emerald-400"
+        >
+          <div
+            class="mx-auto h-7 w-24 animate-pulse rounded bg-surface-secondary"
+          ></div>
+        </div>
+        <div
+          v-else
           :class="[
             'text-xl font-semibold',
             winLossRate >= 0 ? 'text-premium-emerald-400' : 'text-error',

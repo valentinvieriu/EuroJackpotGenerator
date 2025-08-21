@@ -5,27 +5,42 @@
     >
       Simulated Extraction
     </h3>
-    <div class="flex flex-col items-center justify-around gap-6 md:flex-row">
+    <div
+      class="flex min-h-[120px] flex-col items-center justify-around gap-6 md:flex-row"
+    >
       <div class="text-center">
         <h4
           class="mb-3 text-lg font-semibold tracking-wider text-content-primary uppercase"
         >
           Main Numbers
         </h4>
-        <TransitionGroup
-          name="ball"
-          tag="div"
-          class="flex flex-wrap justify-center gap-3"
-          appear
-        >
-          <TicketNumber
-            v-for="(number, index) in result.mainNumbers"
-            :key="`main-${number}`"
-            :number="number"
-            :is-winner="true"
-            :style="{ '--stagger-delay': `${index * 100}ms` }"
-          />
-        </TransitionGroup>
+        <div class="flex min-h-[48px] flex-wrap justify-center gap-3">
+          <!-- Loading skeleton -->
+          <template v-if="loading && !result">
+            <div
+              v-for="i in 5"
+              :key="`main-skeleton-${i}`"
+              class="skeleton-ball"
+              :style="{ '--stagger-delay': `${(i - 1) * 100}ms` }"
+            />
+          </template>
+          <!-- Actual numbers -->
+          <TransitionGroup
+            v-else-if="result && result.mainNumbers"
+            name="ball"
+            tag="div"
+            class="flex flex-wrap justify-center gap-3"
+            appear
+          >
+            <TicketNumber
+              v-for="(number, index) in result.mainNumbers"
+              :key="`main-${number}`"
+              :number="number"
+              :is-winner="true"
+              :style="{ '--stagger-delay': `${index * 100}ms` }"
+            />
+          </TransitionGroup>
+        </div>
       </div>
       <div class="text-center">
         <h4
@@ -33,21 +48,34 @@
         >
           Euro Numbers
         </h4>
-        <TransitionGroup
-          name="ball"
-          tag="div"
-          class="flex flex-wrap justify-center gap-3"
-          appear
-        >
-          <TicketNumber
-            v-for="(number, index) in result.euroNumbers"
-            :key="`euro-${number}`"
-            :number="number"
-            :is-winner="true"
-            type="euro"
-            :style="{ '--stagger-delay': `${index * 100}ms` }"
-          />
-        </TransitionGroup>
+        <div class="flex min-h-[48px] flex-wrap justify-center gap-3">
+          <!-- Loading skeleton -->
+          <template v-if="loading && !result">
+            <div
+              v-for="i in 2"
+              :key="`euro-skeleton-${i}`"
+              class="skeleton-ball skeleton-ball-euro"
+              :style="{ '--stagger-delay': `${(i - 1) * 100}ms` }"
+            />
+          </template>
+          <!-- Actual numbers -->
+          <TransitionGroup
+            v-else-if="result && result.euroNumbers"
+            name="ball"
+            tag="div"
+            class="flex flex-wrap justify-center gap-3"
+            appear
+          >
+            <TicketNumber
+              v-for="(number, index) in result.euroNumbers"
+              :key="`euro-${number}`"
+              :number="number"
+              :is-winner="true"
+              type="euro"
+              :style="{ '--stagger-delay': `${index * 100}ms` }"
+            />
+          </TransitionGroup>
+        </div>
       </div>
     </div>
   </div>
@@ -58,7 +86,8 @@ import type { Ticket } from '~/schemas'
 import TicketNumber from './TicketNumber.vue'
 
 interface Props {
-  result: Pick<Ticket, 'mainNumbers' | 'euroNumbers'>
+  result: Pick<Ticket, 'mainNumbers' | 'euroNumbers'> | null
+  loading?: boolean
 }
 
 defineProps<Props>()
@@ -116,5 +145,50 @@ defineProps<Props>()
 /* Ensure smooth transitions for the container */
 .ball-move {
   transition: transform 0.3s ease;
+}
+
+/* Skeleton loading states */
+.skeleton-ball {
+  width: 3rem; /* 48px */
+  height: 3rem; /* 48px */
+  border-radius: 50%;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  background-color: rgba(148, 163, 184, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-ball-euro {
+  border-color: rgba(59, 130, 246, 0.5);
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Skeleton shimmer animation with stagger */
+@keyframes skeleton-shimmer {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+}
+
+.skeleton-ball {
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  animation-delay: var(--stagger-delay, 0ms);
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  .skeleton-ball {
+    /* Slightly reduced animation intensity on mobile for better performance */
+    animation-duration: 2s;
+  }
 }
 </style>
