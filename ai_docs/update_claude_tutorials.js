@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 // -------------------------------
 const DOCS_BASE_URL = 'https://docs.anthropic.com/en/docs/claude-code'
 const OVERVIEW_URL = `${DOCS_BASE_URL}/overview`
-const OUTPUT_FILE = 'claude_code_fresh_tutorials.md'
+const OUTPUT_FILE = 'ai_docs/claude_code_fresh_tutorials.md'
 
 // polite delay between requests (ms)
 const REQUEST_DELAY_MS = 200
