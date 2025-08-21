@@ -27,6 +27,7 @@ logs
 .wrangler
 .dev.vars
 ai_docs/*
+!ai_docs/update_claude_tutorials.js
 !ai_docs/COMMON_GUIDE.md
 !ai_docs/PRD.md
 !ai_docs/ARCHITECTURE.md
