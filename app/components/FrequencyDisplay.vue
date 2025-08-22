@@ -127,6 +127,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useTicketsStore } from '~~/stores/tickets'
+import { FREQ_RATIO_STRONG, FREQ_RATIO_MILD } from '~/utils/constants'
 
 // Follow "dumb component" pattern - only consume reactive state
 const ticketsStore = useTicketsStore()
@@ -167,13 +168,13 @@ const getFrequencyPercentage = (value: number, maxValue: number): number => {
 
 const getFrequencyBarColor = (value: number, expected: number): string => {
   const ratio = value / expected
-  if (ratio >= 1.15) {
+  if (ratio >= FREQ_RATIO_STRONG) {
     // High frequency (15%+ above expected)
     return 'bg-brand-gold'
-  } else if (ratio >= 1.05) {
+  } else if (ratio >= FREQ_RATIO_MILD) {
     // Medium frequency (5-15% above expected)
     return 'bg-brand-gold/70'
-  } else if (ratio <= 0.85) {
+  } else if (ratio <= 2 - FREQ_RATIO_STRONG) {
     // Low frequency (15%+ below expected)
     return 'bg-surface-elevated-2'
   } else {

@@ -113,9 +113,22 @@ export const EUROJACKPOT_TOTAL_COMBINATIONS = 139_838_160 // C(50,5) * C(12,2)
 
 // Simple Mode Configuration
 export const SIMPLE_MODE_TICKET_COUNT = 10
+export const SIMPLE_MODE_TICKET_COUNT_MAX = 50
 export const SIMPLE_MODE_SYSTEM_MAIN = 5
 export const SIMPLE_MODE_SYSTEM_EURO = 2
 export const SIMPLE_MODE_METHOD = 'random' as const
+
+// Simulation Option Values
+export const SIMULATION_OPTION_VALUES = [
+  100, 250, 500, 1000, 2500, 5000, 10000,
+] as const
+
+// Batch Size Options
+export const BATCH_SIZE_OPTIONS = [50, 100, 200] as const
+
+// Frequency Ratio Thresholds
+export const FREQ_RATIO_STRONG = 1.15
+export const FREQ_RATIO_MILD = 1.05
 
 // Derived Arrays for Components
 export const WIN_CLASSES = Array.from(

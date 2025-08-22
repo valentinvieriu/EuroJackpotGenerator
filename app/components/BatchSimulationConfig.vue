@@ -52,9 +52,16 @@
           class="form-select"
           :disabled="disabled"
         >
-          <option :value="50">50 (Faster)</option>
-          <option :value="100">100 (Balanced)</option>
-          <option :value="200">200 (Memory Efficient)</option>
+          <option v-for="size in BATCH_SIZE_OPTIONS" :key="size" :value="size">
+            {{ size }}
+            {{
+              size === 50
+                ? '(Faster)'
+                : size === 100
+                  ? '(Balanced)'
+                  : '(Memory Efficient)'
+            }}
+          </option>
         </select>
       </div>
     </div>
@@ -133,7 +140,11 @@
           <div
             class="min-w-0 text-sm font-bold text-brand-gold md:text-base lg:text-lg xl:text-xl 2xl:text-2xl"
           >
-            {{ Math.round(config.simulationCount * 0.15) }}
+            {{
+              Math.round(
+                config.simulationCount * SIGNIFICANT_WIN_FRACTION_LARGE
+              )
+            }}
           </div>
           <div class="mt-1 text-xs text-content-muted">
             Estimated winning simulations (~15%)
@@ -246,6 +257,9 @@
 import {
   LARGE_SIMULATION_THRESHOLD,
   HIGH_SIMULATION_WARNING_THRESHOLD,
+  SIMULATION_OPTION_VALUES,
+  BATCH_SIZE_OPTIONS,
+  SIGNIFICANT_WIN_FRACTION_LARGE,
 } from '~/utils/constants'
 import { computed, reactive, watch } from 'vue'
 import type { BatchSimulationRequest, Ticket } from '~/schemas'
@@ -275,15 +289,25 @@ const config = reactive({
 
 const oddsStore = useOddsStore()
 
-const simulationOptions = [
-  { value: 100, label: '100 (Quick Test)' },
-  { value: 250, label: '250 (Small Analysis)' },
-  { value: 500, label: '500 (Medium Analysis)' },
-  { value: 1000, label: '1,000 (Standard Analysis)' },
-  { value: 2500, label: '2,500 (Detailed Analysis)' },
-  { value: 5000, label: '5,000 (Comprehensive)' },
-  { value: 10000, label: '10,000 (Maximum)' },
-]
+const simulationOptions = SIMULATION_OPTION_VALUES.map((value) => ({
+  value,
+  label:
+    value === 100
+      ? '100 (Quick Test)'
+      : value === 250
+        ? '250 (Small Analysis)'
+        : value === 500
+          ? '500 (Medium Analysis)'
+          : value === 1000
+            ? '1,000 (Standard Analysis)'
+            : value === 2500
+              ? '2,500 (Detailed Analysis)'
+              : value === 5000
+                ? '5,000 (Comprehensive)'
+                : value === 10000
+                  ? '10,000 (Maximum)'
+                  : `${value.toLocaleString()}`,
+}))
 
 const totalSimulationCost = computed(
   () => config.simulationCount * props.costPerSimulation

@@ -28,7 +28,11 @@
             <label class="text-sm font-medium text-content-muted">
               Tickets:
             </label>
-            <StepperInput v-model="ticketCount" :min="1" :max="50" />
+            <StepperInput
+              v-model="ticketCount"
+              :min="1"
+              :max="SIMPLE_MODE_TICKET_COUNT_MAX"
+            />
           </div>
 
           <div
@@ -170,6 +174,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import {
   SIMPLE_MODE_SYSTEM_MAIN,
   SIMPLE_MODE_SYSTEM_EURO,
+  SIMPLE_MODE_TICKET_COUNT_MAX,
 } from '~/utils/constants'
 import { systemPrice } from '~/utils/pricing'
 import StepperInput from './StepperInput.vue'
