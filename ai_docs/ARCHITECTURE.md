@@ -354,6 +354,14 @@ The application supports four distinct number generation methods, each serving d
 - **Caching Strategy**: 10-minute cache prevents excessive API calls while maintaining reasonable freshness
 - **Data Normalization**: Converts external class numbering to consistent internal format
 
+**Lotto Bayern Bookmarklet** (`bookmarklet/`):
+
+- **Purpose**: Enter tickets from the app into Lotto Bayern's Eurojackpot form. It only fills fields; it never generates numbers, saves or submits
+- **Hand-over**: The `LottoBayernExport` panel in the ticket list links to the form with the lines in the URL fragment (and offers them for copy/paste). The bookmarklet reads them and fills the fields through the site's own editor
+- **One definition of a line**: `app/utils/ticketLines.ts` formats and parses lines for both sides. The bookmarklet bundle imports it, so app and bookmarklet cannot drift apart
+- **No server surface**: The bookmarklet makes no network requests, so there is no CORS rule or bookmarklet-specific endpoint
+- **Build**: `bookmarklet/build.mjs` (esbuild) writes to the git-ignored `public/bookmarklet/` before `dev` and `build`; the install page is `app/pages/bookmarklet.vue`
+
 ---
 
 ## Data Flow & Interactions

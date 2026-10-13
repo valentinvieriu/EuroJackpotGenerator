@@ -4,6 +4,7 @@
  * Enhanced with Zod validation for type safety and robust error handling
  */
 
+import { copyText } from '~/utils/clipboard'
 import {
   validateAppConfig,
   validateUrlParams,
@@ -305,27 +306,7 @@ export function updateBrowserUrl(config: AppConfig | null): void {
  * @returns Promise that resolves when copied successfully
  */
 export async function copyConfigUrl(config: AppConfig): Promise<void> {
-  const url = getAppConfigUrl(config)
-
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(url)
-  } else {
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea')
-    textArea.value = url
-    textArea.style.position = 'fixed'
-    textArea.style.left = '-999999px'
-    textArea.style.top = '-999999px'
-    document.body.appendChild(textArea)
-    textArea.focus()
-    textArea.select()
-
-    try {
-      document.execCommand('copy')
-    } finally {
-      document.body.removeChild(textArea)
-    }
-  }
+  await copyText(getAppConfigUrl(config))
 }
 
 // Legacy clipboard sharing removed.

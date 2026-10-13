@@ -120,41 +120,15 @@ export const POPULARITY_LUCKY_NUMBERS = new Set([3, 7, 11, 13, 17, 21]) // Commo
 export const POPULARITY_CANDIDATES_COUNT = 100 // Number of combinations to generate for unpopular selection
 export const POPULARITY_EURO_MONTH_SPREAD_THRESHOLD = 3 // Euro numbers spread threshold for month effect
 
-// Lotto Bayern bookmarklet integration (generation remains in /api/generate)
+// Lotto Bayern bookmarklet: fills the tickets from this app into Lotto Bayern's form
 export const LOTTO_BAYERN_ORIGIN = 'https://www.lotto-bayern.de'
 export const LOTTO_BAYERN_NORMAL_PATH = '/eurojackpot/normalschein'
-export const LOTTO_BAYERN_NORMAL_FIELD_MAX = 12
-export const GENERATE_API_PATH = '/api/generate'
-export const BOOKMARKLET_APP_ORIGIN = 'https://eurojackpot.vv42.workers.dev'
-export const BOOKMARKLET_FETCH_TIMEOUT_MS = 20000
-export const BOOKMARKLET_EDITOR_TIMEOUT_MS = 4500
-export const BOOKMARKLET_POLL_MS = 25
-export const BOOKMARKLET_CORS_MAX_AGE = 600
-export const BOOKMARKLET_ALGORITHMS = [
-  {
-    value: 'uniform',
-    label: 'Uniform random',
-    description: 'Every valid combination has equal selection probability.',
-  },
-  {
-    value: 'weighted',
-    label: 'Weighted by historical frequencies',
-    description:
-      'Uses square-root frequencies and sampling without replacement. Falls back to uniform if statistics are unavailable. No forced odd/even or high/low pattern.',
-  },
-  {
-    value: 'favorites',
-    label: 'Favourites',
-    description:
-      'Uses the app’s favourite weighting with historical frequencies. If statistics are unavailable, it includes favourites that fit and fills the remaining slots randomly.',
-  },
-  {
-    value: 'unpopular',
-    label: 'Unpopular combinations (heuristic)',
-    description:
-      'Ranks random candidates using the app’s human-choice heuristics. The score is not measured player popularity or a calibrated prize-sharing probability.',
-  },
-] as const
+export const LOTTO_BAYERN_NORMAL_FIELD_MAX = 12 // Lines on one standard slip
+export const LOTTO_BAYERN_HANDOFF_KEY = 'eurojackpot' // URL fragment key that carries the lines to the form
+export const BOOKMARKLET_EDITOR_TIMEOUT_MS = 4500 // How long to wait for the site's number editor to react
+export const BOOKMARKLET_POLL_MS = 25 // How often to check whether it has
+export const BOOKMARKLET_URL_PATH =
+  '/bookmarklet/lotto-bayern-bookmarklet-url.txt' // Built bookmark URL, served from public/
 
 // EuroJackpot payout rules (game rules since March 2022)
 // Half of every stake goes into the prize pool; the pool is split across the
@@ -194,9 +168,3 @@ export const SIMULATION_OPTION_VALUES = [
 // Frequency Ratio Thresholds
 export const FREQ_RATIO_STRONG = 1.15
 export const FREQ_RATIO_MILD = 1.05
-
-// Derived Arrays for Components
-export const WIN_CLASSES = Array.from(
-  { length: WIN_CLASS_MAX - WIN_CLASS_MIN + 1 },
-  (_, i) => WIN_CLASS_MIN + i
-) as readonly number[]

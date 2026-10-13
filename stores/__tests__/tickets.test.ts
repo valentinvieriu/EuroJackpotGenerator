@@ -402,6 +402,26 @@ describe('Tickets Store', () => {
     expect(ticketsStore.state.phase).toBe('ready')
   })
 
+  it('exports the tickets that fit a Lotto Bayern slip as lines and a link', () => {
+    const ticketsStore = useTicketsStore()
+    ticketsStore.state.tickets = [
+      { id: 1, mainNumbers: [49, 4, 27, 12, 20], euroNumbers: [9, 2] },
+      // A system ticket cannot be entered as a standard line
+      { id: 2, mainNumbers: [1, 2, 3, 4, 5, 6], euroNumbers: [1, 2, 3] },
+      { id: 3, mainNumbers: [8, 16, 25, 34, 46], euroNumbers: [5, 11] },
+    ] as any
+
+    const exported = ticketsStore.lottoBayernExport
+
+    expect(exported.lines).toHaveLength(2)
+    expect(exported.skippedSystemTickets).toBe(1)
+    expect(exported.skippedOverLimit).toBe(0)
+    expect(exported.text).toBe('4 12 20 27 49 | 2 9\n8 16 25 34 46 | 5 11')
+    expect(exported.url).toBe(
+      'https://www.lotto-bayern.de/eurojackpot/normalschein#eurojackpot=4.12.20.27.49-2.9_8.16.25.34.46-5.11'
+    )
+  })
+
   it('getDecoratedTickets merges highlights and sorts by winClass', async () => {
     const ticketsStore = useTicketsStore()
     const simStore = useSimulationStore()

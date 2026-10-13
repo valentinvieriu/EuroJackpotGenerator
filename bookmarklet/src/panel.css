@@ -35,8 +35,7 @@ label {
   margin: 10px 0 4px;
 }
 textarea,
-input,
-select {
+input {
   font: inherit;
   border: 1px solid var(--color-border-primary);
   border-radius: 7px;
@@ -69,9 +68,12 @@ button:disabled {
   cursor: wait;
 }
 button.primary {
-  background: var(--color-interactive-primary);
+  background: var(--color-brand-gold-400);
   color: var(--color-content-inverse);
-  border-color: var(--color-interactive-primary);
+  border-color: var(--color-brand-gold-400);
+}
+button.primary:hover {
+  background: var(--color-brand-gold-300);
 }
 .row {
   display: flex;
@@ -90,15 +92,6 @@ button.primary {
   float: right;
   font-size: 18px;
   padding: 3px 9px;
-}
-details {
-  border-top: 1px solid var(--color-border-secondary);
-  margin-top: 14px;
-  padding-top: 12px;
-}
-summary {
-  cursor: pointer;
-  font-weight: 600;
 }
 pre {
   font:

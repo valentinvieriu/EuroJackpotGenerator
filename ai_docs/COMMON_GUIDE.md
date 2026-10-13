@@ -52,6 +52,7 @@ npm run format # format
 - Server endpoints: `server/api/`
 - Constants: `app/utils/constants.ts`
 - Animations/audio: `components/Canvas.vue`, `audioUtils.ts` (Web Worker offload)
+- Lotto Bayern bookmarklet: `bookmarklet/` (fills the form on their site; shares `app/utils/ticketLines.ts` with the app; see `bookmarklet/README.md`)
 
 ---
 

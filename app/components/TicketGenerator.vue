@@ -65,7 +65,7 @@
               {{ formatEuro(ticketsStore.stakePerDraw) }} per draw
             </p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <button
               type="button"
               class="rounded-lg px-2 py-1 text-sm text-brand-gold underline underline-offset-4 transition-colors duration-150 hover:text-brand-gold-light"
@@ -73,6 +73,15 @@
               @click="ticketsStore.share"
             >
               Share
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-casino-blue/50 px-3 py-1 text-sm text-content-secondary transition-colors duration-150 hover:border-casino-blue-light hover:text-content-primary"
+              title="Enter these tickets into Lotto Bayern’s Eurojackpot form"
+              :aria-expanded="showLottoBayern"
+              @click="showLottoBayern = !showLottoBayern"
+            >
+              Lotto Bayern
             </button>
             <button
               type="button"
@@ -90,6 +99,11 @@
             </button>
           </div>
         </div>
+
+        <LottoBayernExport
+          v-if="showLottoBayern"
+          @close="showLottoBayern = false"
+        />
 
         <!-- Lucky Numbers sharing dialog -->
         <div v-if="showSharingDialog" class="well mb-4 p-4">
@@ -220,6 +234,7 @@ import MonteCarloPanel from './MonteCarloPanel.vue'
 import PaytableTable from './PaytableTable.vue'
 import TicketItem from './TicketItem.vue'
 import CustomizationOverlay from './CustomizationOverlay.vue'
+import LottoBayernExport from './LottoBayernExport.vue'
 import { logger } from '~/utils/logger'
 import { formatEuro } from '~/utils/format'
 import {
@@ -250,6 +265,7 @@ const {
 } = useUIState()
 
 const showCustomizationOverlay = ref(false)
+const showLottoBayern = ref(false)
 const activeTab = ref<(typeof TABS)[number]['id']>('autoplay')
 
 // Matches stay hidden until the reels have landed, so the tickets don't spoil the draw
@@ -290,6 +306,7 @@ const resetTickets = (): void => {
   ticketsStore.reset()
   hideWelcome()
   hideSharing()
+  showLottoBayern.value = false
 }
 
 // Restore a shared or bookmarked configuration from the URL

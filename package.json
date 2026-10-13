@@ -14,7 +14,8 @@
     "test": "vitest",
     "format": "prettier --write .",
     "prepare": "husky",
-    "bookmarklet:build": "node scripts/build-lotto-bayern-bookmarklet.mjs",
+    "bookmarklet:build": "node bookmarklet/build.mjs",
+    "predev": "npm run bookmarklet:build",
     "prebuild": "npm run bookmarklet:build"
   },
   "dependencies": {

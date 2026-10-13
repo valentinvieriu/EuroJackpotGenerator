@@ -17,6 +17,11 @@ import { useSimulationStore } from './simulation'
 import { useUIState, useTransientErrors } from '~/composables/useAppState'
 import { calculateTotalSimulationCost } from '~/utils/simulationMath'
 import {
+  ticketsToStandardLines,
+  formatTicketLines,
+  buildLottoBayernUrl,
+} from '~/utils/ticketLines'
+import {
   encodeAppConfigToHash,
   decodeUrlHash,
   parseTicketType,
@@ -126,6 +131,17 @@ export const useTicketsStore = defineStore('tickets', () => {
   const stakePerDraw = computed(() =>
     calculateTotalSimulationCost(state.value.tickets)
   )
+
+  // The tickets as lines for Lotto Bayern's form: what fits on a standard slip,
+  // what has to stay behind, and the link that carries the lines to the form
+  const lottoBayernExport = computed(() => {
+    const selection = ticketsToStandardLines(state.value.tickets)
+    return {
+      ...selection,
+      text: formatTicketLines(selection.lines),
+      url: buildLottoBayernUrl(selection.lines),
+    }
+  })
 
   const systemCost = computed(() => {
     const { mainCount, euroCount } = state.value.config
@@ -832,6 +848,7 @@ export const useTicketsStore = defineStore('tickets', () => {
     hasFavoriteNumbers,
     totalPrice,
     stakePerDraw,
+    lottoBayernExport,
     systemCost,
     hasFrequencyData,
     hasFrequencyError,
