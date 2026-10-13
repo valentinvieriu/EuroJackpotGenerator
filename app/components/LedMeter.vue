@@ -17,19 +17,26 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onBeforeUnmount } from 'vue'
-import { LED_TWEEN_MS } from '~/utils/constants'
-import { formatEuro, formatCount } from '~/utils/format'
+import {
+  LED_TWEEN_MS,
+  LED_WHOLE_EURO_FROM,
+  LED_COMPACT_FROM,
+} from '~/utils/constants'
+import { formatEuro, formatEuroCompact, formatCount } from '~/utils/format'
 
 interface Props {
   label: string
   value: number
   format?: 'euro' | 'signed-euro' | 'count'
   tone?: 'neutral' | 'loss' | 'gain'
+  /** The value is streaming in: show each update as it arrives, without rolling to it */
+  live?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   format: 'euro',
   tone: 'neutral',
+  live: false,
 })
 
 // The displayed number rolls towards the real one, like a mechanical counter
@@ -49,7 +56,7 @@ watch(
     const reduceMotion =
       typeof window === 'undefined' ||
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduceMotion || from === to) {
+    if (props.live || reduceMotion || from === to) {
       displayed.value = to
       return
     }
@@ -67,8 +74,20 @@ watch(
 
 onBeforeUnmount(stop)
 
+// A long autoplay run reaches sums the display has no room for: cents go
+// first, then the figure is abbreviated
 const text = computed(() => {
-  if (props.format === 'count') return formatCount(displayed.value)
-  return formatEuro(displayed.value, { sign: props.format === 'signed-euro' })
+  const value = displayed.value
+  if (props.format === 'count') return formatCount(value)
+
+  const sign = props.format === 'signed-euro'
+  const size = Math.abs(value)
+  if (size >= LED_COMPACT_FROM) {
+    return `${sign && value > 0 ? '+' : ''}${formatEuroCompact(value)}`
+  }
+  return formatEuro(value, {
+    sign,
+    decimals: size >= LED_WHOLE_EURO_FROM ? 0 : 2,
+  })
 })
 </script>

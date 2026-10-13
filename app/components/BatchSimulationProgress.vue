@@ -29,6 +29,10 @@
       Draw {{ formatCount(currentSimulation) }} of
       {{ formatCount(totalSimulations) }}
     </p>
+    <p class="mt-1 text-sm text-content-muted">
+      That many draws is {{ formatPlayingTime(totalSimulations) }} of playing
+      every Tuesday and Friday.
+    </p>
 
     <div class="mt-5">
       <BankrollChart
@@ -85,7 +89,7 @@
 import { computed } from 'vue'
 import BankrollChart from './BankrollChart.vue'
 import { formatDuration } from '~/utils/time'
-import { formatEuro, formatCount } from '~/utils/format'
+import { formatEuro, formatCount, formatPlayingTime } from '~/utils/format'
 
 interface Props {
   currentSimulation?: number

@@ -223,7 +223,7 @@ onMounted(() => {
 const WHOLE_EURO_FROM = 1000
 
 // With hits on show, phones keep match / expected / hits and drop the two
-// reference columns, which are one tap away on the Paytable tab.
+// reference columns, which are one tap away behind the cabinet's Paytable link.
 const referenceColumn = computed(() =>
   showHits.value ? 'hidden sm:table-cell' : ''
 )

@@ -90,7 +90,7 @@ export interface SingleDrawState {
   error: string | null
 }
 
-/** Running tally of every single draw played this session */
+/** Running tally of every draw played this session, by hand or on autoplay */
 export interface SessionLedger {
   draws: number
   spent: number
@@ -136,8 +136,29 @@ export const useSimulationStore = defineStore('simulation', () => {
     singleDraw: createIdleSingleDraw(),
   })
 
-  // What the machine has taken and paid out across all single draws
+  // What the machine has taken and paid out this session: every spin by hand
+  // and every autoplay run that finished or was stopped
   const session = ref<SessionLedger>(createEmptyLedger())
+
+  // The autoplay run in flight, not yet settled into the session
+  const runTally = ref<SessionLedger>(createEmptyLedger())
+
+  /** What the cabinet's meters read: the session plus the run still playing */
+  const meter = computed<SessionLedger>(() => ({
+    draws: session.value.draws + runTally.value.draws,
+    spent: session.value.spent + runTally.value.spent,
+    won: session.value.won + runTally.value.won,
+  }))
+
+  /** The run is over: its draws were paid for, so they join the session */
+  const settleRun = (played: SessionLedger = runTally.value) => {
+    session.value = {
+      draws: session.value.draws + played.draws,
+      spent: session.value.spent + played.spent,
+      won: session.value.won + played.won,
+    }
+    runTally.value = createEmptyLedger()
+  }
 
   // Cumulative paid in / won back over the current autoplay run
   const trajectory = ref<TrajectoryPoint[]>([])
@@ -215,8 +236,15 @@ export const useSimulationStore = defineStore('simulation', () => {
     }
   }
 
-  /** The user started over: clear the run, the draw and the session tally */
+  /** The user started over: nothing of the old session applies any more */
   const ticketsReset = () => {
+    cashOut()
+  }
+
+  // --- Session ---
+
+  /** Walk away from the machine: the meters, the draw and the run are cleared, the tickets stay */
+  const cashOut = () => {
     resetToConfig()
     resetSingleDraw()
     session.value = createEmptyLedger()
@@ -287,7 +315,7 @@ export const useSimulationStore = defineStore('simulation', () => {
 
   // --- Monte Carlo (autoplay) ---
 
-  /** Back to the setup screen, keeping the chosen config */
+  /** Clear the run and its report, keeping the chosen config */
   const resetToConfig = () => {
     if (state.value.phase === 'running') {
       cancelSimulation()
@@ -317,6 +345,9 @@ export const useSimulationStore = defineStore('simulation', () => {
       state.value.error = 'No tickets available for simulation.'
       return
     }
+
+    // A run replaces the draw on the table: one draw's matches say nothing about it
+    resetSingleDraw()
 
     const runId = ++currentRunId
     state.value = {
@@ -370,10 +401,17 @@ export const useSimulationStore = defineStore('simulation', () => {
       state.value.results = outcome.result
       state.value.progress = null
       state.value.phase = 'results'
+      // The final totals are authoritative, not the last progress update
+      settleRun({
+        draws: outcome.result.totalSimulations,
+        spent: outcome.result.totalCost,
+        won: outcome.result.totalWinnings,
+      })
     } catch (error: unknown) {
       if (runId !== currentRunId) return
       state.value.phase = 'error'
       state.value.error = extractErrorMessage(error)
+      settleRun()
     } finally {
       if (runId === currentRunId) {
         state.value.canCancel = false
@@ -390,6 +428,8 @@ export const useSimulationStore = defineStore('simulation', () => {
     activeRun = null
     state.value.phase = 'cancelled'
     state.value.canCancel = false
+    // The draws played before the stop still count
+    settleRun()
   }
 
   const updateProgress = (snapshot: SimulationSnapshot) => {
@@ -401,6 +441,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     const netProfit = totalWinnings - totalCost
 
     trajectory.value = [TRAJECTORY_ORIGIN, ...snapshot.trajectory]
+    runTally.value = { draws, spent: totalCost, won: totalWinnings }
 
     state.value.progress = {
       currentSimulation: draws,
@@ -509,6 +550,7 @@ export const useSimulationStore = defineStore('simulation', () => {
     trajectory,
 
     // Computed
+    meter,
     isRunning,
     hasResults,
     hasError,
@@ -524,6 +566,9 @@ export const useSimulationStore = defineStore('simulation', () => {
     ticketsGenerated,
     ticketRemoved,
     ticketsReset,
+
+    // Session
+    cashOut,
 
     // Monte Carlo actions
     setConfig,

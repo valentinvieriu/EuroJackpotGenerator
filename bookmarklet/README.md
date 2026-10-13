@@ -7,7 +7,7 @@ It only fills in the form. It never picks numbers, and it never saves, submits o
 ## How the pieces fit
 
 ```
-app (ticket list)  ──"Lotto Bayern" button──▶  link to the form, lines in the URL fragment
+app (ticket tray)  ──"Fill on Lotto Bayern"──▶  link to the form, lines in the URL fragment
                                                         │
 Lotto Bayern form  ◀──bookmark clicked──  bookmarklet reads the lines and fills the fields
 ```

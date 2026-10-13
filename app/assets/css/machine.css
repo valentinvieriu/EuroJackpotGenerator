@@ -339,6 +339,8 @@
   }
 
   .led {
+    /* The figure is sized from its own cell, so it fits in two columns or four */
+    container-type: inline-size;
     min-inline-size: 0;
     padding: 0.625rem 0.75rem 0.75rem;
     text-align: center;
@@ -352,7 +354,7 @@
     white-space: nowrap;
     font-family: var(--font-numbers);
     font-weight: 700;
-    font-size: clamp(1rem, 3.4vw, 1.375rem);
+    font-size: clamp(0.875rem, 14cqi, 1.375rem);
     line-height: 1.3;
     font-variant-numeric: tabular-nums;
     color: var(--color-led-amber);

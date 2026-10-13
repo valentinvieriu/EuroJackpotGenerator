@@ -235,6 +235,125 @@ describe('Simulation Store', () => {
     expect(store.state.phase).toBe('results')
   })
 
+  describe('the meter', () => {
+    const finishedRun = (
+      draws: number,
+      totalCost: number,
+      totalWinnings: number
+    ): SimulationOutcome => ({
+      result: {
+        totalSimulations: draws,
+        totalCost,
+        totalWinnings,
+      } as SimulationOutcome['result'],
+      trajectory: [{ draws, spent: totalCost, won: totalWinnings }],
+    })
+
+    it('counts a run while it plays and settles it into the session', async () => {
+      const store = useSimulationStore()
+      const run = fakeRun()
+      store.session = { draws: 3, spent: 6, won: 2 }
+
+      seedTickets(mockTickets)
+      const promise = store.startSimulation({ simulationCount: 100 })
+      await untilRunStarts()
+
+      run.progress(snapshotAt(40, 160, 30))
+      expect(store.meter).toEqual({ draws: 43, spent: 166, won: 32 })
+      // Not settled yet: the run could still be stopped
+      expect(store.session).toEqual({ draws: 3, spent: 6, won: 2 })
+
+      run.settle(finishedRun(100, 400, 90))
+      await promise
+
+      expect(store.session).toEqual({ draws: 103, spent: 406, won: 92 })
+      expect(store.meter).toEqual(store.session)
+    })
+
+    it('keeps the draws played before a run was stopped', async () => {
+      const store = useSimulationStore()
+      const run = fakeRun()
+
+      seedTickets(mockTickets)
+      const promise = store.startSimulation({ simulationCount: 100 })
+      await untilRunStarts()
+      run.progress(snapshotAt(40, 160, 30))
+
+      store.cancelSimulation()
+      await promise
+
+      expect(store.session).toEqual({ draws: 40, spent: 160, won: 30 })
+      expect(store.meter).toEqual(store.session)
+    })
+
+    it('adds up run after run', async () => {
+      const store = useSimulationStore()
+      seedTickets(mockTickets)
+
+      for (const _ of [1, 2]) {
+        const run = fakeRun()
+        vi.mocked(startSimulationRun).mockClear()
+        const promise = store.startSimulation({ simulationCount: 100 })
+        await untilRunStarts()
+        run.settle(finishedRun(100, 400, 90))
+        await promise
+      }
+
+      expect(store.session).toEqual({ draws: 200, spent: 800, won: 180 })
+    })
+
+    it('clears the draw on the table when a run starts', async () => {
+      const store = useSimulationStore()
+      fakeRun()
+      store.state.singleDraw = {
+        phase: 'results',
+        winningNumbers: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
+        oddsData: null,
+        error: null,
+      }
+
+      seedTickets(mockTickets)
+      void store.startSimulation({ simulationCount: 100 })
+
+      expect(store.state.singleDraw.phase).toBe('idle')
+      expect(store.singleDrawResults).toBeNull()
+    })
+
+    it('cashing out zeroes the meter and clears the run, but keeps the tickets', async () => {
+      const store = useSimulationStore()
+      const run = fakeRun()
+
+      seedTickets(mockTickets)
+      const promise = store.startSimulation({ simulationCount: 100 })
+      await untilRunStarts()
+      run.settle(finishedRun(100, 400, 90))
+      await promise
+
+      store.cashOut()
+
+      expect(store.meter).toEqual({ draws: 0, spent: 0, won: 0 })
+      expect(store.state.phase).toBe('config')
+      expect(store.state.results).toBeNull()
+      expect(useTicketsStore().state.tickets).toHaveLength(mockTickets.length)
+    })
+
+    it('cashing out mid-run stops the run and still ends at zero', async () => {
+      const store = useSimulationStore()
+      const run = fakeRun()
+
+      seedTickets(mockTickets)
+      const promise = store.startSimulation({ simulationCount: 100 })
+      await untilRunStarts()
+      run.progress(snapshotAt(40, 160, 30))
+
+      store.cashOut()
+      await promise
+
+      expect(run.cancel).toHaveBeenCalledTimes(1)
+      expect(store.meter).toEqual({ draws: 0, spent: 0, won: 0 })
+    })
+  })
+
   it('should return to the config screen and keep the config', () => {
     const store = useSimulationStore()
     const config = { simulationCount: 100 }

@@ -18,7 +18,7 @@
       </span>
       <div class="reel" :style="{ '--reel-i': i }">
         <div
-          v-if="phase === 'spinning' || phase === 'landing'"
+          v-if="autoplay || phase === 'spinning' || phase === 'landing'"
           :class="[
             'reel-strip',
             { 'reel-strip--stopping': phase === 'landing' },
@@ -34,22 +34,24 @@
           />
         </div>
 
-        <LottoBall
-          v-if="
-            (phase === 'landing' || phase === 'shown') && reel.number !== null
-          "
-          :number="reel.number"
-          :type="reel.type"
-          hit
-          :class="{ 'reel-ball--landing': phase === 'landing' }"
-        />
-        <span
-          v-else-if="phase === 'idle'"
-          class="lotto-ball lotto-ball--socket"
-          aria-hidden="true"
-        >
-          <span class="lotto-ball__num">?</span>
-        </span>
+        <template v-if="!autoplay">
+          <LottoBall
+            v-if="
+              (phase === 'landing' || phase === 'shown') && reel.number !== null
+            "
+            :number="reel.number"
+            :type="reel.type"
+            hit
+            :class="{ 'reel-ball--landing': phase === 'landing' }"
+          />
+          <span
+            v-else-if="phase === 'idle'"
+            class="lotto-ball lotto-ball--socket"
+            aria-hidden="true"
+          >
+            <span class="lotto-ball__num">?</span>
+          </span>
+        </template>
       </div>
     </template>
   </div>
@@ -75,9 +77,11 @@ interface Props {
   euroNumbers: readonly number[] | null
   /** True while a draw is being fetched */
   spinning: boolean
+  /** True while autoplay runs: draws go by too fast to land, so the reels just turn */
+  autoplay?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), { autoplay: false })
 
 const emit = defineEmits<{
   /** The reels started spinning: hide anything that would spoil the result */
@@ -217,6 +221,7 @@ const reels = computed(() =>
 )
 
 const summary = computed(() => {
+  if (props.autoplay) return 'Autoplay running'
   if (phase.value === 'spinning' || phase.value === 'landing') {
     return 'Drawing numbers'
   }

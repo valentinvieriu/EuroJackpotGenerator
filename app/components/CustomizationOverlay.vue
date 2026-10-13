@@ -19,7 +19,7 @@
               id="customize-title"
               class="text-xl font-semibold text-content-primary"
             >
-              Customize your tickets
+              Choose your tickets
             </h2>
             <button
               type="button"

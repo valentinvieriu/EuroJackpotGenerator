@@ -242,10 +242,12 @@ const handleStartSimulation = () => {
 
 **Key Components**:
 
-- **SlotMachine**: The cabinet that anchors the page in every state. Holds the reels (`SlotReels`), the LED session meters (`LedMeter`), the stake stepper and the spin button; the first spin buys simple-mode tickets, later spins re-draw against the tickets on the table
-- **SlotReels**: Spins while a draw is in flight and lands the drawn numbers reel by reel. Emits `spin`, `reelStop` and `settled`, which the machine uses to time the reveal and the sounds
+- **SlotMachine**: The cabinet that anchors the page in every state, and the only place the machine is operated from. Holds the reels (`SlotReels`), the LED meters (`LedMeter`), the stake stepper, the spin button, the autoplay control (start/stop plus the number of draws), "Cash out" and the link to the paytable. The first spin buys simple-mode tickets, later spins re-draw against the tickets on the table. The meters read `SimulationStore.meter`: one ledger for spins by hand and autoplay runs alike
+- **SlotReels**: Spins while a draw is in flight and lands the drawn numbers reel by reel. Emits `spin`, `reelStop` and `settled`, which the machine uses to time the reveal and the sounds. During autoplay the reels just turn: draws go by too fast to land
 - **LottoBall**: Pure-CSS 3D ball used for every number (tickets and reels); replaces the former per-number canvas
-- **TicketGenerator**: Page layout around the machine: paytable before the first spin, then tickets and the long-run panel
+- **TicketGenerator**: Page layout around the machine, as one column: the paytable before the first spin, afterwards the ticket tray and, once autoplay has run, the long-run report. Autoplay folds the tray away and the next spin by hand brings it back
+- **TicketTray**: The bet. Its summary line (ticket count, stake per spin, "Change tickets") is always on show; opened, it lists the tickets with their matches and holds the two actions that need the numbers themselves: sharing them and filling them into Lotto Bayern's form. Tickets hold still while a run is playing them
+- **PaytableSheet**: The paytable as a dialog, opened from the cabinet once tickets are on the table
 - **PaytableTable**: Exact odds and last-paid prize per class; with a finished autoplay run it also shows hits against expected hits
 - **BankrollChart**: SVG line chart of money paid in vs won back, with crosshair tooltip, keyboard stepping and a table view
 - **CustomizationOverlay**: Centralized modal overlay for all customization interfaces, providing consistent user experience across both first screen and results screen
@@ -253,7 +255,7 @@ const handleStartSimulation = () => {
 - **UnpopularityDisplay**: Educational component explaining unpopular combination factors and cognitive biases
 - **FrequencyDisplay**: Comprehensive frequency visualization with bar charts and statistical analysis
 - **TicketItem**: One compact row per ticket with deletion, matched numbers in gold and the prize line
-- **MonteCarloPanel**: "Autoplay": configuration, live progress and results for the Monte Carlo run via `SimulationStore`
+- **MonteCarloPanel**: The long-run stage: live progress and the report of the autoplay run in `SimulationStore`. The run itself is started from the cabinet
 - **Progress Components**: Live view of the worker's progress snapshots (the bankroll chart grows as they arrive) with instant cancellation
 
 **Utility Organization**:
@@ -377,7 +379,7 @@ The application supports four distinct number generation methods, each serving d
 
 **Custom Mode Flow**:
 
-1. **Mode Transition**: User switches from simple to custom mode via "Customize" button
+1. **Mode Transition**: User switches from simple to custom mode via "Choose your own tickets" on the cabinet or "Change tickets" on the ticket tray
 1. **User Configuration**: Component captures system parameters (main/euro numbers) and optional favorite numbers
 1. **Validation**: Zod schemas validate parameters including favorite number constraints before API call
 1. **Generation**: Server applies uniform, weighted, favorite-enhanced, or unpopular algorithms based on configuration

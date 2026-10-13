@@ -61,6 +61,8 @@ export const REEL_STAGGER_MS = 90 // Delay between one reel stopping and the nex
 export const REEL_LAND_MS = 420 // Duration of a single reel's landing animation
 export const REEL_SETTLE_GRACE_MS = 400 // Wait this long for a result before giving up on a spin
 export const LED_TWEEN_MS = 600 // LED meters roll to their new value over this duration
+export const LED_WHOLE_EURO_FROM = 100_000 // LED meters drop the cents from this amount
+export const LED_COMPACT_FROM = 10_000_000 // LED meters abbreviate (e.g. €200M) from this amount
 
 // Sound: volume multiplier per user-selected level
 export const SOUND_LEVEL_VOLUME = {
@@ -165,6 +167,7 @@ export const SIMPLE_MODE_METHOD = 'random' as const
 export const SIMULATION_OPTION_VALUES = [
   100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000,
 ] as const
+export const AUTOPLAY_DEFAULT_DRAWS = 1_000 // Preselected on the cabinet's autoplay control
 
 // Frequency Ratio Thresholds
 export const FREQ_RATIO_STRONG = 1.15

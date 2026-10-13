@@ -37,6 +37,7 @@
     </div>
 
     <button
+      v-if="removable"
       type="button"
       class="rounded-full p-1.5 text-content-muted transition-colors duration-150 hover:bg-error-dark/25 hover:text-error-light"
       :aria-label="`Remove ticket ${ticketNumber}`"
@@ -92,9 +93,14 @@ interface Props {
   ticketNumber: number
   /** A draw is on the table, so numbers that missed can recede */
   hasDraw?: boolean
+  /** Off while a run is playing these tickets */
+  removable?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), { hasDraw: false })
+const props = withDefaults(defineProps<Props>(), {
+  hasDraw: false,
+  removable: true,
+})
 
 const emit = defineEmits<{
   delete: [ticketId: number]

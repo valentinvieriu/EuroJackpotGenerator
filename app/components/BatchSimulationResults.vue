@@ -226,7 +226,7 @@
       <button
         type="button"
         class="btn-casino-gold rounded-xl px-6 py-2.5 font-cta"
-        @click="$emit('reset')"
+        @click="$emit('again')"
       >
         Run it again
       </button>
@@ -262,7 +262,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), { trajectory: () => [] })
 
-defineEmits<{ reset: [] }>()
+defineEmits<{ again: [] }>()
 
 const isLoss = computed(() => props.results.netProfit < 0)
 const playingTime = computed(() =>

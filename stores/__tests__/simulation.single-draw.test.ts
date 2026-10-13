@@ -247,12 +247,12 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
       eurojackpotTurnover: [],
     } as any)
 
-    await sim.runSingleDraw()
-    expect(sim.state.singleDraw.phase).toBe('results')
-
-    // Start Monte Carlo to reach results state (tickets already present)
+    // Monte Carlo first: starting a run clears the draw on the table
     await sim.startSimulation({ simulationCount: 100 })
     expect(sim.state.phase).toBe('results')
+
+    await sim.runSingleDraw()
+    expect(sim.state.singleDraw.phase).toBe('results')
 
     // Generate new tickets → should reset Monte Carlo to config and rehighlight single draw
     seedTickets([
