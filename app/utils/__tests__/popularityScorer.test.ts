@@ -10,6 +10,16 @@ import {
 
 describe('popularityScorer', () => {
   describe('scorePopularity', () => {
+    it('rejects fractional and non-finite numbers before scoring', () => {
+      for (const invalid of [Number.NaN, Infinity, 4.5]) {
+        expect(() =>
+          scorePopularity({ mains: [invalid, 12, 20, 27, 49], euros: [2, 9] })
+        ).toThrow()
+        expect(() =>
+          scorePopularity({ mains: [4, 12, 20, 27, 49], euros: [invalid, 9] })
+        ).toThrow()
+      }
+    })
     it('validates input correctly', () => {
       // Invalid arrays
       expect(() =>

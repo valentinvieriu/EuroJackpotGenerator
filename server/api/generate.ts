@@ -1,8 +1,9 @@
 import { combinationCount } from '~/utils/combinatorics'
 import type { H3Event } from 'h3'
-import { readBody, defineEventHandler } from 'h3'
+import { readBody, defineEventHandler, getHeader } from 'h3'
 import type { Ticket, StatisticsData, GenerateResponse } from '~/schemas'
 import { generateRequestSchema, generateResponseSchema } from '~/schemas'
+import { lottoBayernGenerateRequestSchema } from '~/schemas/lottoBayern'
 import {
   validateInput,
   validateOutput,
@@ -19,6 +20,7 @@ import {
   MAIN_NUMBER_MAX,
   EURO_NUMBER_MIN,
   EURO_NUMBER_MAX,
+  LOTTO_BAYERN_ORIGIN,
 } from '~/utils/constants'
 import { generateSeededRandomNumbers } from '../utils/seededRng'
 import { logger } from '~/utils/logger'
@@ -172,7 +174,9 @@ export default defineEventHandler(
         seed,
         favoriteNumbers,
       } = validateInput(
-        generateRequestSchema,
+        getHeader(event, 'origin') === LOTTO_BAYERN_ORIGIN
+          ? lottoBayernGenerateRequestSchema
+          : generateRequestSchema,
         rawBody,
         'ticket generation request'
       )

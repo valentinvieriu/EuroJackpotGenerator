@@ -8,6 +8,8 @@ import {
   EURO_NUMBER_MIN,
   EURO_NUMBER_MAX,
   POPULARITY_CANDIDATES_COUNT,
+  MAIN_NUMBERS_COUNT,
+  EURO_NUMBERS_COUNT,
 } from '~/utils/constants'
 import {
   scorePopularity,
@@ -353,12 +355,12 @@ export function generateUnpopularNumbers(
   euroNumbers: number[]
   popularityResult: PopularityResult
 } {
-  if (candidatesCount < 1) {
-    throw new Error('candidatesCount must be at least 1')
+  if (!Number.isInteger(candidatesCount) || candidatesCount < 1) {
+    throw new Error('candidatesCount must be at least 1 and an integer')
   }
 
   // Validate that this is standard EuroJackpot format (popularity scorer requirement)
-  if (mainCount !== 5 || euroCount !== 2) {
+  if (mainCount !== MAIN_NUMBERS_COUNT || euroCount !== EURO_NUMBERS_COUNT) {
     throw new Error(
       'generateUnpopularNumbers only supports standard EuroJackpot format (5 main + 2 euro numbers)'
     )
@@ -369,7 +371,7 @@ export function generateUnpopularNumbers(
     euros: number[]
     popularityResult: PopularityResult
   } | null = null
-  let lowestPopularityScore = Infinity
+  let lowestRawScore = Infinity
 
   // Generate multiple candidates and find the least popular
   for (let i = 0; i < candidatesCount; i++) {
@@ -393,9 +395,9 @@ export function generateUnpopularNumbers(
       }
       const popularityResult = scorePopularity(combo)
 
-      // Keep track of the least popular (highest unpopularity score)
-      if (popularityResult.popularityScore < lowestPopularityScore) {
-        lowestPopularityScore = popularityResult.popularityScore
+      // Rank by the raw heuristic; rounding the display score creates ties.
+      if (popularityResult.features.raw < lowestRawScore) {
+        lowestRawScore = popularityResult.features.raw
         bestCandidate = {
           mains: candidateMains,
           euros: candidateEuros,

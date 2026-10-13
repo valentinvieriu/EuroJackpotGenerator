@@ -1,0 +1,130 @@
+:host {
+  color-scheme: dark;
+  font:
+    14px/1.5 system-ui,
+    sans-serif;
+  color: var(--color-content-primary);
+}
+* {
+  box-sizing: border-box;
+}
+section {
+  width: 500px;
+  max-width: calc(100vw - 32px);
+  max-height: 88vh;
+  overflow: auto;
+  background: var(--color-surface-primary-light);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 16px;
+  box-shadow: 0 12px 60px
+    color-mix(in srgb, var(--color-surface-tertiary) 65%, transparent);
+  padding: 22px;
+}
+h2 {
+  font-size: 21px;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+p {
+  margin: 8px 0;
+  color: var(--color-content-secondary);
+}
+label {
+  display: block;
+  font-weight: 600;
+  margin: 10px 0 4px;
+}
+textarea,
+input,
+select {
+  font: inherit;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 7px;
+  padding: 9px;
+  background: var(--color-surface-primary-light);
+  color: var(--color-content-primary);
+  width: 100%;
+}
+textarea {
+  min-height: 125px;
+  resize: vertical;
+  font:
+    13px/1.6 ui-monospace,
+    monospace;
+}
+button {
+  font: 600 14px system-ui;
+  cursor: pointer;
+  padding: 10px 13px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 7px;
+  background: var(--color-surface-secondary);
+  color: var(--color-content-primary);
+}
+button:hover {
+  background: var(--color-surface-card-hover);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+button.primary {
+  background: var(--color-interactive-primary);
+  color: var(--color-content-inverse);
+  border-color: var(--color-interactive-primary);
+}
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.row > label {
+  flex: 1;
+  min-width: 110px;
+}
+.actions {
+  margin-top: 14px;
+}
+.close {
+  float: right;
+  font-size: 18px;
+  padding: 3px 9px;
+}
+details {
+  border-top: 1px solid var(--color-border-secondary);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+pre {
+  font:
+    12px/1.6 ui-monospace,
+    monospace;
+  white-space: pre-wrap;
+  background: var(--color-surface-secondary);
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 180px;
+  overflow: auto;
+}
+pre:empty {
+  display: none;
+}
+.status {
+  min-height: 22px;
+  margin-top: 10px;
+  white-space: pre-wrap;
+}
+.error {
+  color: var(--color-error);
+}
+small {
+  color: var(--color-content-secondary);
+}
+input[type='number'] {
+  max-width: 120px;
+}

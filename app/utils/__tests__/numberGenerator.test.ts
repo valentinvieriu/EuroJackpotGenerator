@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import * as popularityScorer from '../popularityScorer'
 import {
   generateRandomNumbers,
   generateNumbers,
@@ -220,6 +221,30 @@ describe('number generator', () => {
       expect(() => generateUnpopularNumbers(5, 2, -1)).toThrow(
         'candidatesCount must be at least 1'
       )
+      for (const invalid of [Number.NaN, Infinity, 1.5]) {
+        expect(() => generateUnpopularNumbers(5, 2, invalid)).toThrow()
+      }
+    })
+
+    it('chooses the lower raw score when display scores round to a tie', () => {
+      const originalScore = popularityScorer.scorePopularity
+      const score = vi.spyOn(popularityScorer, 'scorePopularity')
+      let candidate = 0
+      score.mockImplementation((combo) => {
+        const result = originalScore(combo)
+        return {
+          ...result,
+          popularityScore: 70,
+          features: { ...result.features, raw: candidate++ === 0 ? 0.71 : 0.7 },
+        }
+      })
+      try {
+        expect(
+          generateUnpopularNumbers(5, 2, 2).popularityResult.features.raw
+        ).toBe(0.7)
+      } finally {
+        score.mockRestore()
+      }
     })
 
     it('throws with non-standard EuroJackpot format', () => {

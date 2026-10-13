@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+  <title>Install Lotto Bayern number filler</title>
+  <style>
+    :host {
+      --color-content-primary: oklch(0.98 0.003 80);
+      --color-surface-primary-light: oklch(0.22 0.025 229);
+      --color-border-secondary: oklch(0.25 0.03 229);
+      --color-surface-tertiary: oklch(0.12 0.02 229);
+      --color-content-secondary: oklch(0.75 0.01 229);
+      --color-border-primary: oklch(0.85 0.12 85);
+      --color-surface-secondary: oklch(0.25 0.03 229);
+      --color-surface-card-hover: oklch(0.28 0.03 229);
+      --color-interactive-primary: oklch(0.6 0.2 25);
+      --color-content-inverse: oklch(0.13 0.02 229);
+      --color-error: oklch(0.6 0.2 15);
+    }
+    :host {
+      color-scheme: dark;
+      font:
+        14px/1.5 system-ui,
+        sans-serif;
+      color: var(--color-content-primary);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    section {
+      width: 500px;
+      max-width: calc(100vw - 32px);
+      max-height: 88vh;
+      overflow: auto;
+      background: var(--color-surface-primary-light);
+      border: 1px solid var(--color-border-secondary);
+      border-radius: 16px;
+      box-shadow: 0 12px 60px
+        color-mix(in srgb, var(--color-surface-tertiary) 65%, transparent);
+      padding: 22px;
+    }
+    h2 {
+      font-size: 21px;
+      line-height: 1.2;
+      margin: 0 0 8px;
+    }
+    p {
+      margin: 8px 0;
+      color: var(--color-content-secondary);
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin: 10px 0 4px;
+    }
+    textarea,
+    input,
+    select {
+      font: inherit;
+      border: 1px solid var(--color-border-primary);
+      border-radius: 7px;
+      padding: 9px;
+      background: var(--color-surface-primary-light);
+      color: var(--color-content-primary);
+      width: 100%;
+    }
+    textarea {
+      min-height: 125px;
+      resize: vertical;
+      font:
+        13px/1.6 ui-monospace,
+        monospace;
+    }
+    button {
+      font: 600 14px system-ui;
+      cursor: pointer;
+      padding: 10px 13px;
+      border: 1px solid var(--color-border-secondary);
+      border-radius: 7px;
+      background: var(--color-surface-secondary);
+      color: var(--color-content-primary);
+    }
+    button:hover {
+      background: var(--color-surface-card-hover);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+    button.primary {
+      background: var(--color-interactive-primary);
+      color: var(--color-content-inverse);
+      border-color: var(--color-interactive-primary);
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+    .row > label {
+      flex: 1;
+      min-width: 110px;
+    }
+    .actions {
+      margin-top: 14px;
+    }
+    .close {
+      float: right;
+      font-size: 18px;
+      padding: 3px 9px;
+    }
+    details {
+      border-top: 1px solid var(--color-border-secondary);
+      margin-top: 14px;
+      padding-top: 12px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    pre {
+      font:
+        12px/1.6 ui-monospace,
+        monospace;
+      white-space: pre-wrap;
+      background: var(--color-surface-secondary);
+      border-radius: 8px;
+      padding: 10px;
+      max-height: 180px;
+      overflow: auto;
+    }
+    pre:empty {
+      display: none;
+    }
+    .status {
+      min-height: 22px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+    .error {
+      color: var(--color-error);
+    }
+    small {
+      color: var(--color-content-secondary);
+    }
+    input[type='number'] {
+      max-width: 120px;
+    }
+
+    body {
+      font: 16px/1.6 system-ui;
+      max-width: 760px;
+      margin: 48px auto;
+      padding: 0 24px;
+      background: var(--color-surface-primary-light);
+      color: var(--color-content-primary);
+    }
+    :root {
+      --color-content-primary: oklch(0.98 0.003 80);
+      --color-surface-primary-light: oklch(0.22 0.025 229);
+      --color-border-secondary: oklch(0.25 0.03 229);
+      --color-surface-tertiary: oklch(0.12 0.02 229);
+      --color-content-secondary: oklch(0.75 0.01 229);
+      --color-border-primary: oklch(0.85 0.12 85);
+      --color-surface-secondary: oklch(0.25 0.03 229);
+      --color-surface-card-hover: oklch(0.28 0.03 229);
+      --color-interactive-primary: oklch(0.6 0.2 25);
+      --color-content-inverse: oklch(0.13 0.02 229);
+      --color-error: oklch(0.6 0.2 15);
+    }
+    a {
+      color: var(--color-content-primary);
+    }
+    .bookmark {
+      display: inline-block;
+      padding: 16px 22px;
+      border-radius: 10px;
+      background: var(--color-interactive-primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+    }
+  </style>
+  <h1>Lotto Bayern number filler</h1>
+  <p>
+    This bookmarklet uses your Eurojackpot app’s server algorithms and fills the
+    normal ticket form.
+  </p>
+  <ol>
+    <li>Drag the link below onto your browser’s bookmarks bar.</li>
+    <li>
+      Open
+      <a href="https://www.lotto-bayern.de/eurojackpot/normalschein"
+        >Lotto Bayern’s Eurojackpot Normalschein</a
+      >
+      and click the bookmark.
+    </li>
+    <li>
+      Paste numbers or expand
+      <strong>Generate using the app’s algorithms</strong>. Preview, then click
+      <strong>Fill ticket fields</strong>.
+    </li>
+  </ol>
+  <a
+    class="bookmark"
+    href="javascript:void%20function()%7B%22use%20strict%22%3B(()%3D%3E%7Bvar%20oe%3D%5B2%2C5%5D%2Cie%3Doe.length*52%3Bvar%20A%3D5%3Bvar%20Y%3D10%3Bvar%20X%3D%22https%3A%2F%2Fwww.lotto-bayern.de%22%2CW%3D%22%2Feurojackpot%2Fnormalschein%22%2CT%3D12%2CJ%3D%22%2Fapi%2Fgenerate%22%2Cq%3D%22https%3A%2F%2Feurojackpot.vv42.workers.dev%22%2Cj%3D2e4%2CV%3D4500%2CQ%3D25%3Bvar%20b%3D%5B%7Bvalue%3A%22uniform%22%2Clabel%3A%22Uniform%20random%22%2Cdescription%3A%22Every%20valid%20combination%20has%20equal%20selection%20probability.%22%7D%2C%7Bvalue%3A%22weighted%22%2Clabel%3A%22Weighted%20by%20historical%20frequencies%22%2Cdescription%3A%22Uses%20square-root%20frequencies%20and%20sampling%20without%20replacement.%20Falls%20back%20to%20uniform%20if%20statistics%20are%20unavailable.%20No%20forced%20odd%2Feven%20or%20high%2Flow%20pattern.%22%7D%2C%7Bvalue%3A%22favorites%22%2Clabel%3A%22Favourites%22%2Cdescription%3A%22Uses%20the%20app%5Cu2019s%20favourite%20weighting%20with%20historical%20frequencies.%20If%20statistics%20are%20unavailable%2C%20it%20includes%20favourites%20that%20fit%20and%20fills%20the%20remaining%20slots%20randomly.%22%7D%2C%7Bvalue%3A%22unpopular%22%2Clabel%3A%22Unpopular%20combinations%20(heuristic)%22%2Cdescription%3A%22Ranks%20random%20candidates%20using%20the%20app%5Cu2019s%20human-choice%20heuristics.%20The%20score%20is%20not%20measured%20player%20popularity%20or%20a%20calibrated%20prize-sharing%20probability.%22%7D%5D%3Bvar%20ae%3DArray.from(%7Blength%3A12%7D%2C(o%2Ct)%3D%3E1%2Bt)%3Bvar%20Z%3Do%3D%3E%7Bthrow%20new%20Error(o)%7D%2Cm%3D(o%2Ct)%3D%3E%7Bo%7C%7CZ(t)%7D%2Cre%3Do%3D%3E%5B...o%5D.sort((t%2Cc)%3D%3Et-c)%2CR%3Do%3D%3EArray.isArray(o)%3Fo.map(t%3D%3E(m(typeof%20t%3D%3D%22number%22%7C%7Ctypeof%20t%3D%3D%22string%22%26%26%2F%5E%5Cd%2B%24%2F.test(t)%2C%22Use%20integer%20numbers%20only.%22)%2CNumber(t)))%3A(m(typeof%20o%3D%3D%22string%22%26%26%2F%5E%5B%5Cd%5Cs%2C%5D*%24%2F.test(o)%2C%22Separate%20numbers%20with%20spaces%20or%20commas.%22)%2Co.trim()%3Fo.trim().split(%2F%5B%5Cs%2C%5D%2B%2F).map(Number)%3A%5B%5D)%3Bfunction%20z(o%2Ct%2Cc%2Cs)%7Blet%20n%3DR(o)%3Breturn%20m(n.length%3D%3D%3Dt%2C%60%24%7Bs%7D%3A%20expected%20%24%7Bt%7D%20numbers.%60)%2Cm(n.every(a%3D%3ENumber.isInteger(a)%26%26a%3E%3D1%26%26a%3C%3Dc)%2C%60%24%7Bs%7D%3A%20numbers%20must%20be%20from%201%20to%20%24%7Bc%7D.%60)%2Cm(new%20Set(n).size%3D%3D%3Dn.length%2C%60%24%7Bs%7D%3A%20duplicate%20numbers.%60)%2Cre(n)%7Dfunction%20h(o)%7Bo%3Do.trim()%2Cm(o%2C%22Paste%20numbers%20or%20generate%20them%20first.%22)%3Blet%20t%3Bif(%2F%5E%5B%5B%7B%5D%2F.test(o))%7Blet%20s%3Btry%7Bs%3DJSON.parse(o)%7Dcatch%7BZ(%22Invalid%20JSON.%20Paste%20JSON%20data%2C%20not%20JavaScript%20code.%22)%7Dt%3DArray.isArray(s)%3Fs%3As%3F.mainPrognosises%3F.EUROJACKPOT%3F%3Fs%3F.fields%3F%3Fs%3F.tickets%2Cm(Array.isArray(t)%2C%22JSON%20must%20be%20an%20array%20of%20lines%20or%20a%20Eurojackpot%20draft%20payload.%22)%2Ct.every(n%3D%3Etypeof%20n%3D%3D%22number%22)%26%26(t%3D%5Bt%5D)%2Ct%3Dt.map(n%3D%3EArray.isArray(n)%3F%7Bmains%3An.slice(0%2C5)%2Ceuros%3An.slice(5)%7D%3A%7Bmains%3An%3F.mains%3F%3Fn%3F.mainNumbers%3F%3Fn%3F.prognosises%2Ceuros%3An%3F.euros%3F%3Fn%3F.euroNumbers%3F%3Fn%3F.additionalPrognosises%7D)%7Delse%20t%3Do.split(%2F%5B%5Cr%5Cn%3B%5D%2B%2F).map(s%3D%3E%7Blet%20n%3Ds.trim().split(%2F%5B%7C%2B%5D%2F)%3Bif(m(n.length%3C%3D2%2C%22Use%20one%20%7C%20or%20%2B%20between%20main%20numbers%20and%20Euro%20numbers.%22)%2Cn.length%3D%3D%3D2)return%7Bmains%3AR(n%5B0%5D)%2Ceuros%3AR(n%5B1%5D)%7D%3Blet%20a%3DR(n%5B0%5D)%3Breturn%7Bmains%3Aa.slice(0%2C5)%2Ceuros%3Aa.slice(5)%7D%7D)%3Bm(t.length%3E%3D1%26%26t.length%3C%3DT%2C%22Enter%201%20to%2012%20lines.%22)%3Blet%20c%3Dnew%20Set%3Breturn%20t.map((s%2Cn)%3D%3E%7Blet%20a%3Dz(s.mains%2C5%2C50%2C%60Line%20%24%7Bn%2B1%7D%20main%20numbers%60)%2Cu%3Dz(s.euros%2C2%2C12%2C%60Line%20%24%7Bn%2B1%7D%20Euro%20numbers%60)%2C_%3D%60%24%7Ba%7D%7C%24%7Bu%7D%60%3Breturn%20m(!c.has(_)%2C%60Line%20%24%7Bn%2B1%7D%20repeats%20an%20earlier%20line.%60)%2Cc.add(_)%2C%7Bmains%3Aa%2Ceuros%3Au%7D%7D)%7Dvar%20x%3Do%3D%3Eo.map(t%3D%3E%60%24%7Bt.mains.join(%22%20%22)%7D%20%7C%20%24%7Bt.euros.join(%22%20%22)%7D%60).join(%60%0A%60)%3Bfunction%20ne(o)%7Blet%20t%3Dnew%20URL(o)%2Cc%3D%5B%22localhost%22%2C%22127.0.0.1%22%2C%22%5B%3A%3A1%5D%22%5D.includes(t.hostname)%3Bif(t.protocol!%3D%3D%22https%3A%22%26%26!(c%26%26t.protocol%3D%3D%3D%22http%3A%22)%7C%7Ct.username%7C%7Ct.password%7C%7Ct.search%7C%7Ct.hash%7C%7Ct.pathname!%3D%3D%22%2F%22%26%26t.pathname!%3D%3D%22%22)throw%20new%20Error(%22Enter%20the%20app%5Cu2019s%20HTTPS%20origin%20only%2C%20without%20a%20path%2C%20credentials%2C%20query%2C%20or%20fragment.%22)%3Breturn%20t.origin%7Dfunction%20se(o)%7Bif(!b.some(c%3D%3Ec.value%3D%3D%3Do.algorithm))throw%20new%20Error(%22Choose%20a%20supported%20generation%20method.%22)%3Bif(!Number.isInteger(o.ticketCount)%7C%7Co.ticketCount%3C1%7C%7Co.ticketCount%3ET)throw%20new%20Error(%60Generate%20%24%7B1%7D%20to%20%24%7BT%7D%20lines.%60)%3Blet%20t%3D(c%2Cs)%3D%3E%7Blet%20n%3DR(c)%3Bif(n.length%3EA%7C%7Cnew%20Set(n).size!%3D%3Dn.length%7C%7C!n.every(a%3D%3ENumber.isInteger(a)%26%26a%3E%3D1%26%26a%3C%3Ds))throw%20new%20Error(%60Enter%20up%20to%20%24%7BA%7D%20distinct%20favourite%20integers%20from%201%20to%20%24%7Bs%7D.%60)%3Breturn%20n%7D%3Breturn%7BticketCount%3Ao.ticketCount%2CmainCount%3A5%2CeuroCount%3A2%2Calgorithm%3Ao.algorithm%2C...o.algorithm%3D%3D%3D%22favorites%22%3F%7BfavoriteNumbers%3A%7BmainNumbers%3At(o.favouritesMain%2C50)%2CeuroNumbers%3At(o.favouritesEuro%2C12)%7D%7D%3A%7B%7D%7D%7Dasync%20function%20ee(o%2Ct%3Dfetch)%7Blet%20c%3Dne(o.appUrl)%2Cs%3Dse(o)%2Cn%3Dnew%20AbortController%2Ca%3DsetTimeout(()%3D%3En.abort()%2Cj)%3Btry%7Blet%20u%3Dawait%20t(%60%24%7Bc%7D%24%7BJ%7D%60%2C%7Bmethod%3A%22POST%22%2Cmode%3A%22cors%22%2Ccredentials%3A%22omit%22%2Credirect%3A%22error%22%2Cheaders%3A%7B%22Content-Type%22%3A%22application%2Fjson%22%2CAccept%3A%22application%2Fjson%22%7D%2Csignal%3An.signal%2Cbody%3AJSON.stringify(s)%7D)%3Bif(!u.ok)throw%20new%20Error(%60App%20generation%20failed%20(HTTP%20%24%7Bu.status%7D).%60)%3Blet%20_%3Dh(JSON.stringify(await%20u.json()))%3Bif(_.length!%3D%3Do.ticketCount)throw%20new%20Error(%22The%20app%20returned%20an%20unexpected%20number%20of%20lines.%22)%3Breturn%20_%7Dcatch(u)%7Bthrow%20n.signal.aborted%3Fnew%20Error(%22App%20generation%20timed%20out.%20Check%20the%20app%20before%20retrying.%22)%3Au%20instanceof%20TypeError%3Fnew%20TypeError(%22Cannot%20reach%20the%20generator.%20Check%20the%20app%20URL%2C%20connection%2C%20and%20deployed%20Lotto%20Bayern%20CORS%20support.%22)%3Au%7Dfinally%7BclearTimeout(a)%7D%7D(()%3D%3E%7B%22use%20strict%22%3Bif(location.origin!%3D%3DX%7C%7Clocation.pathname.replace(%2F%5C%2F%24%2F%2C%22%22)!%3D%3DW)%7Balert(%22Open%20https%3A%2F%2Fwww.lotto-bayern.de%2Feurojackpot%2Fnormalschein%20first.%22)%3Breturn%7Dlet%20o%3D%22lb-number-filler-v2%22%2Ct%3Ddocument.getElementById(o)%3Bif(t)%7Bt.shadowRoot.querySelector(%22textarea%22).focus()%3Breturn%7Dlet%20c%3De%3D%3E%7Bthrow%20new%20Error(e)%7D%2Cs%3D(e%2Cr)%3D%3E%7Be%7C%7Cc(r)%7D%2Cn%3De%3D%3E%5B...e%5D.sort((r%2Cp)%3D%3Er-p)%2Ca%3D(e%2Cr)%3D%3EJSON.stringify(n(e))%3D%3D%3DJSON.stringify(n(r))%2Cu%3De%3D%3Edocument.getElementById(%60tip-field-%24%7Be%7D%60)%3Bfunction%20_(e%2Cr)%7Breturn%5B...e.querySelectorAll(r)%5D.map(p%3D%3Ep.value).filter(p%3D%3Ep!%3D%3D%22%22).map(Number)%7Dfunction%20%24(e)%7Blet%20r%3Du(e)%3Breturn%20s(r%2C%60Field%20%24%7Be%2B1%7D%20was%20not%20found.%20The%20page%20layout%20may%20have%20changed.%60)%2Cs(r.querySelectorAll(%22.tipfield-form-controls%20input%5Btype%3Dnumber%5D%22).length%3D%3D%3D5%26%26r.querySelectorAll(%22.tipfield-form-controls-extra%20input%5Btype%3Dnumber%5D%22).length%3D%3D%3D2%2C%60Field%20%24%7Be%2B1%7D%3A%20unexpected%20page%20controls.%60)%2C%7Bmains%3A_(r%2C%22.tipfield-form-controls%20input%5Btype%3Dnumber%5D%22)%2Ceuros%3A_(r%2C%22.tipfield-form-controls-extra%20input%5Btype%3Dnumber%5D%22)%7D%7Dlet%20H%3D()%3D%3Enew%20Promise(e%3D%3EsetTimeout(e%2CQ))%3Basync%20function%20g(e%2Cr)%7Blet%20p%3DDate.now()%2BV%3Bdo%7Bif(e())return%3Bawait%20H()%7Dwhile(Date.now()%3Cp)%3Bc(r)%7Dlet%20y%3D()%3D%3Edocument.getElementById(%22layer-tip%22)%3F.classList.contains(%22visible%22)%3Basync%20function%20k(e%2Cr)%7Blet%20p%3Ddocument.getElementById(%60open-layer-%24%7Be%7D%60)%3Bs(p%2C%60Cannot%20open%20field%20%24%7Be%2B1%7D.%60)%2Cp.click()%2Cawait%20g(()%3D%3Ey()%26%26document.querySelector(%22%23layer-tip%20.field-number%22)%3F.textContent.trim()%3D%3D%3DString(e%2B1)%2C%60The%20editor%20for%20field%20%24%7Be%2B1%7D%20did%20not%20open.%60)%3Blet%20l%3Ddocument.getElementById(%22layer-tip%22)%2CE%3Dl.querySelector(%22%5Bdata-action-delete%5D%22)%2CD%3Dl.querySelector(%22%5Bdata-action-confirm%5D%22)%3Bs(E%26%26D%2C%22The%20site%20editor%20controls%20have%20changed.%22)%2CE.click()%2Cawait%20g(()%3D%3E!_(l%2C%22input%5Btype%3Dnumber%5D%22).length%2C%22The%20editor%20did%20not%20clear.%22)%3Bfor(let%5BU%2Cte%5Dof%5B%5B%22%5Bdata-numbers-primary%5D%22%2Cr.mains%5D%2C%5B%22%5Bdata-numbers-secondary%5D%22%2Cr.euros%5D%5D)for(let%20K%20of%20te)%7Blet%20F%3Dl.querySelector(%60%24%7BU%7D%20%5Bdata-number%3D%22%24%7BK%7D%22%5D%60)%3Bs(F%2C%60Number%20%24%7BK%7D%20was%20not%20found%20in%20the%20editor.%60)%2CF.click()%2Cawait%20H()%7Dawait%20g(()%3D%3Ea(_(l%2C%22.tipfield-form-controls%20input%5Btype%3Dnumber%5D%22)%2Cr.mains)%26%26a(_(l%2C%22.tipfield-form-controls-extra%20input%5Btype%3Dnumber%5D%22)%2Cr.euros)%2C%60The%20editor%20did%20not%20accept%20the%20numbers%20for%20field%20%24%7Be%2B1%7D.%60)%2CD.click()%2Cawait%20g(()%3D%3E%7Blet%20U%3D%24(e)%3Breturn!y()%26%26a(U.mains%2Cr.mains)%26%26a(U.euros%2Cr.euros)%7D%2C%60Field%20%24%7Be%2B1%7D%20did%20not%20update.%20Inspect%20the%20site%20before%20continuing.%60)%7Dlet%20M%3Ddocument.createElement(%22div%22)%3BM.id%3Do%2CM.style.cssText%3D%22position%3Afixed%3Bright%3A16px%3Bbottom%3A16px%3Bz-index%3A2147483647%3Bmax-width%3Acalc(100vw%20-%2032px)%3B%22%3Blet%20v%3DM.attachShadow(%7Bmode%3A%22open%22%7D)%3Bv.innerHTML%3D%60%0A%20%20%20%20%3Cstyle%3E%3Ahost%7B--color-content-primary%3Aoklch(0.98%200.003%2080)%3B--color-surface-primary-light%3Aoklch(0.22%200.025%20229)%3B--color-border-secondary%3Aoklch(0.25%200.03%20229)%3B--color-surface-tertiary%3Aoklch(0.12%200.02%20229)%3B--color-content-secondary%3Aoklch(0.75%200.01%20229)%3B--color-border-primary%3Aoklch(0.85%200.12%2085)%3B--color-surface-secondary%3Aoklch(0.25%200.03%20229)%3B--color-surface-card-hover%3Aoklch(0.28%200.03%20229)%3B--color-interactive-primary%3Aoklch(0.6%200.2%2025)%3B--color-content-inverse%3Aoklch(0.13%200.02%20229)%3B--color-error%3Aoklch(0.6%200.2%2015)%3B%7D%0A%3Ahost%20%7B%0A%20%20color-scheme%3A%20dark%3B%0A%20%20font%3A%0A%20%20%20%2014px%2F1.5%20system-ui%2C%0A%20%20%20%20sans-serif%3B%0A%20%20color%3A%20var(--color-content-primary)%3B%0A%7D%0A*%20%7B%0A%20%20box-sizing%3A%20border-box%3B%0A%7D%0Asection%20%7B%0A%20%20width%3A%20500px%3B%0A%20%20max-width%3A%20calc(100vw%20-%2032px)%3B%0A%20%20max-height%3A%2088vh%3B%0A%20%20overflow%3A%20auto%3B%0A%20%20background%3A%20var(--color-surface-primary-light)%3B%0A%20%20border%3A%201px%20solid%20var(--color-border-secondary)%3B%0A%20%20border-radius%3A%2016px%3B%0A%20%20box-shadow%3A%200%2012px%2060px%0A%20%20%20%20color-mix(in%20srgb%2C%20var(--color-surface-tertiary)%2065%25%2C%20transparent)%3B%0A%20%20padding%3A%2022px%3B%0A%7D%0Ah2%20%7B%0A%20%20font-size%3A%2021px%3B%0A%20%20line-height%3A%201.2%3B%0A%20%20margin%3A%200%200%208px%3B%0A%7D%0Ap%20%7B%0A%20%20margin%3A%208px%200%3B%0A%20%20color%3A%20var(--color-content-secondary)%3B%0A%7D%0Alabel%20%7B%0A%20%20display%3A%20block%3B%0A%20%20font-weight%3A%20600%3B%0A%20%20margin%3A%2010px%200%204px%3B%0A%7D%0Atextarea%2C%0Ainput%2C%0Aselect%20%7B%0A%20%20font%3A%20inherit%3B%0A%20%20border%3A%201px%20solid%20var(--color-border-primary)%3B%0A%20%20border-radius%3A%207px%3B%0A%20%20padding%3A%209px%3B%0A%20%20background%3A%20var(--color-surface-primary-light)%3B%0A%20%20color%3A%20var(--color-content-primary)%3B%0A%20%20width%3A%20100%25%3B%0A%7D%0Atextarea%20%7B%0A%20%20min-height%3A%20125px%3B%0A%20%20resize%3A%20vertical%3B%0A%20%20font%3A%0A%20%20%20%2013px%2F1.6%20ui-monospace%2C%0A%20%20%20%20monospace%3B%0A%7D%0Abutton%20%7B%0A%20%20font%3A%20600%2014px%20system-ui%3B%0A%20%20cursor%3A%20pointer%3B%0A%20%20padding%3A%2010px%2013px%3B%0A%20%20border%3A%201px%20solid%20var(--color-border-secondary)%3B%0A%20%20border-radius%3A%207px%3B%0A%20%20background%3A%20var(--color-surface-secondary)%3B%0A%20%20color%3A%20var(--color-content-primary)%3B%0A%7D%0Abutton%3Ahover%20%7B%0A%20%20background%3A%20var(--color-surface-card-hover)%3B%0A%7D%0Abutton%3Adisabled%20%7B%0A%20%20opacity%3A%200.5%3B%0A%20%20cursor%3A%20wait%3B%0A%7D%0Abutton.primary%20%7B%0A%20%20background%3A%20var(--color-interactive-primary)%3B%0A%20%20color%3A%20var(--color-content-inverse)%3B%0A%20%20border-color%3A%20var(--color-interactive-primary)%3B%0A%7D%0A.row%20%7B%0A%20%20display%3A%20flex%3B%0A%20%20gap%3A%208px%3B%0A%20%20align-items%3A%20end%3B%0A%20%20flex-wrap%3A%20wrap%3B%0A%7D%0A.row%20%3E%20label%20%7B%0A%20%20flex%3A%201%3B%0A%20%20min-width%3A%20110px%3B%0A%7D%0A.actions%20%7B%0A%20%20margin-top%3A%2014px%3B%0A%7D%0A.close%20%7B%0A%20%20float%3A%20right%3B%0A%20%20font-size%3A%2018px%3B%0A%20%20padding%3A%203px%209px%3B%0A%7D%0Adetails%20%7B%0A%20%20border-top%3A%201px%20solid%20var(--color-border-secondary)%3B%0A%20%20margin-top%3A%2014px%3B%0A%20%20padding-top%3A%2012px%3B%0A%7D%0Asummary%20%7B%0A%20%20cursor%3A%20pointer%3B%0A%20%20font-weight%3A%20600%3B%0A%7D%0Apre%20%7B%0A%20%20font%3A%0A%20%20%20%2012px%2F1.6%20ui-monospace%2C%0A%20%20%20%20monospace%3B%0A%20%20white-space%3A%20pre-wrap%3B%0A%20%20background%3A%20var(--color-surface-secondary)%3B%0A%20%20border-radius%3A%208px%3B%0A%20%20padding%3A%2010px%3B%0A%20%20max-height%3A%20180px%3B%0A%20%20overflow%3A%20auto%3B%0A%7D%0Apre%3Aempty%20%7B%0A%20%20display%3A%20none%3B%0A%7D%0A.status%20%7B%0A%20%20min-height%3A%2022px%3B%0A%20%20margin-top%3A%2010px%3B%0A%20%20white-space%3A%20pre-wrap%3B%0A%7D%0A.error%20%7B%0A%20%20color%3A%20var(--color-error)%3B%0A%7D%0Asmall%20%7B%0A%20%20color%3A%20var(--color-content-secondary)%3B%0A%7D%0Ainput%5Btype%3D&#39;number&#39;%5D%20%7B%0A%20%20max-width%3A%20120px%3B%0A%7D%0A%3C%2Fstyle%3E%0A%20%20%20%20%3Csection%20role%3D%22dialog%22%20aria-label%3D%22Eurojackpot%20number%20filler%22%3E%0A%20%20%20%20%20%20%3Cbutton%20type%3D%22button%22%20class%3D%22close%22%20id%3D%22close%22%20aria-label%3D%22Close%20number%20filler%22%3E%5CxD7%3C%2Fbutton%3E%0A%20%20%20%20%20%20%3Ch2%3EEurojackpot%20number%20filler%3C%2Fh2%3E%0A%20%20%20%20%20%20%3Cp%3EPaste%20one%20line%20per%20field%3A%20%3Cstrong%3E5%20main%20numbers%20%7C%202%20Euro%20numbers%3C%2Fstrong%3E.%20JSON%20from%20the%20earlier%20snippets%20works%20too.%3C%2Fp%3E%0A%20%20%20%20%20%20%3Clabel%20for%3D%22lines%22%3EYour%20numbers%3C%2Flabel%3E%0A%20%20%20%20%20%20%3Ctextarea%20id%3D%22lines%22%20spellcheck%3D%22false%22%20placeholder%3D%224%2012%2020%2027%2049%20%7C%202%209%26%2310%3B8%2016%2025%2034%2046%20%7C%205%2011%22%3E%3C%2Ftextarea%3E%0A%20%20%20%20%20%20%3Cdiv%20class%3D%22row%22%3E%3Clabel%20for%3D%22start%22%3EStart%20at%20field%20%3Cinput%20id%3D%22start%22%20type%3D%22number%22%20min%3D%221%22%20max%3D%2212%22%20value%3D%221%22%3E%3C%2Flabel%3E%3Cbutton%20type%3D%22button%22%20id%3D%22draft%22%3EUse%20generated%20draft%3C%2Fbutton%3E%3C%2Fdiv%3E%0A%20%20%20%20%20%20%3Csmall%3EImported%20lines%20replace%20consecutive%20fields.%20Other%20fields%2C%20draw%20day%2C%20duration%20and%20add-ons%20keep%20their%20current%20values.%3C%2Fsmall%3E%0A%20%20%20%20%20%20%3Cdetails%3E%3Csummary%3EGenerate%20using%20the%20app%5Cu2019s%20algorithms%3C%2Fsummary%3E%0A%20%20%20%20%20%20%20%20%3Clabel%20for%3D%22appUrl%22%3EGenerator%20app%20URL%3C%2Flabel%3E%3Cinput%20id%3D%22appUrl%22%20type%3D%22url%22%20value%3D%22%24%7Bq%7D%22%3E%0A%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22row%22%3E%3Clabel%20for%3D%22count%22%3ELines%20%3Cinput%20id%3D%22count%22%20type%3D%22number%22%20min%3D%22%24%7B1%7D%22%20max%3D%22%24%7BT%7D%22%20value%3D%22%24%7BT%7D%22%3E%3C%2Flabel%3E%0A%20%20%20%20%20%20%20%20%3Clabel%20for%3D%22algorithm%22%3EMethod%20%3Cselect%20id%3D%22algorithm%22%3E%24%7Bb.map(e%3D%3E%60%3Coption%20value%3D%22%24%7Be.value%7D%22%3E%24%7Be.label%7D%3C%2Foption%3E%60).join(%22%22)%7D%3C%2Fselect%3E%3C%2Flabel%3E%3C%2Fdiv%3E%0A%20%20%20%20%20%20%20%20%3Cp%20id%3D%22algorithmHelp%22%3E%3C%2Fp%3E%0A%20%20%20%20%20%20%20%20%3Cdiv%20id%3D%22favouriteControls%22%20hidden%3E%0A%20%20%20%20%20%20%20%20%20%20%3Clabel%20for%3D%22favMain%22%3EMain%20favourites%20(up%20to%20%24%7BA%7D)%3C%2Flabel%3E%3Cinput%20id%3D%22favMain%22%20placeholder%3D%22e.g.%204%2C%2012%2C%2020%2C%2027%2C%2049%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Clabel%20for%3D%22favEuro%22%3EEuro%20favourites%20(up%20to%20%24%7BA%7D)%3C%2Flabel%3E%3Cinput%20id%3D%22favEuro%22%20placeholder%3D%22e.g.%202%2C%209%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cp%3E%3Csmall%3EUses%20the%20app%5Cu2019s%20%24%7BY%7D%5CxD7%20favourite%20weight.%20Statistics%20fallback%20follows%20the%20app%5Cu2019s%20existing%20behaviour.%3C%2Fsmall%3E%3C%2Fp%3E%0A%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%20%20%20%20%3Cp%3E%3Csmall%3EGeneration%20sends%20your%20selected%20method%20and%20favourites%20to%20your%20app.%20Its%20server%20generates%20the%20numbers%3B%20filling%20the%20Lotto%20Bayern%20form%20is%20a%20separate%20action.%3C%2Fsmall%3E%3C%2Fp%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20type%3D%22button%22%20id%3D%22generate%22%3EGenerate%20preview%3C%2Fbutton%3E%0A%20%20%20%20%20%20%3C%2Fdetails%3E%0A%20%20%20%20%20%20%3Cpre%20id%3D%22preview%22%3E%3C%2Fpre%3E%0A%20%20%20%20%20%20%3Cdiv%20class%3D%22row%20actions%22%3E%3Cbutton%20type%3D%22button%22%20id%3D%22validate%22%3EPreview%3C%2Fbutton%3E%3Cbutton%20type%3D%22button%22%20id%3D%22fill%22%20class%3D%22primary%22%3EFill%20ticket%20fields%3C%2Fbutton%3E%3Cbutton%20type%3D%22button%22%20id%3D%22undo%22%20disabled%3EUndo%20fill%3C%2Fbutton%3E%3C%2Fdiv%3E%0A%20%20%20%20%20%20%3Cdiv%20id%3D%22status%22%20role%3D%22status%22%20aria-live%3D%22polite%22%20class%3D%22status%22%3E%3C%2Fdiv%3E%0A%20%20%20%20%20%20%3Csmall%3EFills%20the%20form%20only.%20Review%20the%20ticket%20and%20price%20on%20Lotto%20Bayern%20before%20saving%20or%20playing.%3C%2Fsmall%3E%0A%20%20%20%20%3C%2Fsection%3E%60%2Cdocument.body.append(M)%3Blet%20i%3De%3D%3Ev.getElementById(e)%2CC%3D!1%2CS%3Dnull%2CO%3D(e%2Cr%3D!1)%3D%3E%7Bi(%22status%22).textContent%3De%2Ci(%22status%22).classList.toggle(%22error%22%2Cr)%7D%2Cf%3De%3D%3E%7BC%3De%2Cv.querySelectorAll(%22button%2Cinput%2Ctextarea%2Cselect%22).forEach(r%3D%3E%7Br.disabled%3De%7D)%2Ci(%22undo%22).disabled%3De%7C%7C!S%7D%2CL%3De%3D%3Easync()%3D%3E%7Bif(!C)try%7Bawait%20e()%7Dcatch(r)%7BO(r.message%2C!0)%7D%7D%3Bfunction%20P(e)%7Bi(%22preview%22).textContent%3Dx(e)%2CO(%60%24%7Be.length%7D%20valid%20line%24%7Be.length%3D%3D%3D1%3F%22%22%3A%22s%22%7D.%20Ready%20to%20fill.%60)%7Di(%22close%22).onclick%3D()%3D%3E%7BC%7C%7CM.remove()%7D%2Ci(%22validate%22).onclick%3DL(()%3D%3EP(h(i(%22lines%22).value)))%2Ci(%22draft%22).onclick%3DL(()%3D%3E%7Blet%20e%3Dwindow.eurojackpotFavourites%3F.data%3F%3Fwindow.eurojackpotSnippet%3F.data%3Bs(e%2C%22No%20generated%20draft%20found.%20Run%20a%20preview%20snippet%20on%20this%20page%2C%20or%20paste%20its%20JSON.%22)%3Blet%20r%3Dh(JSON.stringify(e))%3Bi(%22lines%22).value%3Dx(r)%2CP(r)%7D)%3Blet%20G%3D()%3D%3E%7Blet%20e%3Db.find(r%3D%3Er.value%3D%3D%3Di(%22algorithm%22).value)%3Bi(%22algorithmHelp%22).textContent%3De.description%2Ci(%22favouriteControls%22).hidden%3De.value!%3D%3D%22favorites%22%7D%3Bi(%22algorithm%22).onchange%3DG%2CG()%2Ci(%22generate%22).onclick%3DL(async()%3D%3E%7Bf(!0)%2CO(%22Generating%20through%20your%20app%5Cu2026%22)%3Btry%7Blet%20e%3Dawait%20ee(%7BappUrl%3Ai(%22appUrl%22).value%2Calgorithm%3Ai(%22algorithm%22).value%2CticketCount%3ANumber(i(%22count%22).value)%2CfavouritesMain%3Ai(%22favMain%22).value%2CfavouritesEuro%3Ai(%22favEuro%22).value%7D)%3Bi(%22lines%22).value%3Dx(e)%2CP(e)%7Dfinally%7Bf(!1)%7D%7D)%2Ci(%22fill%22).onclick%3DL(async()%3D%3E%7Bs(!y()%2C%22Close%20the%20Lotto%20Bayern%20number%20editor%20before%20filling.%22)%3Blet%20e%3Dh(i(%22lines%22).value)%2Cr%3DNumber(i(%22start%22).value)-1%3Bs(Number.isInteger(r)%26%26r%3E%3D0%26%26r%2Be.length%3C%3DT%2C%22The%20imported%20lines%20must%20fit%20within%20fields%201%5Cu201312.%22)%3Blet%20p%3De.map((l%2CE)%3D%3E(%7Bindex%3Ar%2BE%2Crow%3A%24(r%2BE)%7D))%3Bfor(let%7Bindex%3Al%2Crow%3AE%7Dof%20p)s(document.getElementById(%60open-layer-%24%7Bl%7D%60)%2C%60Field%20%24%7Bl%2B1%7D%20cannot%20be%20opened.%60)%2Cs(E.mains.length%3D%3D%3D0%26%26E.euros.length%3D%3D%3D0%7C%7CE.mains.length%3D%3D%3D5%26%26E.euros.length%3D%3D%3D2%2C%60Field%20%24%7Bl%2B1%7D%20is%20partly%20filled.%20Complete%20or%20clear%20it%20on%20the%20site%20first.%60)%3BS%3Dp%2Cf(!0)%3Btry%7Bfor(let%20l%3D0%3Bl%3Ce.length%3Bl%2B%2B)O(%60Filling%20field%20%24%7Br%2Bl%2B1%7D%20(%24%7Bl%2B1%7D%2F%24%7Be.length%7D)%5Cu2026%60)%2Cawait%20k(r%2Bl%2Ce%5Bl%5D)%3BO(%60Filled%20and%20checked%20%24%7Be.length%7D%20fields.%20Review%20the%20site%5Cu2019s%20ticket%20and%20price.%60)%7Dcatch(l)%7Bc(%60%24%7Bl.message%7D%0ASome%20fields%20may%20have%20changed.%20Close%20the%20site%20editor%20and%20use%20Undo%20fill%20to%20restore%20the%20previous%20numbers.%60)%7Dfinally%7Bf(!1)%7D%7D)%2Ci(%22undo%22).onclick%3DL(async()%3D%3E%7Bs(S%2C%22Nothing%20to%20undo.%22)%2Cs(!y()%2C%22Close%20the%20Lotto%20Bayern%20number%20editor%20before%20undoing.%22)%2Cf(!0)%3Btry%7Bfor(let%7Bindex%3Ae%2Crow%3Ar%7Dof%20S)O(%60Restoring%20field%20%24%7Be%2B1%7D%5Cu2026%60)%2Cawait%20k(e%2Cr)%3BS%3Dnull%2CO(%22Previous%20numbers%20restored%20and%20checked.%22)%7Dfinally%7Bf(!1)%7D%7D)%2Ci(%22lines%22).focus()%7D)()%3B%7D)()%3B%0A%7D()"
+    >Lotto Bayern · Fill numbers</a
+  >
+  <h2>Four generation methods</h2>
+  <ul>
+    <li><strong>Uniform:</strong> unbiased random selection.</li>
+    <li>
+      <strong>Weighted:</strong> square-root historical frequencies, sampled
+      without replacement.
+    </li>
+    <li>
+      <strong>Favourites:</strong> your app’s favourite weighting and statistics
+      fallback.
+    </li>
+    <li>
+      <strong>Unpopular:</strong> the app’s candidate-ranking heuristic; not
+      calibrated player popularity.
+    </li>
+  </ul>
+  <p>
+    Generation uses <code>/api/generate</code> on the app URL entered in the
+    panel. The updated server must be deployed to allow requests from Lotto
+    Bayern. The bookmarklet sends no account cookies.
+  </p>
+  <p>
+    There is no forced odd/even or high/low distribution. Methods change number
+    selection, not the probability that an individual combination is drawn.
+  </p>
+  <h2>Paste numbers or app JSON</h2>
+  <pre>
+4 12 20 27 49 | 2 9
+8 16 25 34 46 | 5 11</pre
+  >
+  <p>
+    Accepts arrays of app tickets with <code>mainNumbers</code> and
+    <code>euroNumbers</code>, earlier <code>mains</code>/<code>euros</code>
+    objects, and Lotto Bayern payloads. Only standard 5+2 lines fit this form.
+    System tickets are rejected rather than truncated.
+  </p>
+  <p>
+    Imports replace consecutive fields. Undo restores the previous fill while
+    the panel remains open. Review the numbers and price on Lotto Bayern; saving
+    and playing remain manual.
+  </p>
+  <details>
+    <summary>Manual installation</summary>
+    <p>
+      Create a bookmark and replace its URL with the entire text below,
+      including <code>javascript:</code>.
+    </p>
+    <textarea readonly aria-label="Bookmark URL">
+javascript:void%20function()%7B%22use%20strict%22%3B(()%3D%3E%7Bvar%20oe%3D%5B2%2C5%5D%2Cie%3Doe.length*52%3Bvar%20A%3D5%3Bvar%20Y%3D10%3Bvar%20X%3D%22https%3A%2F%2Fwww.lotto-bayern.de%22%2CW%3D%22%2Feurojackpot%2Fnormalschein%22%2CT%3D12%2CJ%3D%22%2Fapi%2Fgenerate%22%2Cq%3D%22https%3A%2F%2Feurojackpot.vv42.workers.dev%22%2Cj%3D2e4%2CV%3D4500%2CQ%3D25%3Bvar%20b%3D%5B%7Bvalue%3A%22uniform%22%2Clabel%3A%22Uniform%20random%22%2Cdescription%3A%22Every%20valid%20combination%20has%20equal%20selection%20probability.%22%7D%2C%7Bvalue%3A%22weighted%22%2Clabel%3A%22Weighted%20by%20historical%20frequencies%22%2Cdescription%3A%22Uses%20square-root%20frequencies%20and%20sampling%20without%20replacement.%20Falls%20back%20to%20uniform%20if%20statistics%20are%20unavailable.%20No%20forced%20odd%2Feven%20or%20high%2Flow%20pattern.%22%7D%2C%7Bvalue%3A%22favorites%22%2Clabel%3A%22Favourites%22%2Cdescription%3A%22Uses%20the%20app%5Cu2019s%20favourite%20weighting%20with%20historical%20frequencies.%20If%20statistics%20are%20unavailable%2C%20it%20includes%20favourites%20that%20fit%20and%20fills%20the%20remaining%20slots%20randomly.%22%7D%2C%7Bvalue%3A%22unpopular%22%2Clabel%3A%22Unpopular%20combinations%20(heuristic)%22%2Cdescription%3A%22Ranks%20random%20candidates%20using%20the%20app%5Cu2019s%20human-choice%20heuristics.%20The%20score%20is%20not%20measured%20player%20popularity%20or%20a%20calibrated%20prize-sharing%20probability.%22%7D%5D%3Bvar%20ae%3DArray.from(%7Blength%3A12%7D%2C(o%2Ct)%3D%3E1%2Bt)%3Bvar%20Z%3Do%3D%3E%7Bthrow%20new%20Error(o)%7D%2Cm%3D(o%2Ct)%3D%3E%7Bo%7C%7CZ(t)%7D%2Cre%3Do%3D%3E%5B...o%5D.sort((t%2Cc)%3D%3Et-c)%2CR%3Do%3D%3EArray.isArray(o)%3Fo.map(t%3D%3E(m(typeof%20t%3D%3D%22number%22%7C%7Ctypeof%20t%3D%3D%22string%22%26%26%2F%5E%5Cd%2B%24%2F.test(t)%2C%22Use%20integer%20numbers%20only.%22)%2CNumber(t)))%3A(m(typeof%20o%3D%3D%22string%22%26%26%2F%5E%5B%5Cd%5Cs%2C%5D*%24%2F.test(o)%2C%22Separate%20numbers%20with%20spaces%20or%20commas.%22)%2Co.trim()%3Fo.trim().split(%2F%5B%5Cs%2C%5D%2B%2F).map(Number)%3A%5B%5D)%3Bfunction%20z(o%2Ct%2Cc%2Cs)%7Blet%20n%3DR(o)%3Breturn%20m(n.length%3D%3D%3Dt%2C%60%24%7Bs%7D%3A%20expected%20%24%7Bt%7D%20numbers.%60)%2Cm(n.every(a%3D%3ENumber.isInteger(a)%26%26a%3E%3D1%26%26a%3C%3Dc)%2C%60%24%7Bs%7D%3A%20numbers%20must%20be%20from%201%20to%20%24%7Bc%7D.%60)%2Cm(new%20Set(n).size%3D%3D%3Dn.length%2C%60%24%7Bs%7D%3A%20duplicate%20numbers.%60)%2Cre(n)%7Dfunction%20h(o)%7Bo%3Do.trim()%2Cm(o%2C%22Paste%20numbers%20or%20generate%20them%20first.%22)%3Blet%20t%3Bif(%2F%5E%5B%5B%7B%5D%2F.test(o))%7Blet%20s%3Btry%7Bs%3DJSON.parse(o)%7Dcatch%7BZ(%22Invalid%20JSON.%20Paste%20JSON%20data%2C%20not%20JavaScript%20code.%22)%7Dt%3DArray.isArray(s)%3Fs%3As%3F.mainPrognosises%3F.EUROJACKPOT%3F%3Fs%3F.fields%3F%3Fs%3F.tickets%2Cm(Array.isArray(t)%2C%22JSON%20must%20be%20an%20array%20of%20lines%20or%20a%20Eurojackpot%20draft%20payload.%22)%2Ct.every(n%3D%3Etypeof%20n%3D%3D%22number%22)%26%26(t%3D%5Bt%5D)%2Ct%3Dt.map(n%3D%3EArray.isArray(n)%3F%7Bmains%3An.slice(0%2C5)%2Ceuros%3An.slice(5)%7D%3A%7Bmains%3An%3F.mains%3F%3Fn%3F.mainNumbers%3F%3Fn%3F.prognosises%2Ceuros%3An%3F.euros%3F%3Fn%3F.euroNumbers%3F%3Fn%3F.additionalPrognosises%7D)%7Delse%20t%3Do.split(%2F%5B%5Cr%5Cn%3B%5D%2B%2F).map(s%3D%3E%7Blet%20n%3Ds.trim().split(%2F%5B%7C%2B%5D%2F)%3Bif(m(n.length%3C%3D2%2C%22Use%20one%20%7C%20or%20%2B%20between%20main%20numbers%20and%20Euro%20numbers.%22)%2Cn.length%3D%3D%3D2)return%7Bmains%3AR(n%5B0%5D)%2Ceuros%3AR(n%5B1%5D)%7D%3Blet%20a%3DR(n%5B0%5D)%3Breturn%7Bmains%3Aa.slice(0%2C5)%2Ceuros%3Aa.slice(5)%7D%7D)%3Bm(t.length%3E%3D1%26%26t.length%3C%3DT%2C%22Enter%201%20to%2012%20lines.%22)%3Blet%20c%3Dnew%20Set%3Breturn%20t.map((s%2Cn)%3D%3E%7Blet%20a%3Dz(s.mains%2C5%2C50%2C%60Line%20%24%7Bn%2B1%7D%20main%20numbers%60)%2Cu%3Dz(s.euros%2C2%2C12%2C%60Line%20%24%7Bn%2B1%7D%20Euro%20numbers%60)%2C_%3D%60%24%7Ba%7D%7C%24%7Bu%7D%60%3Breturn%20m(!c.has(_)%2C%60Line%20%24%7Bn%2B1%7D%20repeats%20an%20earlier%20line.%60)%2Cc.add(_)%2C%7Bmains%3Aa%2Ceuros%3Au%7D%7D)%7Dvar%20x%3Do%3D%3Eo.map(t%3D%3E%60%24%7Bt.mains.join(%22%20%22)%7D%20%7C%20%24%7Bt.euros.join(%22%20%22)%7D%60).join(%60%0A%60)%3Bfunction%20ne(o)%7Blet%20t%3Dnew%20URL(o)%2Cc%3D%5B%22localhost%22%2C%22127.0.0.1%22%2C%22%5B%3A%3A1%5D%22%5D.includes(t.hostname)%3Bif(t.protocol!%3D%3D%22https%3A%22%26%26!(c%26%26t.protocol%3D%3D%3D%22http%3A%22)%7C%7Ct.username%7C%7Ct.password%7C%7Ct.search%7C%7Ct.hash%7C%7Ct.pathname!%3D%3D%22%2F%22%26%26t.pathname!%3D%3D%22%22)throw%20new%20Error(%22Enter%20the%20app%5Cu2019s%20HTTPS%20origin%20only%2C%20without%20a%20path%2C%20credentials%2C%20query%2C%20or%20fragment.%22)%3Breturn%20t.origin%7Dfunction%20se(o)%7Bif(!b.some(c%3D%3Ec.value%3D%3D%3Do.algorithm))throw%20new%20Error(%22Choose%20a%20supported%20generation%20method.%22)%3Bif(!Number.isInteger(o.ticketCount)%7C%7Co.ticketCount%3C1%7C%7Co.ticketCount%3ET)throw%20new%20Error(%60Generate%20%24%7B1%7D%20to%20%24%7BT%7D%20lines.%60)%3Blet%20t%3D(c%2Cs)%3D%3E%7Blet%20n%3DR(c)%3Bif(n.length%3EA%7C%7Cnew%20Set(n).size!%3D%3Dn.length%7C%7C!n.every(a%3D%3ENumber.isInteger(a)%26%26a%3E%3D1%26%26a%3C%3Ds))throw%20new%20Error(%60Enter%20up%20to%20%24%7BA%7D%20distinct%20favourite%20integers%20from%201%20to%20%24%7Bs%7D.%60)%3Breturn%20n%7D%3Breturn%7BticketCount%3Ao.ticketCount%2CmainCount%3A5%2CeuroCount%3A2%2Calgorithm%3Ao.algorithm%2C...o.algorithm%3D%3D%3D%22favorites%22%3F%7BfavoriteNumbers%3A%7BmainNumbers%3At(o.favouritesMain%2C50)%2CeuroNumbers%3At(o.favouritesEuro%2C12)%7D%7D%3A%7B%7D%7D%7Dasync%20function%20ee(o%2Ct%3Dfetch)%7Blet%20c%3Dne(o.appUrl)%2Cs%3Dse(o)%2Cn%3Dnew%20AbortController%2Ca%3DsetTimeout(()%3D%3En.abort()%2Cj)%3Btry%7Blet%20u%3Dawait%20t(%60%24%7Bc%7D%24%7BJ%7D%60%2C%7Bmethod%3A%22POST%22%2Cmode%3A%22cors%22%2Ccredentials%3A%22omit%22%2Credirect%3A%22error%22%2Cheaders%3A%7B%22Content-Type%22%3A%22application%2Fjson%22%2CAccept%3A%22application%2Fjson%22%7D%2Csignal%3An.signal%2Cbody%3AJSON.stringify(s)%7D)%3Bif(!u.ok)throw%20new%20Error(%60App%20generation%20failed%20(HTTP%20%24%7Bu.status%7D).%60)%3Blet%20_%3Dh(JSON.stringify(await%20u.json()))%3Bif(_.length!%3D%3Do.ticketCount)throw%20new%20Error(%22The%20app%20returned%20an%20unexpected%20number%20of%20lines.%22)%3Breturn%20_%7Dcatch(u)%7Bthrow%20n.signal.aborted%3Fnew%20Error(%22App%20generation%20timed%20out.%20Check%20the%20app%20before%20retrying.%22)%3Au%20instanceof%20TypeError%3Fnew%20TypeError(%22Cannot%20reach%20the%20generator.%20Check%20the%20app%20URL%2C%20connection%2C%20and%20deployed%20Lotto%20Bayern%20CORS%20support.%22)%3Au%7Dfinally%7BclearTimeout(a)%7D%7D(()%3D%3E%7B%22use%20strict%22%3Bif(location.origin!%3D%3DX%7C%7Clocation.pathname.replace(%2F%5C%2F%24%2F%2C%22%22)!%3D%3DW)%7Balert(%22Open%20https%3A%2F%2Fwww.lotto-bayern.de%2Feurojackpot%2Fnormalschein%20first.%22)%3Breturn%7Dlet%20o%3D%22lb-number-filler-v2%22%2Ct%3Ddocument.getElementById(o)%3Bif(t)%7Bt.shadowRoot.querySelector(%22textarea%22).focus()%3Breturn%7Dlet%20c%3De%3D%3E%7Bthrow%20new%20Error(e)%7D%2Cs%3D(e%2Cr)%3D%3E%7Be%7C%7Cc(r)%7D%2Cn%3De%3D%3E%5B...e%5D.sort((r%2Cp)%3D%3Er-p)%2Ca%3D(e%2Cr)%3D%3EJSON.stringify(n(e))%3D%3D%3DJSON.stringify(n(r))%2Cu%3De%3D%3Edocument.getElementById(%60tip-field-%24%7Be%7D%60)%3Bfunction%20_(e%2Cr)%7Breturn%5B...e.querySelectorAll(r)%5D.map(p%3D%3Ep.value).filter(p%3D%3Ep!%3D%3D%22%22).map(Number)%7Dfunction%20%24(e)%7Blet%20r%3Du(e)%3Breturn%20s(r%2C%60Field%20%24%7Be%2B1%7D%20was%20not%20found.%20The%20page%20layout%20may%20have%20changed.%60)%2Cs(r.querySelectorAll(%22.tipfield-form-controls%20input%5Btype%3Dnumber%5D%22).length%3D%3D%3D5%26%26r.querySelectorAll(%22.tipfield-form-controls-extra%20input%5Btype%3Dnumber%5D%22).length%3D%3D%3D2%2C%60Field%20%24%7Be%2B1%7D%3A%20unexpected%20page%20controls.%60)%2C%7Bmains%3A_(r%2C%22.tipfield-form-controls%20input%5Btype%3Dnumber%5D%22)%2Ceuros%3A_(r%2C%22.tipfield-form-controls-extra%20input%5Btype%3Dnumber%5D%22)%7D%7Dlet%20H%3D()%3D%3Enew%20Promise(e%3D%3EsetTimeout(e%2CQ))%3Basync%20function%20g(e%2Cr)%7Blet%20p%3DDate.now()%2BV%3Bdo%7Bif(e())return%3Bawait%20H()%7Dwhile(Date.now()%3Cp)%3Bc(r)%7Dlet%20y%3D()%3D%3Edocument.getElementById(%22layer-tip%22)%3F.classList.contains(%22visible%22)%3Basync%20function%20k(e%2Cr)%7Blet%20p%3Ddocument.getElementById(%60open-layer-%24%7Be%7D%60)%3Bs(p%2C%60Cannot%20open%20field%20%24%7Be%2B1%7D.%60)%2Cp.click()%2Cawait%20g(()%3D%3Ey()%26%26document.querySelector(%22%23layer-tip%20.field-number%22)%3F.textContent.trim()%3D%3D%3DString(e%2B1)%2C%60The%20editor%20for%20field%20%24%7Be%2B1%7D%20did%20not%20open.%60)%3Blet%20l%3Ddocument.getElementById(%22layer-tip%22)%2CE%3Dl.querySelector(%22%5Bdata-action-delete%5D%22)%2CD%3Dl.querySelector(%22%5Bdata-action-confirm%5D%22)%3Bs(E%26%26D%2C%22The%20site%20editor%20controls%20have%20changed.%22)%2CE.click()%2Cawait%20g(()%3D%3E!_(l%2C%22input%5Btype%3Dnumber%5D%22).length%2C%22The%20editor%20did%20not%20clear.%22)%3Bfor(let%5BU%2Cte%5Dof%5B%5B%22%5Bdata-numbers-primary%5D%22%2Cr.mains%5D%2C%5B%22%5Bdata-numbers-secondary%5D%22%2Cr.euros%5D%5D)for(let%20K%20of%20te)%7Blet%20F%3Dl.querySelector(%60%24%7BU%7D%20%5Bdata-number%3D%22%24%7BK%7D%22%5D%60)%3Bs(F%2C%60Number%20%24%7BK%7D%20was%20not%20found%20in%20the%20editor.%60)%2CF.click()%2Cawait%20H()%7Dawait%20g(()%3D%3Ea(_(l%2C%22.tipfield-form-controls%20input%5Btype%3Dnumber%5D%22)%2Cr.mains)%26%26a(_(l%2C%22.tipfield-form-controls-extra%20input%5Btype%3Dnumber%5D%22)%2Cr.euros)%2C%60The%20editor%20did%20not%20accept%20the%20numbers%20for%20field%20%24%7Be%2B1%7D.%60)%2CD.click()%2Cawait%20g(()%3D%3E%7Blet%20U%3D%24(e)%3Breturn!y()%26%26a(U.mains%2Cr.mains)%26%26a(U.euros%2Cr.euros)%7D%2C%60Field%20%24%7Be%2B1%7D%20did%20not%20update.%20Inspect%20the%20site%20before%20continuing.%60)%7Dlet%20M%3Ddocument.createElement(%22div%22)%3BM.id%3Do%2CM.style.cssText%3D%22position%3Afixed%3Bright%3A16px%3Bbottom%3A16px%3Bz-index%3A2147483647%3Bmax-width%3Acalc(100vw%20-%2032px)%3B%22%3Blet%20v%3DM.attachShadow(%7Bmode%3A%22open%22%7D)%3Bv.innerHTML%3D%60%0A%20%20%20%20%3Cstyle%3E%3Ahost%7B--color-content-primary%3Aoklch(0.98%200.003%2080)%3B--color-surface-primary-light%3Aoklch(0.22%200.025%20229)%3B--color-border-secondary%3Aoklch(0.25%200.03%20229)%3B--color-surface-tertiary%3Aoklch(0.12%200.02%20229)%3B--color-content-secondary%3Aoklch(0.75%200.01%20229)%3B--color-border-primary%3Aoklch(0.85%200.12%2085)%3B--color-surface-secondary%3Aoklch(0.25%200.03%20229)%3B--color-surface-card-hover%3Aoklch(0.28%200.03%20229)%3B--color-interactive-primary%3Aoklch(0.6%200.2%2025)%3B--color-content-inverse%3Aoklch(0.13%200.02%20229)%3B--color-error%3Aoklch(0.6%200.2%2015)%3B%7D%0A%3Ahost%20%7B%0A%20%20color-scheme%3A%20dark%3B%0A%20%20font%3A%0A%20%20%20%2014px%2F1.5%20system-ui%2C%0A%20%20%20%20sans-serif%3B%0A%20%20color%3A%20var(--color-content-primary)%3B%0A%7D%0A*%20%7B%0A%20%20box-sizing%3A%20border-box%3B%0A%7D%0Asection%20%7B%0A%20%20width%3A%20500px%3B%0A%20%20max-width%3A%20calc(100vw%20-%2032px)%3B%0A%20%20max-height%3A%2088vh%3B%0A%20%20overflow%3A%20auto%3B%0A%20%20background%3A%20var(--color-surface-primary-light)%3B%0A%20%20border%3A%201px%20solid%20var(--color-border-secondary)%3B%0A%20%20border-radius%3A%2016px%3B%0A%20%20box-shadow%3A%200%2012px%2060px%0A%20%20%20%20color-mix(in%20srgb%2C%20var(--color-surface-tertiary)%2065%25%2C%20transparent)%3B%0A%20%20padding%3A%2022px%3B%0A%7D%0Ah2%20%7B%0A%20%20font-size%3A%2021px%3B%0A%20%20line-height%3A%201.2%3B%0A%20%20margin%3A%200%200%208px%3B%0A%7D%0Ap%20%7B%0A%20%20margin%3A%208px%200%3B%0A%20%20color%3A%20var(--color-content-secondary)%3B%0A%7D%0Alabel%20%7B%0A%20%20display%3A%20block%3B%0A%20%20font-weight%3A%20600%3B%0A%20%20margin%3A%2010px%200%204px%3B%0A%7D%0Atextarea%2C%0Ainput%2C%0Aselect%20%7B%0A%20%20font%3A%20inherit%3B%0A%20%20border%3A%201px%20solid%20var(--color-border-primary)%3B%0A%20%20border-radius%3A%207px%3B%0A%20%20padding%3A%209px%3B%0A%20%20background%3A%20var(--color-surface-primary-light)%3B%0A%20%20color%3A%20var(--color-content-primary)%3B%0A%20%20width%3A%20100%25%3B%0A%7D%0Atextarea%20%7B%0A%20%20min-height%3A%20125px%3B%0A%20%20resize%3A%20vertical%3B%0A%20%20font%3A%0A%20%20%20%2013px%2F1.6%20ui-monospace%2C%0A%20%20%20%20monospace%3B%0A%7D%0Abutton%20%7B%0A%20%20font%3A%20600%2014px%20system-ui%3B%0A%20%20cursor%3A%20pointer%3B%0A%20%20padding%3A%2010px%2013px%3B%0A%20%20border%3A%201px%20solid%20var(--color-border-secondary)%3B%0A%20%20border-radius%3A%207px%3B%0A%20%20background%3A%20var(--color-surface-secondary)%3B%0A%20%20color%3A%20var(--color-content-primary)%3B%0A%7D%0Abutton%3Ahover%20%7B%0A%20%20background%3A%20var(--color-surface-card-hover)%3B%0A%7D%0Abutton%3Adisabled%20%7B%0A%20%20opacity%3A%200.5%3B%0A%20%20cursor%3A%20wait%3B%0A%7D%0Abutton.primary%20%7B%0A%20%20background%3A%20var(--color-interactive-primary)%3B%0A%20%20color%3A%20var(--color-content-inverse)%3B%0A%20%20border-color%3A%20var(--color-interactive-primary)%3B%0A%7D%0A.row%20%7B%0A%20%20display%3A%20flex%3B%0A%20%20gap%3A%208px%3B%0A%20%20align-items%3A%20end%3B%0A%20%20flex-wrap%3A%20wrap%3B%0A%7D%0A.row%20%3E%20label%20%7B%0A%20%20flex%3A%201%3B%0A%20%20min-width%3A%20110px%3B%0A%7D%0A.actions%20%7B%0A%20%20margin-top%3A%2014px%3B%0A%7D%0A.close%20%7B%0A%20%20float%3A%20right%3B%0A%20%20font-size%3A%2018px%3B%0A%20%20padding%3A%203px%209px%3B%0A%7D%0Adetails%20%7B%0A%20%20border-top%3A%201px%20solid%20var(--color-border-secondary)%3B%0A%20%20margin-top%3A%2014px%3B%0A%20%20padding-top%3A%2012px%3B%0A%7D%0Asummary%20%7B%0A%20%20cursor%3A%20pointer%3B%0A%20%20font-weight%3A%20600%3B%0A%7D%0Apre%20%7B%0A%20%20font%3A%0A%20%20%20%2012px%2F1.6%20ui-monospace%2C%0A%20%20%20%20monospace%3B%0A%20%20white-space%3A%20pre-wrap%3B%0A%20%20background%3A%20var(--color-surface-secondary)%3B%0A%20%20border-radius%3A%208px%3B%0A%20%20padding%3A%2010px%3B%0A%20%20max-height%3A%20180px%3B%0A%20%20overflow%3A%20auto%3B%0A%7D%0Apre%3Aempty%20%7B%0A%20%20display%3A%20none%3B%0A%7D%0A.status%20%7B%0A%20%20min-height%3A%2022px%3B%0A%20%20margin-top%3A%2010px%3B%0A%20%20white-space%3A%20pre-wrap%3B%0A%7D%0A.error%20%7B%0A%20%20color%3A%20var(--color-error)%3B%0A%7D%0Asmall%20%7B%0A%20%20color%3A%20var(--color-content-secondary)%3B%0A%7D%0Ainput%5Btype%3D&#39;number&#39;%5D%20%7B%0A%20%20max-width%3A%20120px%3B%0A%7D%0A%3C%2Fstyle%3E%0A%20%20%20%20%3Csection%20role%3D%22dialog%22%20aria-label%3D%22Eurojackpot%20number%20filler%22%3E%0A%20%20%20%20%20%20%3Cbutton%20type%3D%22button%22%20class%3D%22close%22%20id%3D%22close%22%20aria-label%3D%22Close%20number%20filler%22%3E%5CxD7%3C%2Fbutton%3E%0A%20%20%20%20%20%20%3Ch2%3EEurojackpot%20number%20filler%3C%2Fh2%3E%0A%20%20%20%20%20%20%3Cp%3EPaste%20one%20line%20per%20field%3A%20%3Cstrong%3E5%20main%20numbers%20%7C%202%20Euro%20numbers%3C%2Fstrong%3E.%20JSON%20from%20the%20earlier%20snippets%20works%20too.%3C%2Fp%3E%0A%20%20%20%20%20%20%3Clabel%20for%3D%22lines%22%3EYour%20numbers%3C%2Flabel%3E%0A%20%20%20%20%20%20%3Ctextarea%20id%3D%22lines%22%20spellcheck%3D%22false%22%20placeholder%3D%224%2012%2020%2027%2049%20%7C%202%209%26%2310%3B8%2016%2025%2034%2046%20%7C%205%2011%22%3E%3C%2Ftextarea%3E%0A%20%20%20%20%20%20%3Cdiv%20class%3D%22row%22%3E%3Clabel%20for%3D%22start%22%3EStart%20at%20field%20%3Cinput%20id%3D%22start%22%20type%3D%22number%22%20min%3D%221%22%20max%3D%2212%22%20value%3D%221%22%3E%3C%2Flabel%3E%3Cbutton%20type%3D%22button%22%20id%3D%22draft%22%3EUse%20generated%20draft%3C%2Fbutton%3E%3C%2Fdiv%3E%0A%20%20%20%20%20%20%3Csmall%3EImported%20lines%20replace%20consecutive%20fields.%20Other%20fields%2C%20draw%20day%2C%20duration%20and%20add-ons%20keep%20their%20current%20values.%3C%2Fsmall%3E%0A%20%20%20%20%20%20%3Cdetails%3E%3Csummary%3EGenerate%20using%20the%20app%5Cu2019s%20algorithms%3C%2Fsummary%3E%0A%20%20%20%20%20%20%20%20%3Clabel%20for%3D%22appUrl%22%3EGenerator%20app%20URL%3C%2Flabel%3E%3Cinput%20id%3D%22appUrl%22%20type%3D%22url%22%20value%3D%22%24%7Bq%7D%22%3E%0A%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22row%22%3E%3Clabel%20for%3D%22count%22%3ELines%20%3Cinput%20id%3D%22count%22%20type%3D%22number%22%20min%3D%22%24%7B1%7D%22%20max%3D%22%24%7BT%7D%22%20value%3D%22%24%7BT%7D%22%3E%3C%2Flabel%3E%0A%20%20%20%20%20%20%20%20%3Clabel%20for%3D%22algorithm%22%3EMethod%20%3Cselect%20id%3D%22algorithm%22%3E%24%7Bb.map(e%3D%3E%60%3Coption%20value%3D%22%24%7Be.value%7D%22%3E%24%7Be.label%7D%3C%2Foption%3E%60).join(%22%22)%7D%3C%2Fselect%3E%3C%2Flabel%3E%3C%2Fdiv%3E%0A%20%20%20%20%20%20%20%20%3Cp%20id%3D%22algorithmHelp%22%3E%3C%2Fp%3E%0A%20%20%20%20%20%20%20%20%3Cdiv%20id%3D%22favouriteControls%22%20hidden%3E%0A%20%20%20%20%20%20%20%20%20%20%3Clabel%20for%3D%22favMain%22%3EMain%20favourites%20(up%20to%20%24%7BA%7D)%3C%2Flabel%3E%3Cinput%20id%3D%22favMain%22%20placeholder%3D%22e.g.%204%2C%2012%2C%2020%2C%2027%2C%2049%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Clabel%20for%3D%22favEuro%22%3EEuro%20favourites%20(up%20to%20%24%7BA%7D)%3C%2Flabel%3E%3Cinput%20id%3D%22favEuro%22%20placeholder%3D%22e.g.%202%2C%209%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cp%3E%3Csmall%3EUses%20the%20app%5Cu2019s%20%24%7BY%7D%5CxD7%20favourite%20weight.%20Statistics%20fallback%20follows%20the%20app%5Cu2019s%20existing%20behaviour.%3C%2Fsmall%3E%3C%2Fp%3E%0A%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%20%20%20%20%3Cp%3E%3Csmall%3EGeneration%20sends%20your%20selected%20method%20and%20favourites%20to%20your%20app.%20Its%20server%20generates%20the%20numbers%3B%20filling%20the%20Lotto%20Bayern%20form%20is%20a%20separate%20action.%3C%2Fsmall%3E%3C%2Fp%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20type%3D%22button%22%20id%3D%22generate%22%3EGenerate%20preview%3C%2Fbutton%3E%0A%20%20%20%20%20%20%3C%2Fdetails%3E%0A%20%20%20%20%20%20%3Cpre%20id%3D%22preview%22%3E%3C%2Fpre%3E%0A%20%20%20%20%20%20%3Cdiv%20class%3D%22row%20actions%22%3E%3Cbutton%20type%3D%22button%22%20id%3D%22validate%22%3EPreview%3C%2Fbutton%3E%3Cbutton%20type%3D%22button%22%20id%3D%22fill%22%20class%3D%22primary%22%3EFill%20ticket%20fields%3C%2Fbutton%3E%3Cbutton%20type%3D%22button%22%20id%3D%22undo%22%20disabled%3EUndo%20fill%3C%2Fbutton%3E%3C%2Fdiv%3E%0A%20%20%20%20%20%20%3Cdiv%20id%3D%22status%22%20role%3D%22status%22%20aria-live%3D%22polite%22%20class%3D%22status%22%3E%3C%2Fdiv%3E%0A%20%20%20%20%20%20%3Csmall%3EFills%20the%20form%20only.%20Review%20the%20ticket%20and%20price%20on%20Lotto%20Bayern%20before%20saving%20or%20playing.%3C%2Fsmall%3E%0A%20%20%20%20%3C%2Fsection%3E%60%2Cdocument.body.append(M)%3Blet%20i%3De%3D%3Ev.getElementById(e)%2CC%3D!1%2CS%3Dnull%2CO%3D(e%2Cr%3D!1)%3D%3E%7Bi(%22status%22).textContent%3De%2Ci(%22status%22).classList.toggle(%22error%22%2Cr)%7D%2Cf%3De%3D%3E%7BC%3De%2Cv.querySelectorAll(%22button%2Cinput%2Ctextarea%2Cselect%22).forEach(r%3D%3E%7Br.disabled%3De%7D)%2Ci(%22undo%22).disabled%3De%7C%7C!S%7D%2CL%3De%3D%3Easync()%3D%3E%7Bif(!C)try%7Bawait%20e()%7Dcatch(r)%7BO(r.message%2C!0)%7D%7D%3Bfunction%20P(e)%7Bi(%22preview%22).textContent%3Dx(e)%2CO(%60%24%7Be.length%7D%20valid%20line%24%7Be.length%3D%3D%3D1%3F%22%22%3A%22s%22%7D.%20Ready%20to%20fill.%60)%7Di(%22close%22).onclick%3D()%3D%3E%7BC%7C%7CM.remove()%7D%2Ci(%22validate%22).onclick%3DL(()%3D%3EP(h(i(%22lines%22).value)))%2Ci(%22draft%22).onclick%3DL(()%3D%3E%7Blet%20e%3Dwindow.eurojackpotFavourites%3F.data%3F%3Fwindow.eurojackpotSnippet%3F.data%3Bs(e%2C%22No%20generated%20draft%20found.%20Run%20a%20preview%20snippet%20on%20this%20page%2C%20or%20paste%20its%20JSON.%22)%3Blet%20r%3Dh(JSON.stringify(e))%3Bi(%22lines%22).value%3Dx(r)%2CP(r)%7D)%3Blet%20G%3D()%3D%3E%7Blet%20e%3Db.find(r%3D%3Er.value%3D%3D%3Di(%22algorithm%22).value)%3Bi(%22algorithmHelp%22).textContent%3De.description%2Ci(%22favouriteControls%22).hidden%3De.value!%3D%3D%22favorites%22%7D%3Bi(%22algorithm%22).onchange%3DG%2CG()%2Ci(%22generate%22).onclick%3DL(async()%3D%3E%7Bf(!0)%2CO(%22Generating%20through%20your%20app%5Cu2026%22)%3Btry%7Blet%20e%3Dawait%20ee(%7BappUrl%3Ai(%22appUrl%22).value%2Calgorithm%3Ai(%22algorithm%22).value%2CticketCount%3ANumber(i(%22count%22).value)%2CfavouritesMain%3Ai(%22favMain%22).value%2CfavouritesEuro%3Ai(%22favEuro%22).value%7D)%3Bi(%22lines%22).value%3Dx(e)%2CP(e)%7Dfinally%7Bf(!1)%7D%7D)%2Ci(%22fill%22).onclick%3DL(async()%3D%3E%7Bs(!y()%2C%22Close%20the%20Lotto%20Bayern%20number%20editor%20before%20filling.%22)%3Blet%20e%3Dh(i(%22lines%22).value)%2Cr%3DNumber(i(%22start%22).value)-1%3Bs(Number.isInteger(r)%26%26r%3E%3D0%26%26r%2Be.length%3C%3DT%2C%22The%20imported%20lines%20must%20fit%20within%20fields%201%5Cu201312.%22)%3Blet%20p%3De.map((l%2CE)%3D%3E(%7Bindex%3Ar%2BE%2Crow%3A%24(r%2BE)%7D))%3Bfor(let%7Bindex%3Al%2Crow%3AE%7Dof%20p)s(document.getElementById(%60open-layer-%24%7Bl%7D%60)%2C%60Field%20%24%7Bl%2B1%7D%20cannot%20be%20opened.%60)%2Cs(E.mains.length%3D%3D%3D0%26%26E.euros.length%3D%3D%3D0%7C%7CE.mains.length%3D%3D%3D5%26%26E.euros.length%3D%3D%3D2%2C%60Field%20%24%7Bl%2B1%7D%20is%20partly%20filled.%20Complete%20or%20clear%20it%20on%20the%20site%20first.%60)%3BS%3Dp%2Cf(!0)%3Btry%7Bfor(let%20l%3D0%3Bl%3Ce.length%3Bl%2B%2B)O(%60Filling%20field%20%24%7Br%2Bl%2B1%7D%20(%24%7Bl%2B1%7D%2F%24%7Be.length%7D)%5Cu2026%60)%2Cawait%20k(r%2Bl%2Ce%5Bl%5D)%3BO(%60Filled%20and%20checked%20%24%7Be.length%7D%20fields.%20Review%20the%20site%5Cu2019s%20ticket%20and%20price.%60)%7Dcatch(l)%7Bc(%60%24%7Bl.message%7D%0ASome%20fields%20may%20have%20changed.%20Close%20the%20site%20editor%20and%20use%20Undo%20fill%20to%20restore%20the%20previous%20numbers.%60)%7Dfinally%7Bf(!1)%7D%7D)%2Ci(%22undo%22).onclick%3DL(async()%3D%3E%7Bs(S%2C%22Nothing%20to%20undo.%22)%2Cs(!y()%2C%22Close%20the%20Lotto%20Bayern%20number%20editor%20before%20undoing.%22)%2Cf(!0)%3Btry%7Bfor(let%7Bindex%3Ae%2Crow%3Ar%7Dof%20S)O(%60Restoring%20field%20%24%7Be%2B1%7D%5Cu2026%60)%2Cawait%20k(e%2Cr)%3BS%3Dnull%2CO(%22Previous%20numbers%20restored%20and%20checked.%22)%7Dfinally%7Bf(!1)%7D%7D)%2Ci(%22lines%22).focus()%7D)()%3B%7D)()%3B%0A%7D()</textarea
+    >
+  </details>
+  <p>
+    <a href="lotto-bayern-bookmarklet.js">Readable JavaScript</a> ·
+    <a href="lotto-bayern-bookmarklet-url.txt">Bookmark URL</a>
+  </p>
+</html>

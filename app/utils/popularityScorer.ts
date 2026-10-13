@@ -107,12 +107,12 @@ function validateCombo(mains: number[], euros: number[]): void {
     throw new Error('Numbers must be unique within mains and within euros')
   }
   for (const m of mains) {
-    if (m < MAIN_NUMBER_MIN || m > MAIN_NUMBER_MAX) {
+    if (!Number.isInteger(m) || m < MAIN_NUMBER_MIN || m > MAIN_NUMBER_MAX) {
       throw new Error('Main numbers must be in 1..50')
     }
   }
   for (const e of euros) {
-    if (e < EURO_NUMBER_MIN || e > EURO_NUMBER_MAX) {
+    if (!Number.isInteger(e) || e < EURO_NUMBER_MIN || e > EURO_NUMBER_MAX) {
       throw new Error('Euro numbers must be in 1..12')
     }
   }
