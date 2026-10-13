@@ -7,8 +7,10 @@ import {
   expectedHits,
   splitReturnByReach,
   LONG_RUN_RETURN,
+  LONG_RUN_PRIZES,
   BOOSTER_FUND_RETURN,
 } from '~/utils/prizeTable'
+import { PRICE_PER_LINE } from '~/utils/pricing'
 import { EUROJACKPOT_TOTAL_COMBINATIONS } from '~/utils/constants'
 
 describe('PRIZE_CLASSES', () => {
@@ -65,6 +67,45 @@ describe('long-run payback by the rules', () => {
   it('pays back half of every euro once the jackpot reserve is included', () => {
     expect(LONG_RUN_RETURN).toBe(0.5)
     expect(classTotal + BOOSTER_FUND_RETURN).toBeCloseTo(LONG_RUN_RETURN, 10)
+  })
+
+  it('prices every class so that all of them together pay back exactly half', () => {
+    // Expected payout of one line, class by class, against its €2 stake
+    const expectedPayout = PRIZE_CLASSES.reduce(
+      (sum, c) => sum + c.probability * LONG_RUN_PRIZES[c.winClass]!,
+      0
+    )
+    // Prizes are whole cents, so the total can be off by a few thousandths of a cent
+    expect(expectedPayout / PRICE_PER_LINE).toBeCloseTo(LONG_RUN_RETURN, 3)
+  })
+
+  it('gives each class the prize its share of the stakes can afford', () => {
+    for (const c of PRIZE_CLASSES) {
+      const reserve = c.winClass === 1 ? BOOSTER_FUND_RETURN : 0
+      const exact =
+        ((c.longRunReturn + reserve) * PRICE_PER_LINE) / c.probability
+      // To the nearest cent
+      expect(Math.abs(LONG_RUN_PRIZES[c.winClass]! - exact)).toBeLessThan(
+        0.0051
+      )
+    }
+  })
+
+  it('lands on realistic prizes, growing with the rarity of the match', () => {
+    expect(LONG_RUN_PRIZES[12]).toBeCloseTo(10, 0) // 2 + 1
+    expect(LONG_RUN_PRIZES[2]).toBeGreaterThan(500_000) // 5 + 1
+    expect(LONG_RUN_PRIZES[2]).toBeLessThan(700_000)
+    expect(LONG_RUN_PRIZES[1]).toBeGreaterThan(60_000_000) // jackpot
+    expect(LONG_RUN_PRIZES[1]).toBeLessThan(65_000_000)
+    // 4 + 0 is rarer than 3 + 2, so no strict order by class number: compare by odds
+    const byRarity = [...PRIZE_CLASSES].sort(
+      (a, b) => b.probability - a.probability
+    )
+    for (let i = 1; i < byRarity.length; i++) {
+      expect(LONG_RUN_PRIZES[byRarity[i]!.winClass]!).toBeGreaterThan(
+        LONG_RUN_PRIZES[byRarity[i - 1]!.winClass]!
+      )
+    }
   })
 
   it('puts the largest shares at the two ends: jackpot and smallest prize', () => {

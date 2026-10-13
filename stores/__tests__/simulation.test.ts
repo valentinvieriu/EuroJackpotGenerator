@@ -9,6 +9,7 @@ import type {
   SimulationSnapshot,
 } from '~/utils/simulationEngine'
 import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
+import { LONG_RUN_PRIZES } from '~/utils/prizeTable'
 import type { BatchSimulationRequest, Ticket } from '~/schemas'
 
 // The simulation store reads tickets from the tickets store, whose setup pulls
@@ -86,10 +87,6 @@ describe('Simulation Store', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     vi.mocked(startSimulationRun).mockReset()
-
-    vi.spyOn(useOddsStore(), 'fetchOdds').mockResolvedValue(
-      FALLBACK_EUROJACKPOT_ODDS
-    )
   })
 
   it('should initialize with config phase', () => {
@@ -195,19 +192,6 @@ describe('Simulation Store', () => {
     await promise
     expect(store.state.phase).toBe('cancelled')
     expect(store.state.results).toBeNull()
-  })
-
-  it('never starts the worker when cancelled while the prizes load', async () => {
-    const store = useSimulationStore()
-    fakeRun()
-
-    seedTickets(mockTickets)
-    const promise = store.startSimulation({ simulationCount: 100 })
-    store.cancelSimulation()
-    await promise
-
-    expect(startSimulationRun).not.toHaveBeenCalled()
-    expect(store.state.phase).toBe('cancelled')
   })
 
   it('ignores a cancelled run that reports back late', async () => {
@@ -476,12 +460,14 @@ describe('Simulation Store', () => {
       return run.request!
     }
 
-    it('carries the tickets, the draw count and the current prizes', async () => {
+    it('carries the tickets, the draw count and the long-run prizes', async () => {
+      // The last draw's prizes must not leak into a run, however generous
+      useOddsStore().setOdds(FALLBACK_EUROJACKPOT_ODDS)
       const request = await requestFor({ simulationCount: 500 })
 
       expect(request.tickets).toEqual(mockTickets)
       expect(request.simulationCount).toBe(500)
-      expect(request.payouts).toEqual(useOddsStore().getPayoutMap())
+      expect(request.payouts).toEqual(LONG_RUN_PRIZES)
       expect(Object.keys(request.payouts)).toHaveLength(12)
     })
 

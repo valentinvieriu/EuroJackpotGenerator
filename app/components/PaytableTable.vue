@@ -21,7 +21,7 @@
                 referenceColumn,
               ]"
             >
-              Last paid
+              {{ showHits ? 'Average prize' : 'Last paid' }}
             </th>
             <th
               scope="col"
@@ -175,10 +175,18 @@
         The tick on each bar marks how many hits the odds predict for
         {{ formatCount(lines) }} lines.
       </template>
-      Odds are exact for a single line: 5 numbers from 50 plus 2 from 12. “Last
-      paid” is what the most recent draw paid each winner and changes with every
-      draw. “Paid back per €1” is fixed by the game’s rules: half of all stakes
-      goes to prizes, split between the classes as shown, with
+      Odds are exact for a single line: 5 numbers from 50 plus 2 from 12.
+      <template v-if="showHits">
+        “Average prize” is what autoplay paid for every hit: the class’s
+        long-run average by the game’s rules. A real draw pays more or less than
+        that, depending on the pot and on how many winners share it.
+      </template>
+      <template v-else>
+        “Last paid” is what the most recent draw paid each winner and changes
+        with every draw.
+      </template>
+      “Paid back per €1” is fixed by the game’s rules: half of all stakes goes
+      to prizes, split between the classes as shown, with
       {{ formatCents(BOOSTER_FUND_RETURN, 1) }} held in a reserve that tops up
       jackpots. The other half is never paid back.
     </p>
@@ -192,6 +200,7 @@ import {
   ANY_PRIZE_PROBABILITY,
   LONG_RUN_RETURN,
   BOOSTER_FUND_RETURN,
+  LONG_RUN_PRIZES,
   expectedHits,
 } from '~/utils/prizeTable'
 import { MAIN_NUMBERS_COUNT, EURO_NUMBERS_COUNT } from '~/utils/constants'
@@ -237,7 +246,8 @@ const formatExpected = (value: number) => {
 }
 
 const rows = computed(() => {
-  const payouts = oddsStore.getPayoutMap()
+  // A finished run shows the prizes it was paid with, not the last draw's
+  const payouts = showHits.value ? LONG_RUN_PRIZES : oddsStore.getPayoutMap()
   const classes = PRIZE_CLASSES.map((prizeClass) => {
     const hits = props.hits?.[String(prizeClass.winClass)] ?? 0
     const expected = expectedHits(prizeClass.winClass, props.lines)

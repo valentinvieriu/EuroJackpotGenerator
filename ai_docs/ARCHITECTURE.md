@@ -61,9 +61,7 @@ sequenceDiagram
     Note over User, External: Monte Carlo Simulation Flow
     User->>Frontend: Start mass simulation
     Frontend->>Store: Initialize simulation
-    Store->>API: GET /api/fetchWinningData (cached)
-    API-->>Store: Odds data
-    Store->>Store: Start simulation Web Worker (tickets, prizes, seed)
+    Store->>Store: Start simulation Web Worker (tickets, long-run prizes, seed)
 
     loop While the worker plays the draws
         Store->>Store: Progress snapshot from the worker
@@ -289,7 +287,7 @@ const handleStartSimulation = () => {
 - `app/utils/simulationEngine.ts` plays 100 to 10,000,000 draws with a seeded generator (`app/utils/sfc32.ts`), so a run replays exactly from its seed
 - Keeps running totals (payout counts, win classes, per-ticket hits) instead of the draws; runs of up to 1,000 draws also keep every draw for the JSON export
 - Runs inside `app/workers/simulation.worker.ts`, started by `app/utils/simulationRunner.ts`; cancelling terminates the worker
-- Scores with the prizes the client already holds from `/api/fetchWinningData`
+- Pays every hit its class's long-run average prize (`LONG_RUN_PRIZES` in `app/utils/prizeTable.ts`), so long runs converge on the 50% the rules pay back. The last draw's prizes from `/api/fetchWinningData` are for single draws only: paid on every hit of a long run they can return more than was staked
 
 **`GET /api/fetchWinningData`**: External API proxy with resilience
 

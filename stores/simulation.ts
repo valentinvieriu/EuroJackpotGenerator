@@ -23,6 +23,7 @@ import type {
   TrajectoryPoint,
 } from '~/utils/simulationEngine'
 import { randomSeed } from '~/utils/sfc32'
+import { LONG_RUN_PRIZES } from '~/utils/prizeTable'
 import {
   scoreDraw,
   type DrawScore,
@@ -370,11 +371,6 @@ export const useSimulationStore = defineStore('simulation', () => {
     trajectory.value = [TRAJECTORY_ORIGIN]
 
     try {
-      // The run is scored with the same prizes the paytable shows
-      const odds = useOddsStore()
-      await odds.fetchOdds()
-      if (runId !== currentRunId) return
-
       // Parsing also leaves plain data: reactive proxies cannot be handed to a worker
       const request = batchSimulationRequestSchema.parse({
         tickets: runTickets.map((t) => ({
@@ -385,7 +381,10 @@ export const useSimulationStore = defineStore('simulation', () => {
         })),
         simulationCount: config.simulationCount,
         seed: config.seed ?? randomSeed(),
-        payouts: odds.getPayoutMap(),
+        // Every hit is paid its class's long-run average prize. The last
+        // draw's prizes are right for one draw, but paid on every hit of a
+        // long run they can return more than was staked.
+        payouts: LONG_RUN_PRIZES,
         recordDraws: config.simulationCount <= LARGE_SIMULATION_THRESHOLD,
       })
 

@@ -1,5 +1,6 @@
 import { nCr } from './combinatorics'
 import { winningClassesMap } from './winningClasses'
+import { PRICE_PER_LINE } from './pricing'
 import {
   MAIN_NUMBER_MAX,
   EURO_NUMBER_MAX,
@@ -77,6 +78,26 @@ export const BOOSTER_FUND_RETURN =
 export function getPrizeClass(winClass: number): PrizeClass | undefined {
   return PRIZE_CLASSES.find((prizeClass) => prizeClass.winClass === winClass)
 }
+
+/**
+ * What each class pays one winning line on average over the long run, in
+ * euros: the part of every stake the rules send to the class, divided by how
+ * often a line lands in it. The jackpot reserve is paid out through class 1.
+ *
+ * This is what a long simulation has to pay. A single draw's prizes will not
+ * do: they swing with the size of the pot and the number of winners sharing
+ * it, and paying one draw's prizes on every hit can return more than was
+ * staked, which the game never does.
+ */
+export const LONG_RUN_PRIZES: Readonly<Record<number, number>> =
+  Object.fromEntries(
+    PRIZE_CLASSES.map(({ winClass, probability, longRunReturn }) => {
+      const perEuro =
+        longRunReturn + (winClass === JACKPOT_CLASS ? BOOSTER_FUND_RETURN : 0)
+      const cents = Math.round(((perEuro * PRICE_PER_LINE) / probability) * 100)
+      return [winClass, cents / 100]
+    })
+  )
 
 /** "2 + 1" style label for a win class; falls back to the class number. */
 export function matchLabel(winClass: number): string {
