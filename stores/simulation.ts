@@ -10,11 +10,19 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type {
   BatchSimulationResult,
-  BatchSimulationRequest,
   Ticket,
   EurojackpotHistoricOdds,
 } from '~/schemas'
-import { parseNdjsonEvent } from '~/utils/ndjsonParser'
+import { batchSimulationRequestSchema } from '~/schemas/batchSimulation'
+import {
+  startSimulationRun,
+  type SimulationRun,
+} from '~/utils/simulationRunner'
+import type {
+  SimulationSnapshot,
+  TrajectoryPoint,
+} from '~/utils/simulationEngine'
+import { randomSeed } from '~/utils/sfc32'
 import {
   scoreDraw,
   type DrawScore,
@@ -65,7 +73,8 @@ export interface SimulationProgress {
 
 export interface SimulationConfig {
   simulationCount: number
-  batchSize: number
+  /** Replays an earlier run exactly. A fresh seed is drawn when left out. */
+  seed?: string
 }
 
 export type SingleDrawPhase = 'idle' | 'running' | 'results' | 'error'
@@ -88,12 +97,7 @@ export interface SessionLedger {
   won: number
 }
 
-/** Cumulative money in / money out after a number of autoplay draws */
-export interface TrajectoryPoint {
-  draws: number
-  spent: number
-  won: number
-}
+export type { TrajectoryPoint }
 
 export interface SimulationState {
   phase: SimulationPhase
@@ -103,7 +107,6 @@ export interface SimulationState {
   error: string | null
   startTime: number
   canCancel: boolean
-  abortController: AbortController | null
   singleDraw: SingleDrawState
 }
 
@@ -130,15 +133,21 @@ export const useSimulationStore = defineStore('simulation', () => {
     error: null,
     startTime: 0,
     canCancel: false,
-    abortController: null,
     singleDraw: createIdleSingleDraw(),
   })
 
   // What the machine has taken and paid out across all single draws
   const session = ref<SessionLedger>(createEmptyLedger())
 
-  // Cumulative paid in / won back over the current autoplay run (one point per progress update)
+  // Cumulative paid in / won back over the current autoplay run
   const trajectory = ref<TrajectoryPoint[]>([])
+  const TRAJECTORY_ORIGIN: TrajectoryPoint = { draws: 0, spent: 0, won: 0 }
+
+  // The worker run in flight. A handle rather than data, so it stays out of
+  // the reactive state. The id tells a run that was cancelled or replaced
+  // while it was still starting that its outcome is no longer wanted.
+  let activeRun: SimulationRun | null = null
+  let currentRunId = 0
 
   // Tickets have one owner. Resolved on use, never during setup: the tickets
   // store sets this store up, so reaching back at that point would loop.
@@ -292,7 +301,6 @@ export const useSimulationStore = defineStore('simulation', () => {
       error: null,
       startTime: 0,
       canCancel: false,
-      abortController: null,
     }
     trajectory.value = []
   }
@@ -310,7 +318,7 @@ export const useSimulationStore = defineStore('simulation', () => {
       return
     }
 
-    const abortController = new AbortController()
+    const runId = ++currentRunId
     state.value = {
       ...state.value,
       phase: 'running',
@@ -327,179 +335,88 @@ export const useSimulationStore = defineStore('simulation', () => {
       error: null,
       startTime: Date.now(),
       canCancel: true,
-      abortController,
     }
-    trajectory.value = [{ draws: 0, spent: 0, won: 0 }]
+    trajectory.value = [TRAJECTORY_ORIGIN]
 
     try {
-      const apiBaseUrl = useRuntimeConfig().public.apiBase
+      // The run is scored with the same prizes the paytable shows
+      const odds = useOddsStore()
+      await odds.fetchOdds()
+      if (runId !== currentRunId) return
 
-      const request: BatchSimulationRequest = {
+      // Parsing also leaves plain data: reactive proxies cannot be handed to a worker
+      const request = batchSimulationRequestSchema.parse({
         tickets: runTickets.map((t) => ({
           id: t.id,
-          mainNumbers: t.mainNumbers,
-          euroNumbers: t.euroNumbers,
+          mainNumbers: [...t.mainNumbers],
+          euroNumbers: [...t.euroNumbers],
           linesCount: t.linesCount,
         })),
         simulationCount: config.simulationCount,
-        batchSize: config.batchSize,
-        includeIndividualResults:
-          config.simulationCount <= LARGE_SIMULATION_THRESHOLD,
-      }
+        seed: config.seed ?? randomSeed(),
+        payouts: odds.getPayoutMap(),
+        recordDraws: config.simulationCount <= LARGE_SIMULATION_THRESHOLD,
+      })
 
-      // Request a ReadableStream back for progressive NDJSON updates
-      const stream = await $fetch<ReadableStream>(
-        `${apiBaseUrl}/batchSimulate`,
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/x-ndjson',
-            'Content-Type': 'application/json',
-          },
-          body: request,
-          responseType: 'stream',
-          signal: abortController.signal,
-        }
-      )
+      const run = startSimulationRun(request, (snapshot) => {
+        if (runId === currentRunId) updateProgress(snapshot)
+      })
+      activeRun = run
 
-      await processNDJSONStream(stream)
+      const outcome = await run.finished
+      if (!outcome || runId !== currentRunId) return
+
+      trajectory.value = [TRAJECTORY_ORIGIN, ...outcome.trajectory]
+      state.value.results = outcome.result
+      state.value.progress = null
+      state.value.phase = 'results'
     } catch (error: unknown) {
-      if ((error as { name?: string })?.name === 'AbortError') {
-        state.value.phase = 'cancelled'
-      } else {
-        state.value.phase = 'error'
-        state.value.error = extractErrorMessage(error)
-      }
+      if (runId !== currentRunId) return
+      state.value.phase = 'error'
+      state.value.error = extractErrorMessage(error)
     } finally {
-      state.value.canCancel = false
-      state.value.abortController = null
+      if (runId === currentRunId) {
+        state.value.canCancel = false
+        activeRun = null
+      }
     }
   }
 
   const cancelSimulation = () => {
-    if (state.value.abortController && state.value.canCancel) {
-      state.value.abortController.abort()
-      state.value.phase = 'cancelled'
-      state.value.canCancel = false
-    }
+    if (state.value.phase !== 'running' || !state.value.canCancel) return
+
+    currentRunId++
+    activeRun?.cancel()
+    activeRun = null
+    state.value.phase = 'cancelled'
+    state.value.canCancel = false
   }
 
-  /** Apply one NDJSON event; returns true once the stream has delivered its last word */
-  const applyStreamLine = (line: string, allowProgress: boolean): boolean => {
-    const event = parseNdjsonEvent(JSON.parse(line))
-    if (!event) return false
-
-    if (event.type === 'progress') {
-      if (allowProgress) updateProgress(event.progress, event.summary)
-      return false
-    }
-    if (event.type === 'result') {
-      state.value.results = event.result
-      state.value.progress = null
-      state.value.phase = 'results'
-    } else {
-      state.value.phase = 'error'
-      state.value.error = event.error || 'Simulation stream error'
-    }
-    return true
-  }
-
-  const processNDJSONStream = async (stream: ReadableStream): Promise<void> => {
-    const reader = stream.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        let idx: number
-        while ((idx = buffer.indexOf('\n')) >= 0) {
-          const line = buffer.slice(0, idx).trim()
-          buffer = buffer.slice(idx + 1)
-          if (!line) continue
-          try {
-            if (applyStreamLine(line, true)) return
-          } catch (parseError) {
-            logger.warn('Failed to parse NDJSON line:', parseError)
-          }
-        }
-      }
-
-      // A final line may arrive without a trailing newline
-      const tail = buffer.trim()
-      if (tail) {
-        try {
-          applyStreamLine(tail, false)
-        } catch {
-          // Ignore an incomplete tail
-        }
-      }
-    } finally {
-      reader.releaseLock()
-    }
-  }
-
-  const updateProgress = (
-    progress: {
-      currentSimulation: number
-      totalSimulations: number
-      progressPercentage: number
-      estimatedTimeRemaining?: string | null
-      canCancel: boolean
-    },
-    summary: {
-      winDistribution: {
-        winsByClass: Record<string, number>
-        totalWins: number
-        winPercentage: number
-      }
-      roiPercentage: number
-      netProfit: number
-      maxWin: number
-      totalCost?: number
-      totalWinnings?: number
-    }
-  ) => {
+  const updateProgress = (snapshot: SimulationSnapshot) => {
     if (!state.value.progress) return
 
-    if (
-      typeof summary?.totalCost === 'number' &&
-      typeof summary?.totalWinnings === 'number'
-    ) {
-      trajectory.value.push({
-        draws: progress.currentSimulation,
-        spent: summary.totalCost,
-        won: summary.totalWinnings,
-      })
-    }
-
+    const { draws, totalDraws, totalCost, totalWinnings, hits } = snapshot
     const elapsed = Date.now() - state.value.startTime
+    const progressPercentage = totalDraws > 0 ? (draws / totalDraws) * 100 : 0
+    const netProfit = totalWinnings - totalCost
+
+    trajectory.value = [TRAJECTORY_ORIGIN, ...snapshot.trajectory]
 
     state.value.progress = {
-      currentSimulation: progress.currentSimulation,
-      totalSimulations: progress.totalSimulations,
-      progressPercentage: progress.progressPercentage,
+      currentSimulation: draws,
+      totalSimulations: totalDraws,
+      progressPercentage,
       elapsedTime: elapsed,
-      estimatedTimeRemaining:
-        typeof progress.estimatedTimeRemaining !== 'undefined'
-          ? progress.estimatedTimeRemaining
-          : calculateETA(progress.progressPercentage, elapsed),
-      partialResults: summary
-        ? {
-            simulationsCompleted: progress.currentSimulation,
-            totalWins: summary.winDistribution?.totalWins || 0,
-            winPercentage: summary.winDistribution?.winPercentage || 0,
-            currentROI: summary.roiPercentage || 0,
-            netProfit: summary.netProfit || 0,
-            maxWin: summary.maxWin || 0,
-            winsByClass: summary.winDistribution?.winsByClass
-              ? normalizeWinsByClass(summary.winDistribution.winsByClass)
-              : {},
-          }
-        : null,
+      estimatedTimeRemaining: calculateETA(progressPercentage, elapsed),
+      partialResults: {
+        simulationsCompleted: draws,
+        totalWins: hits,
+        winPercentage: draws > 0 ? (hits / draws) * 100 : 0,
+        currentROI: totalCost > 0 ? (netProfit / totalCost) * 100 : 0,
+        netProfit,
+        maxWin: snapshot.maxWin,
+        winsByClass: snapshot.winsByClass,
+      },
     }
   }
 

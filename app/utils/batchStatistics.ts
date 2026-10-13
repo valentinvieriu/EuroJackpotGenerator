@@ -23,15 +23,46 @@ const finitePercentageOrNull = (n: number): number | null =>
 type WinClassKey = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12}`
 type WinClassMap = Record<WinClassKey, number>
 
-export function calculateBatchStatistics(
-  individualResults: IndividualSimulationResult[],
-  totalCost: number
-): BatchSimulationResult {
-  const totalSimulations = individualResults.length
-  const winnings = individualResults.map((r) => r.totalWinnings)
-  const profits = individualResults.map((r) => r.netProfit)
+/**
+ * A run reduced to the running totals the statistics are built from. Nothing
+ * here grows with the number of draws, only with how many different amounts
+ * a draw has paid.
+ */
+export interface RunTotals {
+  /** Draws played */
+  draws: number
+  /** Stake for one draw across all tickets, in euros */
+  stakePerDraw: number
+  /** How many draws paid each amount, keyed by the payout in cents. Draws that paid nothing are left out. */
+  payoutCounts: ReadonlyMap<number, number>
+  /** Winning lines per win class across the whole run */
+  winsByClass: Readonly<Record<number, number>>
+}
 
-  const totalWinnings = winnings.reduce((sum, w) => sum + w, 0)
+/** One payout amount in cents and the number of draws that paid it */
+type PayoutCount = readonly [cents: number, draws: number]
+
+/** Every draw of the run as ascending payout amounts, the unpaid draws included */
+function sortedPayoutCounts(totals: RunTotals): PayoutCount[] {
+  const paid = [...totals.payoutCounts]
+    .filter(([cents, draws]) => cents > 0 && draws > 0)
+    .sort((a, b) => a[0] - b[0])
+  const paidDraws = paid.reduce((sum, [, draws]) => sum + draws, 0)
+  const unpaidDraws = totals.draws - paidDraws
+  return unpaidDraws > 0 ? [[0, unpaidDraws], ...paid] : paid
+}
+
+export function calculateBatchStatistics(
+  totals: RunTotals
+): BatchSimulationResult {
+  const totalSimulations = totals.draws
+  const stakePerPlay = totals.stakePerDraw
+  const totalCost = stakePerPlay * totalSimulations
+  const payouts = sortedPayoutCounts(totals)
+
+  // Sum in cents to avoid float drift
+  const totalWinnings =
+    payouts.reduce((sum, [cents, draws]) => sum + cents * draws, 0) / 100
   const netProfit = totalWinnings - totalCost
   const roiPercentage = totalCost > 0 ? (netProfit / totalCost) * 100 : 0
 
@@ -42,11 +73,9 @@ export function calculateBatchStatistics(
     totalSimulations > 0 ? netProfit / totalSimulations : 0
   const returnRatePerEuro = totalCost > 0 ? totalWinnings / totalCost : 0
 
-  const winDistribution = calculateWinDistribution(individualResults)
-  const costPerPlay = totalSimulations > 0 ? totalCost / totalSimulations : 0
+  const winDistribution = calculateWinDistribution(totals, payouts)
 
   // 1) Core Economics (per play)
-  const stakePerPlay = costPerPlay
   const expectedPayoutPerPlay = averageWinningsPerSimulation // E[payout]
   const expectedProfitPerPlay = expectedNetReturn // EV = E[payout] - stake
   const returnToPlayer =
@@ -54,13 +83,15 @@ export function calculateBatchStatistics(
   const houseEdge = stakePerPlay > 0 ? 1 - returnToPlayer : 0 // 1 - RTP
   const expectedLossPerEuro = stakePerPlay > 0 ? houseEdge : 0 // Same as house edge
 
+  const statistics = calculateSimulationStatistics(
+    payouts,
+    totalSimulations,
+    stakePerPlay
+  )
+
   // 2) Hit Quality (separate "any prize" from "profitable")
   const hitRate = winDistribution.winPercentage // Any prize > €0
-  const profitableSimulations = individualResults.filter(
-    (r) => r.netProfit >= 0
-  ).length
-  const profitRate =
-    totalSimulations > 0 ? (profitableSimulations / totalSimulations) * 100 : 0
+  const profitRate = statistics.profitablePercentage
   const averagePayoutWhenHit =
     winDistribution.totalWins > 0
       ? totalWinnings / winDistribution.totalWins
@@ -90,22 +121,19 @@ export function calculateBatchStatistics(
   // Legacy calculations for backward compatibility
   const averagePrizePerWin = averagePayoutWhenHit
 
-  // Fix: Calculate actual average loss for losing simulations
-  const losingSimulations = individualResults.filter(
-    (r) => r.totalWinnings < costPerPlay
-  )
-  const averageLossPerLosingSimulation = losingSimulations.length
-    ? losingSimulations.reduce(
-        (sum, r) => sum + (costPerPlay - r.totalWinnings),
-        0
-      ) / losingSimulations.length
+  // Average shortfall across the draws that paid back less than the stake
+  let losingSimulations = 0
+  let lossTotal = 0
+  for (const [cents, draws] of payouts) {
+    const payout = cents / 100
+    if (payout < stakePerPlay) {
+      losingSimulations += draws
+      lossTotal += (stakePerPlay - payout) * draws
+    }
+  }
+  const averageLossPerLosingSimulation = losingSimulations
+    ? lossTotal / losingSimulations
     : 0
-
-  const statistics = calculateSimulationStatistics(
-    winnings,
-    profits,
-    costPerPlay
-  )
 
   return {
     totalSimulations,
@@ -145,12 +173,12 @@ export function calculateBatchStatistics(
     averageLossPerLosingSimulation,
     winDistribution,
     statistics,
-    individualResults,
   }
 }
 
-export function calculateWinDistribution(
-  individualResults: IndividualSimulationResult[]
+function calculateWinDistribution(
+  totals: RunTotals,
+  payouts: ReadonlyArray<PayoutCount>
 ): WinDistribution {
   const winsByClass: WinClassMap = {
     '1': 0,
@@ -166,35 +194,27 @@ export function calculateWinDistribution(
     '11': 0,
     '12': 0,
   }
-
-  let totalWins = 0
-
-  for (const result of individualResults) {
-    for (const [classStr, count] of Object.entries(result.winsByClass)) {
-      if (count > 0) {
-        const key = classStr as WinClassKey
-        winsByClass[key] = (winsByClass[key] ?? 0) + count
-      }
-    }
-    // Count a "hit" only if the simulation actually paid > €0
-    if (result.totalWinnings > 0) totalWins++
+  for (const key of Object.keys(winsByClass) as WinClassKey[]) {
+    winsByClass[key] = totals.winsByClass[Number(key)] ?? 0
   }
 
-  const totalLosses = individualResults.length - totalWins
-  const winPercentage =
-    individualResults.length > 0
-      ? (totalWins / individualResults.length) * 100
-      : 0
+  // Count a "hit" only if the draw actually paid > €0
+  const totalWins = payouts.reduce(
+    (sum, [cents, draws]) => (cents > 0 ? sum + draws : sum),
+    0
+  )
+  const totalLosses = totals.draws - totalWins
+  const winPercentage = totals.draws > 0 ? (totalWins / totals.draws) * 100 : 0
 
   return { winsByClass, totalWins, totalLosses, winPercentage }
 }
 
-export function calculateSimulationStatistics(
-  winnings: number[],
-  profits: number[],
-  _costPerPlay: number
+function calculateSimulationStatistics(
+  payouts: ReadonlyArray<PayoutCount>,
+  draws: number,
+  stakePerDraw: number
 ): SimulationStatistics {
-  if (winnings.length === 0) {
+  if (draws === 0) {
     return {
       meanWinnings: 0,
       medianWinnings: 0,
@@ -215,46 +235,38 @@ export function calculateSimulationStatistics(
     }
   }
 
-  const sortedWinnings = [...winnings].sort((a, b) => a - b)
-  const meanWinnings = winnings.reduce((sum, w) => sum + w, 0) / winnings.length
+  const percentile = (p: number) => percentileOfCounts(payouts, p) / 100
+
+  const meanWinnings =
+    payouts.reduce((sum, [cents, n]) => sum + cents * n, 0) / 100 / draws
 
   // Use sample variance (N-1) to describe spread of outcomes
   const variance =
-    winnings.length > 1
-      ? winnings.reduce((sum, w) => sum + Math.pow(w - meanWinnings, 2), 0) /
-        (winnings.length - 1)
+    draws > 1
+      ? payouts.reduce(
+          (sum, [cents, n]) =>
+            sum + Math.pow(cents / 100 - meanWinnings, 2) * n,
+          0
+        ) /
+        (draws - 1)
       : 0
   const standardDeviation = Math.sqrt(variance)
 
-  const medianWinnings = calculatePercentile(sortedWinnings, 50) ?? 0
-  const minWinnings = sortedWinnings[0] ?? 0
-  const maxWinnings = sortedWinnings[sortedWinnings.length - 1] ?? 0
-  const percentile25 = calculatePercentile(sortedWinnings, 25) ?? 0
-  const percentile75 = calculatePercentile(sortedWinnings, 75) ?? 0
-  const percentile95 = calculatePercentile(sortedWinnings, 95) ?? 0
+  const medianWinnings = percentile(50)
+  const minWinnings = (payouts[0]?.[0] ?? 0) / 100
+  const maxWinnings = (payouts[payouts.length - 1]?.[0] ?? 0) / 100
 
-  const profitableSimulations = profits.filter((p) => p >= 0).length
-  const profitablePercentage =
-    profits.length > 0 ? (profitableSimulations / profits.length) * 100 : 0
+  const profitableSimulations = payouts.reduce(
+    (sum, [cents, n]) => (cents / 100 >= stakePerDraw ? sum + n : sum),
+    0
+  )
+  const profitablePercentage = (profitableSimulations / draws) * 100
 
-  // Calculate profit distribution percentiles
-  const sortedProfits = [...profits].sort((a, b) => a - b)
-  const medianProfit = calculatePercentile(sortedProfits, 50) ?? 0
-  const percentileNet5 = calculatePercentile(sortedProfits, 5) ?? 0
-  const percentileNet50 = medianProfit
-  const percentileNet95 = calculatePercentile(sortedProfits, 95) ?? 0
-
-  // Calculate ROI percentiles
-  const rois =
-    _costPerPlay > 0
-      ? profits.map((p) => (p / _costPerPlay) * 100)
-      : profits.map(() => 0)
-  const medianRoiPct = rois.length
-    ? (calculatePercentile(
-        [...rois].sort((a, b) => a - b),
-        50
-      ) ?? 0)
-    : 0
+  // Every draw costs the same stake, so the profit distribution is the
+  // payout distribution shifted down by it
+  const medianProfit = medianWinnings - stakePerDraw
+  const medianRoiPct =
+    stakePerDraw > 0 ? (medianProfit / stakePerDraw) * 100 : 0
 
   return {
     meanWinnings,
@@ -262,38 +274,46 @@ export function calculateSimulationStatistics(
     standardDeviation,
     minWinnings,
     maxWinnings,
-    percentile25,
-    percentile75,
-    percentile95,
+    percentile25: percentile(25),
+    percentile75: percentile(75),
+    percentile95: percentile(95),
     profitableSimulations,
     profitablePercentage,
     // Net/profit distribution percentiles
     medianProfit,
-    percentileNet5,
-    percentileNet50,
-    percentileNet95,
+    percentileNet5: percentile(5) - stakePerDraw,
+    percentileNet50: medianProfit,
+    percentileNet95: percentile(95) - stakePerDraw,
     medianRoiPct,
   }
 }
 
-export function calculatePercentile(
-  sortedArray: number[],
+/**
+ * Percentile of a distribution given as ascending [value, count] pairs,
+ * interpolating linearly between neighbouring ranks. Gives the same answer as
+ * sorting every single value, without holding them.
+ */
+export function percentileOfCounts(
+  sortedCounts: ReadonlyArray<readonly [value: number, count: number]>,
   percentile: number
 ): number {
-  if (sortedArray.length === 0) return 0
-  if (percentile <= 0) return sortedArray[0] ?? 0
-  if (percentile >= 100) return sortedArray[sortedArray.length - 1] ?? 0
+  const total = sortedCounts.reduce((sum, [, count]) => sum + count, 0)
+  if (total === 0) return 0
 
-  const index = (percentile / 100) * (sortedArray.length - 1)
+  const valueAtRank = (rank: number): number => {
+    let seen = 0
+    for (const [value, count] of sortedCounts) {
+      seen += count
+      if (rank < seen) return value
+    }
+    return sortedCounts[sortedCounts.length - 1]?.[0] ?? 0
+  }
+
+  const index = (Math.min(100, Math.max(0, percentile)) / 100) * (total - 1)
   const lower = Math.floor(index)
   const upper = Math.ceil(index)
-  const weight = index % 1
-
-  if (upper >= sortedArray.length)
-    return sortedArray[sortedArray.length - 1] ?? 0
-  const lowerValue = sortedArray[lower] ?? 0
-  const upperValue = sortedArray[upper] ?? 0
-  return lowerValue * (1 - weight) + upperValue * weight
+  const weight = index - lower
+  return valueAtRank(lower) * (1 - weight) + valueAtRank(upper) * weight
 }
 
 /**

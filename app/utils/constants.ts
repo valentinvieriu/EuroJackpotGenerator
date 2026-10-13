@@ -26,7 +26,7 @@ export const TICKET_COUNT_MAX = 500
 
 // Simulation limits
 export const SIMULATION_COUNT_MIN = 100
-export const SIMULATION_COUNT_MAX = 10000
+export const SIMULATION_COUNT_MAX = 10_000_000
 
 // Percentage bounds
 export const PERCENTAGE_MIN = 0
@@ -37,7 +37,7 @@ export const HTTP_ERROR_MIN = 400
 export const HTTP_ERROR_MAX = 599
 
 // UI Highlight Thresholds
-export const LARGE_SIMULATION_THRESHOLD = 1000 // Export disabled above this
+export const LARGE_SIMULATION_THRESHOLD = 1000 // Runs up to this size keep every draw for export
 
 // UI Timing Constants (milliseconds)
 export const WELCOME_DISPLAY_MS = 12000 // Welcome message auto-hide duration
@@ -72,14 +72,15 @@ export const SOUND_LEVEL_VOLUME = {
 export const REEL_STOP_SOUND_AT = 0.7 // Fraction of a reel's landing animation at which its stop is heard
 
 // Autoplay (Monte Carlo) chart resolution
-export const AUTOPLAY_CHART_POINTS = 50 // Progress updates requested per run; each becomes a chart point
+export const AUTOPLAY_CHART_POINTS = 50 // Evenly spaced points the engine records per run for the bankroll chart
+
+// Autoplay (Monte Carlo) engine pacing, inside its Web Worker
+export const SIMULATION_SLICE_DRAWS = 1000 // Draws played between two looks at the clock
+export const SIMULATION_PROGRESS_INTERVAL_MS = 100 // Shortest gap between two progress updates
 
 // Simulation Thresholds for Highlighting
 export const SIGNIFICANT_WIN_FRACTION_LARGE = 0.15 // 15% of wins for large simulations
 export const SIGNIFICANT_WIN_ABS_MIN = 5 // Absolute minimum wins to highlight
-
-// Fallback Limits
-export const FALLBACK_SIMULATION_MAX = 3 // Maximum fallback simulations when external API fails
 
 // Logging configuration
 export const LOG_LEVELS = {
@@ -162,7 +163,7 @@ export const SIMPLE_MODE_METHOD = 'random' as const
 
 // Simulation Option Values
 export const SIMULATION_OPTION_VALUES = [
-  100, 250, 500, 1000, 2500, 5000, 10000,
+  100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000,
 ] as const
 
 // Frequency Ratio Thresholds

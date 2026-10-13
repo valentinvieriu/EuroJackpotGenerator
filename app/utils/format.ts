@@ -84,5 +84,5 @@ export function formatPlayingTime(draws: number): string {
     const value = Number(years.toFixed(1))
     return `${value} year${value === 1 ? '' : 's'}`
   }
-  return `${Math.round(years)} years`
+  return `${formatCount(years)} years`
 }

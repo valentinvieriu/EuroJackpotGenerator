@@ -5,7 +5,7 @@
 **Stack**
 
 - Frontend: Nuxt 4, Vue 3 (Composition API), TypeScript, Pinia
-- Backend: Cloudflare Workers (Nitro), NDJSON streaming
+- Backend: Cloudflare Workers (Nitro)
 - Quality: Zod, Vitest, ESLint, Prettier
 - UX: Web Audio API, Canvas, Web Workers
 
@@ -48,6 +48,7 @@ npm run format # format
 ## Where things live (short map)
 
 - Business logic: `stores/`, `app/utils/` (generation, scoring, popularity)
+- Monte Carlo engine: `app/utils/simulationEngine.ts` (seeded and deterministic; runs in the browser inside `app/workers/simulation.worker.ts`, started by `app/utils/simulationRunner.ts`)
 - Schemas: `app/schemas/` (Zod)
 - Server endpoints: `server/api/`
 - Constants: `app/utils/constants.ts`

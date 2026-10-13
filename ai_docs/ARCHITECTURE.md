@@ -61,17 +61,16 @@ sequenceDiagram
     Note over User, External: Monte Carlo Simulation Flow
     User->>Frontend: Start mass simulation
     Frontend->>Store: Initialize simulation
-    Store->>API: POST /api/batchSimulate (NDJSON stream)
-    API->>External: Fetch current odds (once)
-    External-->>API: Odds data
+    Store->>API: GET /api/fetchWinningData (cached)
+    API-->>Store: Odds data
+    Store->>Store: Start simulation Web Worker (tickets, prizes, seed)
 
-    loop Streaming Progress
-        API-->>Store: Progress events via NDJSON
-        Store->>Store: Update progress state
+    loop While the worker plays the draws
+        Store->>Store: Progress snapshot from the worker
         Store-->>Frontend: Real-time UI updates
     end
 
-    API-->>Store: Final results event
+    Store->>Store: Final result from the worker
     Store-->>Frontend: Display comprehensive analytics
 ```
 
@@ -255,7 +254,7 @@ const handleStartSimulation = () => {
 - **FrequencyDisplay**: Comprehensive frequency visualization with bar charts and statistical analysis
 - **TicketItem**: One compact row per ticket with deletion, matched numbers in gold and the prize line
 - **MonteCarloPanel**: "Autoplay": configuration, live progress and results for the Monte Carlo run via `SimulationStore`
-- **Progress Components**: Real-time NDJSON stream visualization (the bankroll chart grows as batches arrive) with cancellation support
+- **Progress Components**: Live view of the worker's progress snapshots (the bankroll chart grows as they arrive) with instant cancellation
 
 **Utility Organization**:
 
@@ -283,12 +282,12 @@ const handleStartSimulation = () => {
 - Optional seeding for reproducible testing
 - Immediate response for interactive user experience
 
-**`POST /api/batchSimulate`**: Monte Carlo simulation engine
+**Monte Carlo simulation engine**: not an endpoint. It runs in the browser.
 
-- Processes 100-10,000 simulations with configurable batching
-- Streams real-time progress via NDJSON format
-- Implements cancellation and comprehensive error handling
-- Generates detailed statistical analysis in final response
+- `app/utils/simulationEngine.ts` plays 100 to 10,000,000 draws with a seeded generator (`app/utils/sfc32.ts`), so a run replays exactly from its seed
+- Keeps running totals (payout counts, win classes, per-ticket hits) instead of the draws; runs of up to 1,000 draws also keep every draw for the JSON export
+- Runs inside `app/workers/simulation.worker.ts`, started by `app/utils/simulationRunner.ts`; cancelling terminates the worker
+- Scores with the prizes the client already holds from `/api/fetchWinningData`
 
 **`GET /api/fetchWinningData`**: External API proxy with resilience
 
@@ -392,9 +391,9 @@ The application supports four distinct number generation methods, each serving d
 
 - Generate winning numbers → Compare against tickets → Calculate payouts → Display ROI
 
-**Monte Carlo**: Streaming architecture for long-running operations
+**Monte Carlo**: Client-side Web Worker for long-running operations
 
-- Initialize progress tracking → Stream batch results → Aggregate statistics → Final analytics
+- Initialize progress tracking → Worker plays the draws and keeps running totals → Progress snapshots → Final analytics
 
 ### State Synchronization Patterns
 
@@ -443,10 +442,10 @@ The application supports four distinct number generation methods, each serving d
 
 ### Performance Strategies
 
-**Streaming Architecture**: NDJSON streaming prevents UI blocking during long simulations
+**Simulation Off the Main Thread**: The Monte Carlo engine runs in a Web Worker, so long simulations never block the UI or use server CPU
 **Edge Deployment**: Cloudflare Workers global distribution minimizes latency
 **Intelligent Caching**: Strategic caching of external data balances freshness with performance
-**Batch Processing**: Server-side batching prevents event loop blocking
+**Running Totals**: The engine aggregates as it goes, so memory does not grow with the number of draws
 **Animation Optimisation**: Web Worker-based canvas rendering and efficient particle systems
 **Audio Context Management**: Lazy audio context creation and automatic resource cleanup
 
@@ -492,8 +491,8 @@ The application supports four distinct number generation methods, each serving d
 
 **Cloudflare Workers Limitations**:
 
-- 30-second execution time limit (addressed via streaming for long operations)
-- Memory constraints (handled through batch processing)
+- 30-second execution time limit (the long-running Monte Carlo engine runs in the browser instead)
+- Memory constraints (the endpoints that remain are small request/response handlers)
 - Cold start considerations (minimized through optimization)
 
 **Edge Computing Benefits**:
@@ -512,7 +511,7 @@ The application supports four distinct number generation methods, each serving d
 
 - P95 API latency < 1500ms across all endpoints
 - Error rate < 0.1% with comprehensive fallback coverage
-- Real-time streaming responsiveness for simulations up to 10,000 iterations
+- Responsive progress and instant cancel for simulations up to 10,000,000 draws
 
 ---
 

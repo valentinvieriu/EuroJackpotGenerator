@@ -78,6 +78,10 @@ describe('formatPlayingTime', () => {
   it('rounds to whole years from ten years up', () => {
     expect(formatPlayingTime(10000)).toBe('96 years')
   })
+
+  it('groups the thousands of very long runs', () => {
+    expect(formatPlayingTime(10_000_000)).toBe('96,154 years')
+  })
 })
 
 describe('formatCents', () => {

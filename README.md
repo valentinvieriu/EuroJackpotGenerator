@@ -43,8 +43,8 @@ Instead of guessing about lottery strategies, you can **see the data**. Run 10,0
 
 ### 📊 Monte Carlo Simulation
 
-- Large-scale simulations (100-10,000 draws)
-- Real-time progress streaming with NDJSON
+- Large-scale simulations (100 to 10,000,000 draws), run in your browser in a Web Worker
+- Live progress with instant cancel; every run has a seed and replays exactly from it
 - Comprehensive analytics: distributions, percentiles, profitability rates
 - Detailed statistics: mean, median, standard deviation, p25/p75/p95
 - Optional JSON export of detailed results
@@ -85,7 +85,7 @@ This project demonstrates several interesting concepts:
 - **Custom Strategies**: Compare random vs frequency-based vs favorite number approaches
 - **Historical Analysis**: Explore draw frequency patterns and their impact on outcomes
 - **Monte Carlo Methods**: Watch statistical patterns emerge from large samples
-- **Web Performance**: Real-time streaming of long-running calculations
+- **Web Performance**: Long-running calculations kept off the main thread in a Web Worker
 
 ## Documentation
 

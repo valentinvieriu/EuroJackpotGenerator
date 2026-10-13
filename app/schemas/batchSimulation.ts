@@ -104,6 +104,8 @@ export const batchSimulationResultSchema = z.object({
   statistics: simulationStatisticsSchema,
   individualResults: z.array(individualSimulationResultSchema).optional(),
   highlightingData: ticketHighlightingDataSchema.optional(),
+  // Replaying the same tickets, prizes and draw count with this seed gives the same run
+  seed: z.string().optional(),
 })
 
 export const batchSimulationRequestSchema = z.object({
@@ -113,16 +115,11 @@ export const batchSimulationRequestSchema = z.object({
     .int()
     .min(SIMULATION_COUNT_MIN)
     .max(SIMULATION_COUNT_MAX),
-  includeIndividualResults: z.boolean().optional().default(false),
-  batchSize: z.number().int().positive().optional().default(100),
-})
-
-export const batchSimulationProgressSchema = z.object({
-  currentSimulation: z.number().int().nonnegative(),
-  totalSimulations: z.number().int().positive(),
-  progressPercentage: z.number().min(PERCENTAGE_MIN).max(PERCENTAGE_MAX),
-  estimatedTimeRemaining: z.string().nullable().optional(),
-  canCancel: z.boolean(),
+  seed: z.string().min(1),
+  // Prize per win class in euros
+  payouts: z.record(z.string(), z.number().nonnegative()),
+  // Keep every draw for export; only sensible for short runs
+  recordDraws: z.boolean(),
 })
 
 export type WinDistribution = z.infer<typeof winDistributionSchema>
@@ -136,7 +133,4 @@ export type TicketHighlightingData = z.infer<
 export type BatchSimulationResult = z.infer<typeof batchSimulationResultSchema>
 export type BatchSimulationRequest = z.infer<
   typeof batchSimulationRequestSchema
->
-export type BatchSimulationProgress = z.infer<
-  typeof batchSimulationProgressSchema
 >

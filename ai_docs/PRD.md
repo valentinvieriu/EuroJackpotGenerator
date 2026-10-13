@@ -57,7 +57,7 @@ User selects favorite numbers based on personal preference, frequency analysis, 
 User selects the unpopular generation method to create combinations that avoid common human biases (birthday numbers, lucky patterns, sequences). The system explains why combinations are considered unpopular and demonstrates potential benefits for prize sharing reduction.
 
 **Scenario 5: Monte Carlo Analysis**  
-User configures 100-10,000 simulations with real-time progress streaming. Final report shows comprehensive statistics: total costs, winnings, net results, win-class distributions, percentiles, and profitability rates.
+User configures 100 to 10,000,000 simulations with live progress. Final report shows comprehensive statistics: total costs, winnings, net results, win-class distributions, percentiles, and profitability rates.
 
 ## Functional Requirements
 
@@ -86,8 +86,8 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 
 **Monte Carlo Simulation**
 
-- Configure 100-10,000 simulations with customizable batch sizes
-- Stream real-time progress via NDJSON with partial statistics
+- Configure 100 to 10,000,000 simulations, run client-side in a Web Worker from a seed
+- Show live progress with partial statistics
 - Generate comprehensive final reports with distributions and percentiles
 - Support cancellation and optional detailed result export (JSON)
 
@@ -113,8 +113,8 @@ User configures 100-10,000 simulations with real-time progress streaming. Final 
 ### Performance
 
 - P95 API latency < 1500ms under typical load
-- Real-time Monte Carlo progress streaming to maintain UI responsiveness
-- Efficient batch processing to prevent event loop blocking
+- Monte Carlo runs in a Web Worker with live progress to maintain UI responsiveness
+- Running totals instead of stored draws, so memory does not grow with the run
 - Global edge deployment for optimal performance
 
 ### Reliability

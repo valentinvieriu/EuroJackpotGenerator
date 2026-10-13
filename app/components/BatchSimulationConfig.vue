@@ -80,7 +80,6 @@
 import { computed, ref } from 'vue'
 import {
   SIMULATION_OPTION_VALUES,
-  AUTOPLAY_CHART_POINTS,
   LARGE_SIMULATION_THRESHOLD,
 } from '~/utils/constants'
 import { PRICE_PER_LINE } from '~/utils/pricing'
@@ -101,7 +100,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { disabled: false })
 
 const emit = defineEmits<{
-  start: [config: { simulationCount: number; batchSize: number }]
+  start: [config: { simulationCount: number }]
 }>()
 
 const simulationCount = ref<number>(LARGE_SIMULATION_THRESHOLD)
@@ -115,13 +114,6 @@ const reach = computed(() =>
 )
 
 const start = () => {
-  emit('start', {
-    simulationCount: simulationCount.value,
-    // Each batch produces one progress update, i.e. one point on the live chart
-    batchSize: Math.max(
-      1,
-      Math.ceil(simulationCount.value / AUTOPLAY_CHART_POINTS)
-    ),
-  })
+  emit('start', { simulationCount: simulationCount.value })
 }
 </script>

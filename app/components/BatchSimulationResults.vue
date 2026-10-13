@@ -256,7 +256,7 @@ import {
 interface Props {
   results: BatchSimulationResult
   tickets: Ticket[]
-  /** Cumulative paid in / won back recorded while the run streamed in */
+  /** Cumulative paid in / won back recorded by the engine over the run */
   trajectory?: Array<{ draws: number; spent: number; won: number }>
 }
 
@@ -364,6 +364,8 @@ const detailRows = computed(() => {
     { label: '75th percentile payout', value: formatEuro(s.percentile75) },
     { label: '95th percentile payout', value: formatEuro(s.percentile95) },
     { label: 'Best single draw', value: formatEuro(s.maxWinnings) },
+    // The same tickets, prizes and number of draws replay exactly from this seed
+    ...(r.seed ? [{ label: 'Run seed', value: r.seed }] : []),
   ]
 })
 

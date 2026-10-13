@@ -88,15 +88,6 @@ export default defineNuxtConfig({
     // Pure compute endpoints → no-store
     '/api/generate': { headers: { 'Cache-Control': 'no-store' } },
     '/api/simulate': { headers: { 'Cache-Control': 'no-store' } },
-
-    // Streaming: avoid proxy transformations that can buffer
-    '/api/batchSimulate': {
-      headers: {
-        'Content-Type': 'application/x-ndjson; charset=utf-8',
-        'Cache-Control': 'no-store, no-transform',
-        'X-Content-Type-Options': 'nosniff',
-      },
-    },
   },
   compatibilityDate: '2024-10-01',
 

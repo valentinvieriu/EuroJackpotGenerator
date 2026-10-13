@@ -73,7 +73,6 @@ const costPerDraw = computed(() => calculateTotalSimulationCost(props.tickets))
 
 const handleStart = async (config: {
   simulationCount: number
-  batchSize: number
 }): Promise<void> => {
   if (!props.tickets.length) return
   simStore.clearError()

@@ -2,10 +2,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useSimulationStore } from '../simulation'
 import { useTicketsStore } from '../tickets'
-import type { Ticket } from '~/schemas'
-
-// Mock dependencies
-global.fetch = vi.fn() as any
+import { useOddsStore } from '../odds'
+import { startSimulationRun } from '~/utils/simulationRunner'
+import type {
+  SimulationOutcome,
+  SimulationSnapshot,
+} from '~/utils/simulationEngine'
+import { FALLBACK_EUROJACKPOT_ODDS } from '~/utils/fallbackOdds'
+import type { BatchSimulationRequest, Ticket } from '~/schemas'
 
 // The simulation store reads tickets from the tickets store, whose setup pulls
 // in Nuxt-only UI composables
@@ -14,22 +18,78 @@ vi.mock('~/composables/useAppState', () => ({
   useTransientErrors: () => ({ addError: vi.fn() }),
 }))
 
+// The run itself happens in a Web Worker; the tests stand in for it
+vi.mock('~/utils/simulationRunner', () => ({ startSimulationRun: vi.fn() }))
+
 /** Put tickets on the table the way the app does: in the tickets store */
 const seedTickets = (tickets: unknown) => {
   useTicketsStore().state.tickets = tickets as Ticket[]
 }
 
+const mockTickets = [
+  { id: 1, mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2], linesCount: 1 },
+  { id: 2, mainNumbers: [6, 7, 8, 9, 10], euroNumbers: [3, 4], linesCount: 1 },
+]
+
+/** A worker run the test settles by hand */
+const fakeRun = () => {
+  let settle: (outcome: SimulationOutcome | null) => void = () => {}
+  let fail: (error: Error) => void = () => {}
+  const finished = new Promise<SimulationOutcome | null>((resolve, reject) => {
+    settle = resolve
+    fail = reject
+  })
+  const cancel = vi.fn(() => settle(null))
+  const handle = {
+    request: null as BatchSimulationRequest | null,
+    progress: (_snapshot: SimulationSnapshot) => {},
+    settle,
+    fail,
+    cancel,
+  }
+  vi.mocked(startSimulationRun).mockImplementationOnce(
+    (request, onProgress) => {
+      handle.request = request
+      handle.progress = onProgress
+      return { finished, cancel }
+    }
+  )
+  return handle
+}
+
+const outcomeOf = (totalSimulations: number): SimulationOutcome => ({
+  result: { totalSimulations } as SimulationOutcome['result'],
+  trajectory: [{ draws: totalSimulations, spent: 200, won: 40 }],
+})
+
+const snapshotAt = (
+  draws: number,
+  totalCost: number,
+  totalWinnings: number
+): SimulationSnapshot => ({
+  draws,
+  totalDraws: 100,
+  totalCost,
+  totalWinnings,
+  hits: 1,
+  maxWin: 10,
+  winsByClass: { 12: 1 },
+  trajectory: [{ draws, spent: totalCost, won: totalWinnings }],
+})
+
+/** Let the store get past loading the prizes and start the worker run */
+const untilRunStarts = () =>
+  vi.waitFor(() => expect(startSimulationRun).toHaveBeenCalled())
+
 describe('Simulation Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    vi.mocked(startSimulationRun).mockReset()
 
-    // Mock useRuntimeConfig
-    vi.stubGlobal('useRuntimeConfig', () => ({
-      public: {
-        apiBase: '/api',
-      },
-    }))
+    vi.spyOn(useOddsStore(), 'fetchOdds').mockResolvedValue(
+      FALLBACK_EUROJACKPOT_ODDS
+    )
   })
 
   it('should initialize with config phase', () => {
@@ -45,10 +105,7 @@ describe('Simulation Store', () => {
 
   it('should set configuration', () => {
     const store = useSimulationStore()
-    const config = {
-      simulationCount: 1000,
-      batchSize: 100,
-    }
+    const config = { simulationCount: 1000 }
 
     store.setConfig(config)
 
@@ -58,124 +115,129 @@ describe('Simulation Store', () => {
 
   it('should handle simulation lifecycle', async () => {
     const store = useSimulationStore()
-    const mockTickets = [
-      {
-        id: 1,
-        mainNumbers: [1, 2, 3, 4, 5],
-        euroNumbers: [1, 2],
-        linesCount: 1,
-      },
-    ]
-    const config = { simulationCount: 100, batchSize: 50 }
+    const config = { simulationCount: 100 }
+    const run = fakeRun()
 
-    // Mock successful stream response
-    const mockStream = {
-      getReader: () => ({
-        read: vi
-          .fn()
-          .mockResolvedValueOnce({
-            done: false,
-            value: new TextEncoder().encode(
-              '{"type":"progress","progress":{"currentSimulation":50}}\n'
-            ),
-          })
-          .mockResolvedValueOnce({
-            done: false,
-            value: new TextEncoder().encode(
-              '{"type":"result","result":{"totalSimulations":100}}\n'
-            ),
-          })
-          .mockResolvedValueOnce({
-            done: true,
-            value: undefined,
-          }),
-        releaseLock: vi.fn(),
-      }),
-    }
-
-    global.$fetch = vi.fn().mockResolvedValue(mockStream)
-
-    // Seed tickets into store first
-    seedTickets(mockTickets as any)
-    // Start simulation
+    seedTickets(mockTickets)
     const promise = store.startSimulation(config)
 
     expect(store.state.phase).toBe('running')
     expect(store.isRunning).toBe(true)
+    expect(store.state.canCancel).toBe(true)
     expect(store.state.config).toEqual(config)
 
+    await untilRunStarts()
+    run.settle(outcomeOf(100))
     await promise
 
     expect(store.state.phase).toBe('results')
+    expect(store.state.results).toEqual({ totalSimulations: 100 })
+    expect(store.state.progress).toBeNull()
     expect(store.hasResults).toBe(true)
     expect(store.isRunning).toBe(false)
+    expect(store.state.canCancel).toBe(false)
+  })
+
+  it('refuses to start without tickets', async () => {
+    const store = useSimulationStore()
+
+    await store.startSimulation({ simulationCount: 100 })
+
+    expect(store.state.phase).toBe('error')
+    expect(startSimulationRun).not.toHaveBeenCalled()
   })
 
   it('should handle simulation errors', async () => {
     const store = useSimulationStore()
-    const mockTickets = [
-      {
-        id: 1,
-        mainNumbers: [1, 2, 3, 4, 5],
-        euroNumbers: [1, 2],
-        linesCount: 1,
-      },
-    ]
-    const config = { simulationCount: 100, batchSize: 50 }
+    const run = fakeRun()
 
-    global.$fetch = vi.fn().mockRejectedValue(new Error('Network error'))
-
-    seedTickets(mockTickets as any)
-    await store.startSimulation(config)
+    seedTickets(mockTickets)
+    const promise = store.startSimulation({ simulationCount: 100 })
+    await untilRunStarts()
+    run.fail(new Error('Worker crashed'))
+    await promise
 
     expect(store.state.phase).toBe('error')
     expect(store.hasError).toBe(true)
-    expect(store.state.error).toBe('Network error')
+    expect(store.state.error).toBe('Worker crashed')
+    expect(store.state.canCancel).toBe(false)
+  })
+
+  it('reports a run the engine cannot accept as an error', async () => {
+    const store = useSimulationStore()
+
+    seedTickets(mockTickets)
+    // Below the smallest run the engine is asked to play
+    await store.startSimulation({ simulationCount: 1 })
+
+    expect(store.state.phase).toBe('error')
+    expect(startSimulationRun).not.toHaveBeenCalled()
   })
 
   it('should handle cancellation', async () => {
     const store = useSimulationStore()
-    const mockTickets = [
-      {
-        id: 1,
-        mainNumbers: [1, 2, 3, 4, 5],
-        euroNumbers: [1, 2],
-        linesCount: 1,
-      },
-    ]
-    const config = { simulationCount: 100, batchSize: 50 }
+    const run = fakeRun()
 
-    // Mock a slow stream that we can cancel
-    global.$fetch = vi.fn().mockImplementation(
-      () =>
-        new Promise((_, reject) => {
-          setTimeout(() => {
-            const error = new Error('Operation aborted')
-            error.name = 'AbortError'
-            reject(error)
-          }, 100)
-        })
-    )
-
-    // Start simulation
-    seedTickets(mockTickets as any)
-    const promise = store.startSimulation(config)
+    seedTickets(mockTickets)
+    const promise = store.startSimulation({ simulationCount: 100 })
+    await untilRunStarts()
 
     expect(store.state.phase).toBe('running')
     expect(store.state.canCancel).toBe(true)
 
-    // Cancel immediately
     store.cancelSimulation()
 
-    await promise
-
+    // Cancelling does not wait for anything
+    expect(run.cancel).toHaveBeenCalledTimes(1)
     expect(store.state.phase).toBe('cancelled')
     expect(store.state.canCancel).toBe(false)
+
+    await promise
+    expect(store.state.phase).toBe('cancelled')
+    expect(store.state.results).toBeNull()
+  })
+
+  it('never starts the worker when cancelled while the prizes load', async () => {
+    const store = useSimulationStore()
+    fakeRun()
+
+    seedTickets(mockTickets)
+    const promise = store.startSimulation({ simulationCount: 100 })
+    store.cancelSimulation()
+    await promise
+
+    expect(startSimulationRun).not.toHaveBeenCalled()
+    expect(store.state.phase).toBe('cancelled')
+  })
+
+  it('ignores a cancelled run that reports back late', async () => {
+    const store = useSimulationStore()
+    const first = fakeRun()
+    const second = fakeRun()
+
+    seedTickets(mockTickets)
+    const firstPromise = store.startSimulation({ simulationCount: 100 })
+    await untilRunStarts()
+    store.cancelSimulation()
+
+    const secondPromise = store.startSimulation({ simulationCount: 100 })
+    await vi.waitFor(() => expect(startSimulationRun).toHaveBeenCalledTimes(2))
+
+    // Late news from the first run must not touch the second
+    first.progress(snapshotAt(90, 900, 900))
+    await firstPromise
+    expect(store.state.phase).toBe('running')
+    expect(store.state.canCancel).toBe(true)
+    expect(store.state.progress?.currentSimulation).toBe(0)
+
+    second.settle(outcomeOf(100))
+    await secondPromise
+    expect(store.state.phase).toBe('results')
   })
 
   it('should return to the config screen and keep the config', () => {
     const store = useSimulationStore()
-    const config = { simulationCount: 100, batchSize: 50 }
+    const config = { simulationCount: 100 }
 
     // Set some state
     store.setConfig(config)
@@ -194,35 +256,21 @@ describe('Simulation Store', () => {
 
   it('should prevent multiple concurrent simulations', async () => {
     const store = useSimulationStore()
-    const mockTickets = [
-      {
-        id: 1,
-        mainNumbers: [1, 2, 3, 4, 5],
-        euroNumbers: [1, 2],
-        linesCount: 1,
-      },
-    ]
-    const config = { simulationCount: 100, batchSize: 50 }
+    const run = fakeRun()
 
-    global.$fetch = vi
-      .fn()
-      .mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 100))
-      )
-
-    // Start first simulation
-    seedTickets(mockTickets as any)
-    const promise1 = store.startSimulation(config)
-
+    seedTickets(mockTickets)
+    const promise1 = store.startSimulation({ simulationCount: 100 })
     expect(store.isRunning).toBe(true)
 
     // Try to start second simulation
-    const promise2 = store.startSimulation(config)
+    const promise2 = store.startSimulation({ simulationCount: 100 })
 
+    await untilRunStarts()
+    run.settle(outcomeOf(100))
     await Promise.all([promise1, promise2])
 
-    // Should only make one API call
-    expect(global.$fetch).toHaveBeenCalledTimes(1)
+    // Should only start one worker run
+    expect(startSimulationRun).toHaveBeenCalledTimes(1)
   })
 
   it('should clear errors', () => {
@@ -237,69 +285,41 @@ describe('Simulation Store', () => {
     expect(store.state.phase).toBe('config')
   })
 
-  it('records a paid-in / won-back trajectory from progress events', async () => {
+  it('turns progress snapshots into progress state and a trajectory', async () => {
     const store = useSimulationStore()
-    const progressEvent = (
-      currentSimulation: number,
-      totalCost: number,
-      totalWinnings: number
-    ) =>
-      JSON.stringify({
-        type: 'progress',
-        progress: {
-          currentSimulation,
-          totalSimulations: 100,
-          progressPercentage: currentSimulation,
-          estimatedTimeRemaining: null,
-          canCancel: true,
-        },
-        summary: {
-          totalCost,
-          totalWinnings,
-          netProfit: totalWinnings - totalCost,
-          roiPercentage: -50,
-          maxWin: 10,
-          winDistribution: { totalWins: 1, winPercentage: 2, winsByClass: {} },
-        },
-      }) + '\n'
+    const run = fakeRun()
 
-    const encode = (text: string) => new TextEncoder().encode(text)
-    global.$fetch = vi.fn().mockResolvedValue({
-      getReader: () => ({
-        read: vi
-          .fn()
-          .mockResolvedValueOnce({
-            done: false,
-            value: encode(progressEvent(50, 100, 30)),
-          })
-          .mockResolvedValueOnce({
-            done: false,
-            value: encode(progressEvent(100, 200, 40)),
-          })
-          .mockResolvedValueOnce({
-            done: false,
-            value: encode(
-              '{"type":"result","result":{"totalSimulations":100}}\n'
-            ),
-          })
-          .mockResolvedValueOnce({ done: true, value: undefined }),
-        releaseLock: vi.fn(),
-      }),
-    })
+    seedTickets(mockTickets)
+    const promise = store.startSimulation({ simulationCount: 100 })
+    expect(store.trajectory).toEqual([{ draws: 0, spent: 0, won: 0 }])
+    await untilRunStarts()
 
-    seedTickets([
-      {
-        id: 1,
-        mainNumbers: [1, 2, 3, 4, 5],
-        euroNumbers: [1, 2],
-        linesCount: 1,
-      },
-    ] as any)
-    await store.startSimulation({ simulationCount: 100, batchSize: 50 })
+    run.progress(snapshotAt(50, 100, 30))
 
     expect(store.trajectory).toEqual([
       { draws: 0, spent: 0, won: 0 },
       { draws: 50, spent: 100, won: 30 },
+    ])
+    expect(store.state.progress).toMatchObject({
+      currentSimulation: 50,
+      totalSimulations: 100,
+      progressPercentage: 50,
+      partialResults: {
+        simulationsCompleted: 50,
+        totalWins: 1,
+        winPercentage: 2,
+        currentROI: -70,
+        netProfit: -70,
+        maxWin: 10,
+        winsByClass: { 12: 1 },
+      },
+    })
+
+    // The finished run brings the authoritative trajectory
+    run.settle(outcomeOf(100))
+    await promise
+    expect(store.trajectory).toEqual([
+      { draws: 0, spent: 0, won: 0 },
       { draws: 100, spent: 200, won: 40 },
     ])
 
@@ -322,81 +342,55 @@ describe('Simulation Store', () => {
     })
   })
 
-  describe('configuration validation', () => {
-    it('should include correct parameters in API request', async () => {
+  describe('the request handed to the engine', () => {
+    const requestFor = async (config: {
+      simulationCount: number
+      seed?: string
+    }) => {
       const store = useSimulationStore()
-      const mockTickets = [
-        {
-          id: 1,
-          mainNumbers: [1, 2, 3, 4, 5],
-          euroNumbers: [1, 2],
-          linesCount: 1,
-        },
-        {
-          id: 2,
-          mainNumbers: [6, 7, 8, 9, 10],
-          euroNumbers: [3, 4],
-          linesCount: 1,
-        },
-      ]
-      const config = { simulationCount: 500, batchSize: 100 }
+      const run = fakeRun()
+      seedTickets(mockTickets)
+      const promise = store.startSimulation(config)
+      await untilRunStarts()
+      run.settle(outcomeOf(config.simulationCount))
+      await promise
+      return run.request!
+    }
 
-      global.$fetch = vi.fn().mockResolvedValue({
-        getReader: () => ({
-          read: vi.fn().mockResolvedValue({ done: true }),
-          releaseLock: vi.fn(),
-        }),
-      })
+    it('carries the tickets, the draw count and the current prizes', async () => {
+      const request = await requestFor({ simulationCount: 500 })
 
-      seedTickets(mockTickets as any)
-      await store.startSimulation(config)
-
-      expect(global.$fetch).toHaveBeenCalledWith('/api/batchSimulate', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/x-ndjson',
-          'Content-Type': 'application/json',
-        },
-        body: {
-          tickets: mockTickets.map((t) => ({
-            id: t.id,
-            mainNumbers: t.mainNumbers,
-            euroNumbers: t.euroNumbers,
-            linesCount: t.linesCount,
-          })),
-          simulationCount: 500,
-          batchSize: 100,
-          includeIndividualResults: true, // should be true for <= 1000 simulations
-        },
-        signal: expect.any(AbortSignal),
-        responseType: 'stream',
-      })
+      expect(request.tickets).toEqual(mockTickets)
+      expect(request.simulationCount).toBe(500)
+      expect(request.payouts).toEqual(useOddsStore().getPayoutMap())
+      expect(Object.keys(request.payouts)).toHaveLength(12)
     })
 
-    it('should disable individual results for large simulations', async () => {
-      const store = useSimulationStore()
-      const mockTickets = [
-        {
-          id: 1,
-          mainNumbers: [1, 2, 3, 4, 5],
-          euroNumbers: [1, 2],
-          linesCount: 1,
-        },
-      ]
-      const config = { simulationCount: 5000, batchSize: 200 } // > 1000
+    it('is plain data a worker can receive', async () => {
+      const request = await requestFor({ simulationCount: 500 })
+      expect(() => structuredClone(request)).not.toThrow()
+    })
 
-      global.$fetch = vi.fn().mockResolvedValue({
-        getReader: () => ({
-          read: vi.fn().mockResolvedValue({ done: true }),
-          releaseLock: vi.fn(),
-        }),
-      })
+    it('draws a fresh seed for every run', async () => {
+      const first = await requestFor({ simulationCount: 500 })
+      const second = await requestFor({ simulationCount: 500 })
 
-      seedTickets(mockTickets as any)
-      await store.startSimulation(config)
+      expect(first.seed).toBeTruthy()
+      expect(first.seed).not.toBe(second.seed)
+    })
 
-      const call = global.$fetch.mock.calls[0]
-      expect(call[1].body.includeIndividualResults).toBe(false)
+    it('uses the given seed to replay a run', async () => {
+      const request = await requestFor({ simulationCount: 500, seed: 'replay' })
+      expect(request.seed).toBe('replay')
+    })
+
+    it('keeps every draw for short runs only', async () => {
+      expect((await requestFor({ simulationCount: 1000 })).recordDraws).toBe(
+        true
+      )
+      expect((await requestFor({ simulationCount: 5000 })).recordDraws).toBe(
+        false
+      )
     })
   })
 })

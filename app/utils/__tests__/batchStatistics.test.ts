@@ -1,28 +1,63 @@
 import { describe, it, expect } from 'vitest'
 import {
   calculateBatchStatistics,
-  calculateWinDistribution,
-  calculateSimulationStatistics,
-  calculatePercentile,
+  percentileOfCounts,
   simulateSingleDraw,
+  type RunTotals,
 } from '../batchStatistics'
 import { combinationCount } from '../combinatorics'
 
+/** Running totals for a run given as one payout (in euros) per draw */
+const totalsOf = (
+  payouts: number[],
+  stakePerDraw: number,
+  winsByClass: Record<number, number> = {}
+): RunTotals => {
+  const payoutCounts = new Map<number, number>()
+  for (const payout of payouts) {
+    if (payout <= 0) continue
+    const cents = Math.round(payout * 100)
+    payoutCounts.set(cents, (payoutCounts.get(cents) ?? 0) + 1)
+  }
+  return { draws: payouts.length, stakePerDraw, payoutCounts, winsByClass }
+}
+
 describe('batchStatistics', () => {
-  it('calculatePercentile on sorted data', () => {
-    const arr = [1, 2, 3, 4, 5]
-    expect(calculatePercentile(arr, 0)).toBe(1)
-    expect(calculatePercentile(arr, 50)).toBe(3)
-    expect(calculatePercentile(arr, 100)).toBe(5)
+  it('percentileOfCounts matches a percentile over the sorted values', () => {
+    // 1, 2, 3, 4, 5
+    const single = [1, 2, 3, 4, 5].map((v) => [v, 1] as const)
+    expect(percentileOfCounts(single, 0)).toBe(1)
+    expect(percentileOfCounts(single, 50)).toBe(3)
+    expect(percentileOfCounts(single, 100)).toBe(5)
+
+    // 0, 0, 0, 10: ranks interpolate between neighbouring values
+    const repeated = [
+      [0, 3],
+      [10, 1],
+    ] as const
+    expect(percentileOfCounts(repeated, 50)).toBe(0)
+    expect(percentileOfCounts(repeated, 75)).toBeCloseTo(2.5)
+    expect(percentileOfCounts(repeated, 100)).toBe(10)
+
+    expect(percentileOfCounts([], 50)).toBe(0)
   })
 
-  it('calculateSimulationStatistics empty and non-empty', () => {
-    const empty = calculateSimulationStatistics([], [], 0)
+  it('describes the payout distribution, empty and non-empty', () => {
+    const empty = calculateBatchStatistics(totalsOf([], 0)).statistics
     expect(empty.meanWinnings).toBe(0)
-    const stats = calculateSimulationStatistics([0, 10, 20], [-2, 1, 3], 2)
+
+    const stats = calculateBatchStatistics(totalsOf([0, 10, 20], 2)).statistics
+    expect(stats.meanWinnings).toBe(10)
     expect(stats.medianWinnings).toBe(10)
+    expect(stats.minWinnings).toBe(0)
     expect(stats.maxWinnings).toBe(20)
+    expect(stats.standardDeviation).toBe(10)
     expect(stats.profitableSimulations).toBe(2)
+    // Profit is the payout less the stake, draw by draw
+    expect(stats.medianProfit).toBe(8)
+    expect(stats.percentileNet5).toBeCloseTo(-1)
+    expect(stats.percentileNet95).toBeCloseTo(17)
+    expect(stats.medianRoiPct).toBe(400)
   })
 
   it('simulateSingleDraw computes correct wins and payouts', () => {
@@ -47,49 +82,17 @@ describe('batchStatistics', () => {
   })
 
   it('calculateBatchStatistics aggregates totals', () => {
-    const individual = [
-      {
-        simulationIndex: 0,
-        winningNumbers: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
-        totalWinnings: 10,
-        netProfit: -2,
-        winsByClass: { 12: 1 },
-      },
-      {
-        simulationIndex: 1,
-        winningNumbers: { mainNumbers: [6, 7, 8, 9, 10], euroNumbers: [3, 4] },
-        totalWinnings: 0,
-        netProfit: -2,
-        winsByClass: {},
-      },
-    ] as any
-    const totalCost = 4
-    const res = calculateBatchStatistics(individual, totalCost)
+    const res = calculateBatchStatistics(totalsOf([10, 0], 2, { 12: 1 }))
     expect(res.totalSimulations).toBe(2)
+    expect(res.totalCost).toBe(4)
     expect(res.totalWinnings).toBe(10)
     expect(res.netProfit).toBe(6)
     expect(res.roiPercentage).toBe((6 / 4) * 100)
   })
 
   it('calculateBatchStatistics computes enhanced metrics correctly', () => {
-    const individual = [
-      {
-        simulationIndex: 0,
-        winningNumbers: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
-        totalWinnings: 20,
-        netProfit: 8, // cost per sim = 12
-        winsByClass: { 11: 1 },
-      },
-      {
-        simulationIndex: 1,
-        winningNumbers: { mainNumbers: [6, 7, 8, 9, 10], euroNumbers: [3, 4] },
-        totalWinnings: 0,
-        netProfit: -12,
-        winsByClass: {},
-      },
-    ] as any
-    const totalCost = 24 // 2 simulations * 12 cost each
-    const res = calculateBatchStatistics(individual, totalCost)
+    // 2 draws at €12 each
+    const res = calculateBatchStatistics(totalsOf([20, 0], 12, { 11: 1 }))
 
     // Basic metrics
     expect(res.totalSimulations).toBe(2)
@@ -129,24 +132,7 @@ describe('batchStatistics', () => {
   })
 
   it('calculateBatchStatistics handles all-losing scenario', () => {
-    const individual = [
-      {
-        simulationIndex: 0,
-        winningNumbers: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
-        totalWinnings: 0,
-        netProfit: -10,
-        winsByClass: {},
-      },
-      {
-        simulationIndex: 1,
-        winningNumbers: { mainNumbers: [6, 7, 8, 9, 10], euroNumbers: [3, 4] },
-        totalWinnings: 0,
-        netProfit: -10,
-        winsByClass: {},
-      },
-    ] as any
-    const totalCost = 20
-    const res = calculateBatchStatistics(individual, totalCost)
+    const res = calculateBatchStatistics(totalsOf([0, 0], 10))
 
     // Core Economics (per play) - all-losing scenario
     expect(res.stakePerPlay).toBe(10) // 20 / 2
@@ -177,21 +163,11 @@ describe('batchStatistics', () => {
     expect(res.expectedNetReturn).toBe(-10)
     expect(res.returnRatePerEuro).toBe(0)
     expect(res.averagePrizePerWin).toBe(0) // No wins, so no average prize
-    // removed: worstCaseScenario
+    expect(res.averageLossPerLosingSimulation).toBe(10)
   })
 
   it('calculateBatchStatistics handles edge case: zero cost', () => {
-    const individual = [
-      {
-        simulationIndex: 0,
-        winningNumbers: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
-        totalWinnings: 10,
-        netProfit: 10,
-        winsByClass: { 12: 1 },
-      },
-    ] as any
-    const totalCost = 0
-    const res = calculateBatchStatistics(individual, totalCost)
+    const res = calculateBatchStatistics(totalsOf([10], 0, { 12: 1 }))
 
     // Core Economics (per play) with zero cost
     expect(res.stakePerPlay).toBe(0)
@@ -216,22 +192,17 @@ describe('batchStatistics', () => {
     expect(res.breakEvenAvgPrizeAtCurrentHitRate).toBe(0) // 0/(100/100) = €0 avg prize needed
     expect(res.expectedPlaysPerHit).toBe(1) // 100/100 = 1 play per hit
     expect(res.netIfEveryPlayHit).toBe(10)
+    expect(res.statistics.medianRoiPct).toBe(0)
   })
 
   it('calculateBatchStatistics shows realistic lottery economics', () => {
-    // Simulate realistic lottery scenario: high win rate but small prizes
-    const individual = Array.from({ length: 1000 }, (_, i) => ({
-      simulationIndex: i,
-      winningNumbers: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
-      totalWinnings: i < 300 ? 4 : 0, // 30% win rate, €4 average prize
-      netProfit: i < 300 ? 4 - 20 : -20, // €20 cost per simulation
-      winsByClass: i < 300 ? { 12: 1 } : {},
-    }))
-
-    const totalCost = 20000 // 1000 * €20
-    const res = calculateBatchStatistics(individual as any, totalCost)
+    // Simulate realistic lottery scenario: high win rate but small prizes.
+    // 1000 draws at €20 each, 30% of them paying €4.
+    const payouts = Array.from({ length: 1000 }, (_, i) => (i < 300 ? 4 : 0))
+    const res = calculateBatchStatistics(totalsOf(payouts, 20, { 12: 300 }))
 
     // Core Economics (per play) - shows the mathematical reality
+    expect(res.totalCost).toBe(20000)
     expect(res.stakePerPlay).toBe(20) // €20 stake per play
     expect(res.expectedPayoutPerPlay).toBe(1.2) // €1.20 expected payout
     expect(res.expectedProfitPerPlay).toBe(-18.8) // €-18.80 expected loss per play
@@ -258,30 +229,19 @@ describe('batchStatistics', () => {
     // Legacy metrics for backward compatibility
     expect(res.winDistribution.winPercentage).toBe(30) // 30% win rate sounds good
     expect(res.averagePrizePerWin).toBe(4) // But average prize is only €4
-    // removed: worstCaseScenario
     expect(res.expectedNetReturn).toBe(-18.8) // Actual expected loss per simulation
     expect(res.returnRatePerEuro).toBe(0.06) // Only 6% return per euro invested
   })
 
-  it('calculateWinDistribution counts winning simulations', () => {
-    const dist = calculateWinDistribution([
-      {
-        winsByClass: { 12: 1 },
-        simulationIndex: 0,
-        winningNumbers: { mainNumbers: [], euroNumbers: [] },
-        totalWinnings: 1,
-        netProfit: -1,
-      },
-      {
-        winsByClass: { 12: 0 },
-        simulationIndex: 1,
-        winningNumbers: { mainNumbers: [], euroNumbers: [] },
-        totalWinnings: 0,
-        netProfit: -1,
-      },
-    ] as any)
+  it('counts winning draws and reports every win class', () => {
+    const dist = calculateBatchStatistics(
+      totalsOf([1, 0], 2, { 12: 1 })
+    ).winDistribution
     expect(dist.totalWins).toBe(1)
     expect(dist.totalLosses).toBe(1)
     expect(dist.winsByClass[12]).toBe(1)
+    // Classes that never hit are still listed
+    expect(Object.keys(dist.winsByClass)).toHaveLength(12)
+    expect(dist.winsByClass[1]).toBe(0)
   })
 })

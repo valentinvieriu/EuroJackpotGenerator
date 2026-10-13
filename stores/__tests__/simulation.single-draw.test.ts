@@ -4,6 +4,10 @@ import { useSimulationStore } from '../simulation'
 import { useOddsStore } from '../odds'
 import { useTicketsStore } from '../tickets'
 import type { Ticket } from '~/schemas'
+import { startSimulationRun } from '~/utils/simulationRunner'
+
+// The Monte Carlo run happens in a Web Worker; the tests stand in for it
+vi.mock('~/utils/simulationRunner', () => ({ startSimulationRun: vi.fn() }))
 
 // Mocks that must be hoisted before module import
 vi.mock('~/utils/ticketHighlighting', () => ({
@@ -203,29 +207,20 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
         linesCount: 1,
       },
     ] as any)
+    // The single draw's simulate call
     // @ts-expect-error – global mock
-    global.$fetch = vi
-      .fn()
-      // First: single draw simulate call
-      .mockResolvedValueOnce({
-        draw: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
-        meta: {},
-      })
-      // Then: batchSimulate NDJSON stream
-      .mockResolvedValueOnce({
-        getReader: () => ({
-          read: vi
-            .fn()
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                '{"type":"result","result":{"totalSimulations":10}}\n'
-              ),
-            })
-            .mockResolvedValueOnce({ done: true }),
-          releaseLock: vi.fn(),
-        }),
-      })
+    global.$fetch = vi.fn().mockResolvedValueOnce({
+      draw: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
+      meta: {},
+    })
+    // The Monte Carlo run finishes as soon as it starts
+    vi.mocked(startSimulationRun).mockReturnValueOnce({
+      finished: Promise.resolve({
+        result: { totalSimulations: 100 } as any,
+        trajectory: [],
+      }),
+      cancel: vi.fn(),
+    })
 
     // Odds for single draw
     const odds = useOddsStore()
@@ -256,7 +251,7 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     expect(sim.state.singleDraw.phase).toBe('results')
 
     // Start Monte Carlo to reach results state (tickets already present)
-    await sim.startSimulation({ simulationCount: 10, batchSize: 5 })
+    await sim.startSimulation({ simulationCount: 100 })
     expect(sim.state.phase).toBe('results')
 
     // Generate new tickets → should reset Monte Carlo to config and rehighlight single draw
