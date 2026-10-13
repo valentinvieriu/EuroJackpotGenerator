@@ -45,21 +45,6 @@ export default defineEventHandler(async (event): Promise<SimulateResponse> => {
       } catch {
         rawBody = undefined
       }
-      // Test-friendly fallback: if a plain string body was attached to req, parse it
-      if (rawBody === undefined) {
-        const reqUnknown = event?.node?.req as unknown
-        if (
-          reqUnknown &&
-          typeof reqUnknown === 'object' &&
-          'body' in reqUnknown
-        ) {
-          const maybeBody = (reqUnknown as { body?: unknown }).body
-          if (maybeBody !== undefined) {
-            rawBody =
-              typeof maybeBody === 'string' ? JSON.parse(maybeBody) : maybeBody
-          }
-        }
-      }
     }
     const input = validateInput(
       simulateRequestSchema,

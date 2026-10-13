@@ -84,9 +84,6 @@ export const useTransientErrors = () => {
  * Manages ephemeral UI state that should be SSR-safe
  */
 export const useUIState = () => {
-  // Ticket generation form visibility
-  const showGenerationForm = useState('show-generation-form', () => false)
-
   // Welcome message visibility (for shared configurations)
   const showWelcomeMessage = useState('show-welcome-message', () => false)
   const welcomeLuckyCode = useState('welcome-lucky-code', () => '')
@@ -98,18 +95,7 @@ export const useUIState = () => {
   // Copy success feedback
   const copySuccess = useState('copy-success', () => false)
 
-  // Loading states for various operations
-  const isGeneratingTickets = useState('is-generating-tickets', () => false)
-  const currentOperation = useState<'generate' | 'simulate' | null>(
-    'current-operation',
-    () => null
-  )
-
   // Actions
-  const toggleGenerationForm = () => {
-    showGenerationForm.value = !showGenerationForm.value
-  }
-
   const showWelcome = (luckyCode: string, duration = WELCOME_DISPLAY_MS) => {
     welcomeLuckyCode.value = luckyCode
     showWelcomeMessage.value = true
@@ -148,100 +134,37 @@ export const useUIState = () => {
     }
   }
 
-  const setLoading = (operation: 'generate' | 'simulate' | null) => {
-    currentOperation.value = operation
-    isGeneratingTickets.value = operation === 'generate'
-  }
-
   return {
     // State (readonly)
-    showGenerationForm: readonly(showGenerationForm),
     showWelcomeMessage: readonly(showWelcomeMessage),
     welcomeLuckyCode: readonly(welcomeLuckyCode),
     showSharingDialog: readonly(showSharingDialog),
     sharingLuckyCode: readonly(sharingLuckyCode),
     copySuccess: readonly(copySuccess),
-    isGeneratingTickets: readonly(isGeneratingTickets),
-    currentOperation: readonly(currentOperation),
 
     // Actions
-    toggleGenerationForm,
     showWelcome,
     hideWelcome,
     showSharing,
     hideSharing,
     setCopySuccess,
-    setLoading,
   }
 }
 
 /**
  * Simulation panel state
- * Manages UI state specific to simulation panels
+ * Manages UI state specific to the slot machine and its panels
  */
 export const useSimulationPanelState = () => {
-  const activeMode = useState<'single' | 'montecarlo'>(
-    'simulation-mode',
-    () => 'single'
-  )
-  const singlePanelKey = useState('single-panel-key', () => 0)
-  const montePanelKey = useState('monte-panel-key', () => 0)
+  // False while the reels are still spinning, so results aren't spoiled before they land
+  const drawRevealed = useState('draw-revealed', () => true)
 
-  const setMode = (mode: 'single' | 'montecarlo') => {
-    activeMode.value = mode
-  }
-
-  const refreshSinglePanel = () => {
-    singlePanelKey.value++
-  }
-
-  const refreshMontePanel = () => {
-    montePanelKey.value++
-  }
-
-  const refreshAllPanels = () => {
-    singlePanelKey.value++
-    montePanelKey.value++
+  const setDrawRevealed = (revealed: boolean) => {
+    drawRevealed.value = revealed
   }
 
   return {
-    activeMode: readonly(activeMode),
-    singlePanelKey: readonly(singlePanelKey),
-    montePanelKey: readonly(montePanelKey),
-    setMode,
-    refreshSinglePanel,
-    refreshMontePanel,
-    refreshAllPanels,
-  }
-}
-
-/**
- * Debug and development state
- * Manages debugging flags and development-related state
- */
-export const useDebugState = () => {
-  const debugMode = useState('debug-mode', () => false)
-  const showCacheStats = useState('show-cache-stats', () => false)
-  const showTimings = useState('show-timings', () => false)
-
-  const toggleDebugMode = () => {
-    debugMode.value = !debugMode.value
-  }
-
-  const toggleCacheStats = () => {
-    showCacheStats.value = !showCacheStats.value
-  }
-
-  const toggleTimings = () => {
-    showTimings.value = !showTimings.value
-  }
-
-  return {
-    debugMode: readonly(debugMode),
-    showCacheStats: readonly(showCacheStats),
-    showTimings: readonly(showTimings),
-    toggleDebugMode,
-    toggleCacheStats,
-    toggleTimings,
+    drawRevealed: readonly(drawRevealed),
+    setDrawRevealed,
   }
 }

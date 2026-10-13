@@ -309,16 +309,5 @@ describe('Odds Store', () => {
       expect(payoutMap[1]).toBeGreaterThan(0) // Jackpot class
       expect(payoutMap[12]).toBeGreaterThan(0) // Lowest class
     })
-
-    it('should provide cache statistics', () => {
-      const store = useOddsStore()
-      const stats = store.getCacheStats()
-
-      expect(stats).toHaveProperty('hasData')
-      expect(stats).toHaveProperty('cacheAge')
-      expect(stats).toHaveProperty('isExpired')
-      expect(stats).toHaveProperty('isLoading')
-      expect(stats).toHaveProperty('hasError')
-    })
   })
 })

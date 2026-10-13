@@ -1,27 +1,29 @@
 import { logger } from '~/utils/logger'
+import {
+  buildWinProgram,
+  buildDudProgram,
+  reelStopFrequency,
+  type SoundNote,
+} from '~/utils/soundDesign'
 
 /**
- * Premium win sound engine
+ * Slot machine sound engine
  * -----------------------------------
- * Goals:
- *  - Keep intuitive "size-of-win by ear": pitch and density scale with ROI.
- *  - Sound premium: tasteful reverb, subtle chorus, compression, stereo movement.
- *  - Musical: snap to a major scale, add light harmonic richness.
+ * Everything is synthesised with the Web Audio API; there are no audio files.
  *
- * Public API preserved: playWinSound(winnings, cost, volumeMultiplier?)
+ *  - Spin: a lever clack, then a reel ratchet that thins out as reels stop.
+ *  - Reel stop: a mechanical thunk plus a soft note, one rung higher per reel.
+ *  - Win: a run of coin-bells that climbs higher and longer the more you win
+ *    (the mapping lives in soundDesign.ts).
+ *  - No win: a quiet low dud.
+ *
+ * All notes share one FX chain (chorus, reverb, compressor) so they sit together.
  */
 
 interface AudioSettings {
-  baseFrequency: number
-  winFrequency: number
-  maxFrequency: number
-
+  /** Loudness of a full-gain note before the volume multiplier */
   baseGain: number
 
-  toneDuration: number
-  toneDelay: number
-
-  // Premium engine params
   dryLevel: number
   reverbLevel: number
   reverbDuration: number
@@ -37,31 +39,25 @@ interface AudioSettings {
   compressorAttack: number
   compressorRelease: number
 
-  panSweepPerHit: number // how far we pan per note (-1..1 range)
+  /** Stereo spread of the reels, left to right (-1..1) */
+  reelPanSpread: number
+  /** Clicks per second of the spinning-reel ratchet */
+  ratchetRate: number
+  /** Safety net: the ratchet never runs longer than this */
+  ratchetMaxSeconds: number
 }
 
-// Musical: C major scale
-const MAJOR_SCALE_SEMITONES = [0, 2, 4, 5, 7, 9, 11] as const
-
-// Premium defaults tuned for "classy casino"
 const AUDIO_SETTINGS: AudioSettings = {
-  baseFrequency: 261.63, // C4
-  winFrequency: 523.26, // C5
-  maxFrequency: 1046.52, // C6
-
-  baseGain: 0.15,
-
-  toneDuration: 0.25,
-  toneDelay: 0.12,
+  baseGain: 0.16,
 
   dryLevel: 0.85,
-  reverbLevel: 0.25,
+  reverbLevel: 0.22,
   reverbDuration: 1.2, // seconds
   reverbDecay: 2.6,
 
   chorusRate: 0.85, // Hz
   chorusDepthSeconds: 0.004,
-  chorusLevel: 0.18,
+  chorusLevel: 0.14,
 
   compressorThreshold: -12,
   compressorKnee: 20,
@@ -69,17 +65,23 @@ const AUDIO_SETTINGS: AudioSettings = {
   compressorAttack: 0.003,
   compressorRelease: 0.25,
 
-  panSweepPerHit: 0.18,
+  reelPanSpread: 0.5,
+  ratchetRate: 26,
+  ratchetMaxSeconds: 8,
 }
+
+/** Bell timbre: the fundamental plus two inharmonic partials, as struck metal has */
+const BELL_PARTIALS = [
+  { ratio: 1, level: 1 },
+  { ratio: 2.756, level: 0.32 },
+  { ratio: 5.404, level: 0.1 },
+] as const
+
+const SILENT = 0.0001
 
 /** Utility: clamp a value */
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n))
-}
-
-/** Utility: exponential ease-out (for more natural pitch mapping below 1x ROI) */
-function easeOutExpo(x: number): number {
-  return x <= 0 ? 0 : 1 - Math.pow(2, -10 * x)
 }
 
 /** Create a reverb impulse (Schroeder-style: decaying noise) */
@@ -103,42 +105,19 @@ function createReverbImpulse(
   return impulse
 }
 
-/** Snap an arbitrary frequency to the nearest pitch in a repeating major scale */
-function snapToScaleFrequency(targetHz: number, rootHz: number): number {
-  const semisFromRoot = 12 * Math.log2(targetHz / rootHz)
-  const octave = Math.floor(semisFromRoot / 12)
-  const withinOct = semisFromRoot - octave * 12
-
-  // Find nearest degree in scale
-  let nearest = MAJOR_SCALE_SEMITONES[0]
-  let smallest = Infinity
-  for (const deg of MAJOR_SCALE_SEMITONES) {
-    const diff = Math.abs(deg - withinOct)
-    if (diff < smallest) {
-      smallest = diff
-      nearest = deg
-    }
-  }
-  const snappedSemis = octave * 12 + nearest
-  return rootHz * Math.pow(2, snappedSemis / 12)
+/** One second of white noise: the raw material for clicks, thunks and the ratchet */
+function createNoiseBuffer(context: AudioContext): AudioBuffer {
+  const buffer = context.createBuffer(1, context.sampleRate, context.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+  return buffer
 }
 
-/** Per-note smooth envelope (attack/hold/decay) */
-function applyEnvelope(
-  gainNode: GainNode,
-  startTime: number,
-  peakGain: number,
-  duration: number
-): void {
-  const attack = duration * 0.18
-  const hold = duration * 0.52
-  const end = startTime + duration
-
-  gainNode.gain.cancelScheduledValues(startTime)
-  gainNode.gain.setValueAtTime(0.0001, startTime)
-  gainNode.gain.linearRampToValueAtTime(peakGain, startTime + attack)
-  gainNode.gain.setValueAtTime(peakGain, startTime + attack + hold)
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, end)
+interface Ratchet {
+  source: AudioBufferSourceNode
+  lfo: OscillatorNode
+  out: GainNode
+  level: number
 }
 
 /** Singleton engine with shared FX & dynamics */
@@ -149,19 +128,12 @@ class AudioEngine {
     if (typeof window === 'undefined') return null
 
     // Handle both standard and prefixed contexts
+    const audioWindow = window as unknown as {
+      AudioContext?: typeof AudioContext
+      webkitAudioContext?: typeof AudioContext
+    }
     const AudioContextClass =
-      (
-        window as unknown as {
-          AudioContext?: typeof AudioContext
-          webkitAudioContext?: typeof AudioContext
-        }
-      ).AudioContext ||
-      (
-        window as unknown as {
-          AudioContext?: typeof AudioContext
-          webkitAudioContext?: typeof AudioContext
-        }
-      ).webkitAudioContext
+      audioWindow.AudioContext || audioWindow.webkitAudioContext
     if (!AudioContextClass) return null
 
     if (!this._instance) {
@@ -177,81 +149,71 @@ class AudioEngine {
 
   private ctx: AudioContext
   private inputBus: GainNode
-
-  private dryGain: GainNode
-  private chorusDelay: DelayNode
-  private chorusWet: GainNode
-  private chorusLFO: OscillatorNode
-  private chorusDepth: GainNode
-
-  private reverb: ConvolverNode
-  private reverbGain: GainNode
-
   private master: GainNode
-  private compressor: DynamicsCompressorNode
+  private noise: AudioBuffer
+  private ratchet: Ratchet | null = null
 
   private constructor(ctx: AudioContext) {
     this.ctx = ctx
+    this.noise = createNoiseBuffer(ctx)
 
     // Shared input for all notes
     this.inputBus = ctx.createGain()
 
     // Dry path
-    this.dryGain = ctx.createGain()
-    this.dryGain.gain.value = AUDIO_SETTINGS.dryLevel
+    const dryGain = ctx.createGain()
+    dryGain.gain.value = AUDIO_SETTINGS.dryLevel
 
     // Chorus (LFO-modulated delay)
-    this.chorusDelay = ctx.createDelay(0.05)
-    this.chorusDelay.delayTime.value = 0.016 // base delay
-    this.chorusWet = ctx.createGain()
-    this.chorusWet.gain.value = AUDIO_SETTINGS.chorusLevel
+    const chorusDelay = ctx.createDelay(0.05)
+    chorusDelay.delayTime.value = 0.016 // base delay
+    const chorusWet = ctx.createGain()
+    chorusWet.gain.value = AUDIO_SETTINGS.chorusLevel
 
-    this.chorusLFO = ctx.createOscillator()
-    this.chorusLFO.type = 'sine'
-    this.chorusLFO.frequency.value = AUDIO_SETTINGS.chorusRate
-
-    this.chorusDepth = ctx.createGain()
-    this.chorusDepth.gain.value = AUDIO_SETTINGS.chorusDepthSeconds
-    this.chorusLFO.connect(this.chorusDepth)
-    // Modulate delay time
-    this.chorusDepth.connect(this.chorusDelay.delayTime)
-    this.chorusLFO.start()
+    const chorusLFO = ctx.createOscillator()
+    chorusLFO.type = 'sine'
+    chorusLFO.frequency.value = AUDIO_SETTINGS.chorusRate
+    const chorusDepth = ctx.createGain()
+    chorusDepth.gain.value = AUDIO_SETTINGS.chorusDepthSeconds
+    chorusLFO.connect(chorusDepth)
+    chorusDepth.connect(chorusDelay.delayTime)
+    chorusLFO.start()
 
     // Reverb (generated IR, plate-like)
-    this.reverb = ctx.createConvolver()
-    this.reverb.buffer = createReverbImpulse(
+    const reverb = ctx.createConvolver()
+    reverb.buffer = createReverbImpulse(
       ctx,
       AUDIO_SETTINGS.reverbDuration,
       AUDIO_SETTINGS.reverbDecay
     )
-    this.reverbGain = ctx.createGain()
-    this.reverbGain.gain.value = AUDIO_SETTINGS.reverbLevel
+    const reverbGain = ctx.createGain()
+    reverbGain.gain.value = AUDIO_SETTINGS.reverbLevel
 
     // Dynamics & master
     this.master = ctx.createGain()
     this.master.gain.value = 1.0
 
-    this.compressor = ctx.createDynamicsCompressor()
-    this.compressor.threshold.value = AUDIO_SETTINGS.compressorThreshold
-    this.compressor.knee.value = AUDIO_SETTINGS.compressorKnee
-    this.compressor.ratio.value = AUDIO_SETTINGS.compressorRatio
-    this.compressor.attack.value = AUDIO_SETTINGS.compressorAttack
-    this.compressor.release.value = AUDIO_SETTINGS.compressorRelease
+    const compressor = ctx.createDynamicsCompressor()
+    compressor.threshold.value = AUDIO_SETTINGS.compressorThreshold
+    compressor.knee.value = AUDIO_SETTINGS.compressorKnee
+    compressor.ratio.value = AUDIO_SETTINGS.compressorRatio
+    compressor.attack.value = AUDIO_SETTINGS.compressorAttack
+    compressor.release.value = AUDIO_SETTINGS.compressorRelease
 
     // Wire FX bus: input → (dry, chorus, reverb) → master → compressor → destination
-    this.inputBus.connect(this.dryGain)
-    this.dryGain.connect(this.master)
+    this.inputBus.connect(dryGain)
+    dryGain.connect(this.master)
 
-    this.inputBus.connect(this.chorusDelay)
-    this.chorusDelay.connect(this.chorusWet)
-    this.chorusWet.connect(this.master)
+    this.inputBus.connect(chorusDelay)
+    chorusDelay.connect(chorusWet)
+    chorusWet.connect(this.master)
 
-    this.inputBus.connect(this.reverb)
-    this.reverb.connect(this.reverbGain)
-    this.reverbGain.connect(this.master)
+    this.inputBus.connect(reverb)
+    reverb.connect(reverbGain)
+    reverbGain.connect(this.master)
 
-    this.master.connect(this.compressor)
-    this.compressor.connect(this.ctx.destination)
+    this.master.connect(compressor)
+    compressor.connect(this.ctx.destination)
   }
 
   /** Ensure audio is running (autoplay policies may start suspended) */
@@ -265,235 +227,409 @@ class AudioEngine {
     }
   }
 
+  now(): number {
+    return this.ctx.currentTime
+  }
+
+  /** Route a voice into the FX bus, through a panner when it sits off-centre */
+  private output(pan: number): { node: AudioNode; panner: AudioNode | null } {
+    if ('createStereoPanner' in this.ctx && Math.abs(pan) > 0.01) {
+      const panner = this.ctx.createStereoPanner()
+      panner.pan.value = clamp(pan, -1, 1)
+      panner.connect(this.inputBus)
+      return { node: panner, panner }
+    }
+    return { node: this.inputBus, panner: null }
+  }
+
   /**
-   * Play a single premium note with optional glide and pan.
-   * Adds a soft harmonic fifth for richness.
+   * A struck bell: instant attack, exponential ring-out, inharmonic partials.
+   * This is the coin sound; pitch carries the size of the win.
    */
-  playNote(options: {
+  playBell(options: {
     frequency: number
     startTime: number
     duration: number
     gain: number
-    pan?: number // -1..1
-    glideFromHz?: number | null
+    pan?: number
+  }): void {
+    const { frequency, startTime, duration, gain, pan = 0 } = options
+    const { node: out, panner } = this.output(pan)
+    const end = startTime + duration
+    const nodes: AudioNode[] = panner ? [panner] : []
+
+    BELL_PARTIALS.forEach(({ ratio, level }, i) => {
+      const osc = this.ctx.createOscillator()
+      const env = this.ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = frequency * ratio
+
+      // Higher partials die away faster, as they do in real metal
+      const ringOut = startTime + duration / (1 + i * 0.9)
+      env.gain.setValueAtTime(SILENT, startTime)
+      env.gain.linearRampToValueAtTime(gain * level, startTime + 0.004)
+      env.gain.exponentialRampToValueAtTime(SILENT, ringOut)
+
+      osc.connect(env)
+      env.connect(out)
+      osc.start(startTime)
+      osc.stop(end)
+      nodes.push(osc, env)
+    })
+
+    this.cleanupAfter(nodes[panner ? 1 : 0] as OscillatorNode, nodes)
+  }
+
+  /** A plain soft tone, for sounds that should not sparkle (the dud) */
+  playTone(options: {
+    frequency: number
+    startTime: number
+    duration: number
+    gain: number
+  }): void {
+    const { frequency, startTime, duration, gain } = options
+    const osc = this.ctx.createOscillator()
+    const env = this.ctx.createGain()
+    osc.type = 'triangle'
+    osc.frequency.value = frequency
+
+    env.gain.setValueAtTime(SILENT, startTime)
+    env.gain.linearRampToValueAtTime(gain, startTime + duration * 0.15)
+    env.gain.exponentialRampToValueAtTime(SILENT, startTime + duration)
+
+    osc.connect(env)
+    env.connect(this.inputBus)
+    osc.start(startTime)
+    osc.stop(startTime + duration)
+    this.cleanupAfter(osc, [osc, env])
+  }
+
+  /** A burst of filtered noise: the mechanical part of clicks and thunks */
+  playNoise(options: {
+    startTime: number
+    duration: number
+    gain: number
+    filter: BiquadFilterType
+    frequency: number
+    q?: number
+    pan?: number
   }): void {
     const {
-      frequency,
       startTime,
       duration,
       gain,
+      filter,
+      frequency,
+      q = 1,
       pan = 0,
-      glideFromHz = null,
     } = options
+    const { node: out, panner } = this.output(pan)
 
+    const source = this.ctx.createBufferSource()
+    source.buffer = this.noise
+    const biquad = this.ctx.createBiquadFilter()
+    biquad.type = filter
+    biquad.frequency.value = frequency
+    biquad.Q.value = q
+    const env = this.ctx.createGain()
+    env.gain.setValueAtTime(gain, startTime)
+    env.gain.exponentialRampToValueAtTime(SILENT, startTime + duration)
+
+    source.connect(biquad)
+    biquad.connect(env)
+    env.connect(out)
+    // Start at a random point so repeated bursts don't sound identical
+    source.start(startTime, Math.random() * 0.5)
+    source.stop(startTime + duration)
+    this.cleanupAfter(source, [
+      source,
+      biquad,
+      env,
+      ...(panner ? [panner] : []),
+    ])
+  }
+
+  /** A low pitched knock that drops in pitch: gives clicks their weight */
+  playThump(options: {
+    startTime: number
+    frequency: number
+    duration: number
+    gain: number
+    pan?: number
+  }): void {
+    const { startTime, frequency, duration, gain, pan = 0 } = options
+    const { node: out, panner } = this.output(pan)
     const osc = this.ctx.createOscillator()
-    const harm = this.ctx.createOscillator()
-    const noteGain = this.ctx.createGain()
-
+    const env = this.ctx.createGain()
     osc.type = 'sine'
-    harm.type = 'sine'
-    osc.frequency.value = frequency
-    harm.frequency.value = frequency * 1.5 // perfect fifth
+    osc.frequency.setValueAtTime(frequency * 1.8, startTime)
+    osc.frequency.exponentialRampToValueAtTime(frequency, startTime + duration)
+    env.gain.setValueAtTime(gain, startTime)
+    env.gain.exponentialRampToValueAtTime(SILENT, startTime + duration)
 
-    if (glideFromHz && glideFromHz > 0) {
-      // Gentle glide up into the note
-      const glideTime = Math.min(0.08, duration * 0.35)
-      osc.frequency.setValueAtTime(glideFromHz, startTime)
-      osc.frequency.linearRampToValueAtTime(frequency, startTime + glideTime)
-      harm.frequency.setValueAtTime(glideFromHz * 1.5, startTime)
-      harm.frequency.linearRampToValueAtTime(
-        frequency * 1.5,
-        startTime + glideTime
-      )
-    }
-
-    // Envelope & relative harmonic level
-    applyEnvelope(noteGain, startTime, gain, duration)
-    const harmGain = this.ctx.createGain()
-    applyEnvelope(harmGain, startTime, gain * 0.14, duration)
-
-    // Stereo pan per note if available
-    const hasStereoPanner = 'createStereoPanner' in this.ctx
-    let panner: StereoPannerNode | null = null
-
-    if (hasStereoPanner && Math.abs(pan) > 0.01) {
-      panner = this.ctx.createStereoPanner()
-      panner.pan.value = clamp(pan, -1, 1)
-      // route: note → panner → bus
-      noteGain.connect(panner)
-      harmGain.connect(panner)
-      panner.connect(this.inputBus)
-    } else {
-      // fallback: direct to bus
-      noteGain.connect(this.inputBus)
-      harmGain.connect(this.inputBus)
-    }
-
-    // Osc routing
-    osc.connect(noteGain)
-    harm.connect(harmGain)
-
-    // Schedule
+    osc.connect(env)
+    env.connect(out)
     osc.start(startTime)
-    harm.start(startTime)
-    const stopAt = startTime + duration
-    osc.stop(stopAt)
-    harm.stop(stopAt)
+    osc.stop(startTime + duration)
+    this.cleanupAfter(osc, [osc, env, ...(panner ? [panner] : [])])
+  }
 
-    // Cleanup
-    const clean = () => {
-      try {
-        osc.disconnect()
-        harm.disconnect()
-        noteGain.disconnect()
-        harmGain.disconnect()
-        if (panner) panner.disconnect()
-      } catch {
-        // Ignore cleanup errors
+  /**
+   * The spinning reels: band-passed noise chopped by a square wave into a fast
+   * ratchet. Runs until stopRatchet(); bypasses the reverb so it stays tight.
+   */
+  startRatchet(level: number): void {
+    this.stopRatchet(0)
+    const t = this.ctx.currentTime
+
+    const source = this.ctx.createBufferSource()
+    source.buffer = this.noise
+    source.loop = true
+
+    const band = this.ctx.createBiquadFilter()
+    band.type = 'bandpass'
+    band.frequency.value = 1700
+    band.Q.value = 1.4
+
+    // Gain swings 0..1 at the ratchet rate
+    const chop = this.ctx.createGain()
+    chop.gain.value = 0.5
+    const lfo = this.ctx.createOscillator()
+    lfo.type = 'square'
+    lfo.frequency.value = AUDIO_SETTINGS.ratchetRate
+    const lfoDepth = this.ctx.createGain()
+    lfoDepth.gain.value = 0.5
+    lfo.connect(lfoDepth)
+    lfoDepth.connect(chop.gain)
+
+    const out = this.ctx.createGain()
+    out.gain.setValueAtTime(SILENT, t)
+    out.gain.exponentialRampToValueAtTime(Math.max(SILENT, level), t + 0.06)
+
+    source.connect(band)
+    band.connect(chop)
+    chop.connect(out)
+    out.connect(this.master)
+
+    source.start(t)
+    lfo.start(t)
+    source.stop(t + AUDIO_SETTINGS.ratchetMaxSeconds)
+    lfo.stop(t + AUDIO_SETTINGS.ratchetMaxSeconds)
+
+    const ratchet: Ratchet = { source, lfo, out, level }
+    this.ratchet = ratchet
+    source.onended = () => {
+      for (const node of [source, band, chop, lfo, lfoDepth, out]) {
+        try {
+          node.disconnect()
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+      if (this.ratchet === ratchet) this.ratchet = null
+    }
+  }
+
+  /** Thin the ratchet out as reels stop: 1 = all spinning, 0 = silent */
+  setRatchetLevel(fraction: number): void {
+    if (!this.ratchet) return
+    const target = Math.max(SILENT, this.ratchet.level * clamp(fraction, 0, 1))
+    this.ratchet.out.gain.setTargetAtTime(target, this.ctx.currentTime, 0.03)
+  }
+
+  stopRatchet(fadeSeconds = 0.12): void {
+    const ratchet = this.ratchet
+    if (!ratchet) return
+    this.ratchet = null
+    const t = this.ctx.currentTime
+    try {
+      ratchet.out.gain.cancelScheduledValues(t)
+      ratchet.out.gain.setTargetAtTime(
+        SILENT,
+        t,
+        Math.max(0.005, fadeSeconds / 4)
+      )
+      // Slowing the chop as it fades reads as the mechanism winding down
+      ratchet.lfo.frequency.setTargetAtTime(
+        AUDIO_SETTINGS.ratchetRate / 3,
+        t,
+        Math.max(0.005, fadeSeconds / 2)
+      )
+      ratchet.source.stop(t + fadeSeconds + 0.05)
+      ratchet.lfo.stop(t + fadeSeconds + 0.05)
+    } catch {
+      // Already stopped
+    }
+  }
+
+  /** Disconnect a voice's nodes once its source has finished */
+  private cleanupAfter(
+    source: AudioScheduledSourceNode,
+    nodes: AudioNode[]
+  ): void {
+    source.onended = () => {
+      for (const node of nodes) {
+        try {
+          node.disconnect()
+        } catch {
+          // Ignore cleanup errors
+        }
       }
     }
-    osc.onended = clean
-    harm.onended = clean
-  }
-
-  now(): number {
-    return this.ctx.currentTime
   }
 }
 
-/** Build a tasteful sequence based on ROI, returning scheduled notes */
-function scheduleProgram(
-  engine: AudioEngine,
-  ratio: number,
-  volumeMultiplier: number
-): void {
-  const baseGain = clamp(AUDIO_SETTINGS.baseGain * volumeMultiplier, 0, 1)
-  let t = engine.now()
-
-  if (ratio > 0 && ratio < 1) {
-    // Small wins: single, smooth note; pitch tracks ratio (with ease), snapped to scale.
-    const eased = easeOutExpo(ratio)
-    const rawTarget =
-      AUDIO_SETTINGS.baseFrequency +
-      eased * (AUDIO_SETTINGS.winFrequency - AUDIO_SETTINGS.baseFrequency)
-    const freq = snapToScaleFrequency(
-      clamp(
-        rawTarget,
-        AUDIO_SETTINGS.baseFrequency,
-        AUDIO_SETTINGS.maxFrequency
-      ),
-      AUDIO_SETTINGS.baseFrequency
-    )
-
-    engine.playNote({
-      frequency: freq,
-      startTime: t,
-      duration: AUDIO_SETTINGS.toneDuration,
-      gain: baseGain,
-      pan: 0,
-      glideFromHz: freq * 0.96,
-    })
-    return
-  }
-
-  // Significant wins: ascending sequence; more notes for bigger ROI (cap 8).
-  const capped = Math.min(8, Math.ceil(ratio))
-  let spacing = AUDIO_SETTINGS.toneDelay
-
-  for (let i = 0; i < capped; i++) {
-    // Slightly tighten spacing as excitement builds
-    const tighten = clamp(1 - i * 0.07, 0.6, 1)
-    spacing = AUDIO_SETTINGS.toneDelay * tighten
-
-    // Ascending target that stays within a musical range, snapped to scale
-    const rawTarget = AUDIO_SETTINGS.winFrequency * (1 + i * 0.055) // gentle lift per hit
-    const snapped = snapToScaleFrequency(
-      clamp(
-        rawTarget,
-        AUDIO_SETTINGS.winFrequency,
-        AUDIO_SETTINGS.maxFrequency
-      ),
-      AUDIO_SETTINGS.baseFrequency
-    )
-
-    // Subtle pan sweep across the sequence
-    const pan = (i - (capped - 1) / 2) * AUDIO_SETTINGS.panSweepPerHit // centered sweep
-
-    // Small per-hit decay to feel natural
-    const hitGain = baseGain * (1 - i * 0.06)
-
-    engine.playNote({
-      frequency: snapped,
-      startTime: t,
-      duration: AUDIO_SETTINGS.toneDuration,
-      gain: clamp(hitGain, 0.02, 1),
-      pan,
-      glideFromHz: snapped * 0.97,
-    })
-
-    t += AUDIO_SETTINGS.toneDuration + spacing
-  }
-
-  // Big wins add a short flourish (sparkle arpeggio)
-  if (ratio >= 3) {
-    const flourishStart = t + 0.03
-    const flourishDur = Math.max(0.18, AUDIO_SETTINGS.toneDuration * 0.72)
-    const intervals = [0, 4, 7] // major triad
-    const highRoot = AUDIO_SETTINGS.maxFrequency / 2 // around C6 region
-
-    for (let j = 0; j < intervals.length; j++) {
-      const interval = intervals[j]
-      if (interval === undefined) continue
-      const f = highRoot * Math.pow(2, interval / 12)
-      const start = flourishStart + j * 0.07
-      const pan = -0.2 + j * 0.2
-      engine.playNote({
-        frequency: clamp(
-          f,
-          AUDIO_SETTINGS.winFrequency,
-          AUDIO_SETTINGS.maxFrequency
-        ),
-        startTime: start,
-        duration: flourishDur,
-        gain: clamp(baseGain * 0.9, 0, 1),
-        pan,
-        glideFromHz: null,
-      })
-    }
-  }
-}
-
-/**
- * Plays a premium dynamic win sound.
- * @param winnings The total amount won (must be > 0 to play sound)
- * @param cost The total cost of the tickets played
- * @param volumeMultiplier Optional volume multiplier (0.0 to 1.0)
- */
-export const playWinSound = async (
-  winnings: number,
-  cost: number,
-  volumeMultiplier: number = 1.0
-): Promise<void> => {
+/** Run a sound against a ready engine; never lets an audio failure reach the UI */
+async function withEngine(
+  label: string,
+  play: (engine: AudioEngine) => void
+): Promise<void> {
   try {
-    if (typeof window === 'undefined') return
-    if (!(winnings > 0)) return
-
     const engine = AudioEngine.get()
-    if (!engine) {
-      logger.warn('Web Audio API is not supported in this browser.')
-      return
-    }
-
+    if (!engine) return
     await engine.ensureRunning()
-
-    const ratio = cost > 0 ? winnings / cost : Infinity
-    const volMul = clamp(volumeMultiplier, 0, 1)
-
-    scheduleProgram(engine, ratio, volMul)
+    play(engine)
   } catch (e: unknown) {
     logger.error(
-      'Could not play premium win sound:',
+      `Could not play ${label} sound:`,
       e instanceof Error ? e.message : String(e)
     )
   }
 }
+
+const voiceGain = (noteGain: number, volumeMultiplier: number) =>
+  clamp(
+    AUDIO_SETTINGS.baseGain * noteGain * clamp(volumeMultiplier, 0, 1),
+    0,
+    1
+  )
+
+const playBells = (
+  engine: AudioEngine,
+  notes: SoundNote[],
+  volumeMultiplier: number,
+  spread = 0
+) => {
+  const start = engine.now()
+  notes.forEach((note, i) => {
+    engine.playBell({
+      frequency: note.frequency,
+      startTime: start + note.at,
+      duration: note.duration,
+      gain: voiceGain(note.gain, volumeMultiplier),
+      // Sweep left to right across the run
+      pan: notes.length > 1 ? spread * ((i / (notes.length - 1)) * 2 - 1) : 0,
+    })
+  })
+}
+
+/**
+ * Lever pull and the start of the reel ratchet.
+ * Call stopSpinSound() when the reels have stopped.
+ */
+export const playSpinStart = (volumeMultiplier: number = 1.0): Promise<void> =>
+  withEngine('spin', (engine) => {
+    const t = engine.now()
+    // Lever: a sharp clack with a low knock under it
+    engine.playNoise({
+      startTime: t,
+      duration: 0.05,
+      gain: voiceGain(1.1, volumeMultiplier),
+      filter: 'bandpass',
+      frequency: 900,
+      q: 0.8,
+    })
+    engine.playThump({
+      startTime: t,
+      frequency: 70,
+      duration: 0.14,
+      gain: voiceGain(1.4, volumeMultiplier),
+    })
+    engine.startRatchet(voiceGain(0.45, volumeMultiplier))
+  })
+
+/**
+ * One reel coming to rest: a thunk, plus a note one rung higher than the last reel's.
+ * @param reelIndex Zero-based reel, left to right
+ * @param reelCount Total number of reels, used to thin out the ratchet
+ */
+export const playReelStop = (
+  reelIndex: number,
+  reelCount: number,
+  volumeMultiplier: number = 1.0
+): Promise<void> =>
+  withEngine('reel stop', (engine) => {
+    const t = engine.now()
+    const position = reelCount > 1 ? reelIndex / (reelCount - 1) : 0.5
+    const pan = AUDIO_SETTINGS.reelPanSpread * (position * 2 - 1)
+
+    engine.playNoise({
+      startTime: t,
+      duration: 0.06,
+      gain: voiceGain(0.9, volumeMultiplier),
+      filter: 'lowpass',
+      frequency: 420,
+      pan,
+    })
+    engine.playThump({
+      startTime: t,
+      frequency: 95,
+      duration: 0.09,
+      gain: voiceGain(1.1, volumeMultiplier),
+      pan,
+    })
+    engine.playBell({
+      frequency: reelStopFrequency(reelIndex),
+      startTime: t + 0.005,
+      duration: 0.28,
+      gain: voiceGain(0.55, volumeMultiplier),
+      pan,
+    })
+
+    engine.setRatchetLevel(1 - (reelIndex + 1) / reelCount)
+  })
+
+/** Silence the reel ratchet. Safe to call when nothing is spinning. */
+export const stopSpinSound = (): void => {
+  try {
+    AudioEngine.get()?.stopRatchet()
+  } catch {
+    // Nothing to stop
+  }
+}
+
+/**
+ * Plays the win sound: a coin-bell run that climbs higher and longer the more
+ * was won relative to the stake.
+ * @param winnings The total amount won (must be > 0 to play sound)
+ * @param cost The total cost of the tickets played
+ * @param volumeMultiplier Optional volume multiplier (0.0 to 1.0)
+ */
+export const playWinSound = (
+  winnings: number,
+  cost: number,
+  volumeMultiplier: number = 1.0
+): Promise<void> => {
+  if (!(winnings > 0)) return Promise.resolve()
+  const program = buildWinProgram(cost > 0 ? winnings / cost : Infinity)
+
+  return withEngine('win', (engine) => {
+    playBells(engine, program.run, volumeMultiplier, 0.35)
+    playBells(engine, program.chord, volumeMultiplier)
+    playBells(engine, program.fanfare, volumeMultiplier, 0.5)
+  })
+}
+
+/** The quiet dud for a draw that won nothing. */
+export const playNoWinSound = (volumeMultiplier: number = 1.0): Promise<void> =>
+  withEngine('no-win', (engine) => {
+    const start = engine.now()
+    for (const note of buildDudProgram()) {
+      engine.playTone({
+        frequency: note.frequency,
+        startTime: start + note.at,
+        duration: note.duration,
+        gain: voiceGain(note.gain, volumeMultiplier),
+      })
+    }
+  })

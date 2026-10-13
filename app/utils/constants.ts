@@ -37,15 +37,7 @@ export const HTTP_ERROR_MIN = 400
 export const HTTP_ERROR_MAX = 599
 
 // UI Highlight Thresholds
-export const WIN_RATE_EXCELLENT_THRESHOLD = 20 // % - Green colour
-export const WIN_RATE_GOOD_THRESHOLD = 10 // % - Yellow colour
-export const PROFIT_RATE_EXCELLENT_THRESHOLD = 50 // % - Green colour
-export const PROFIT_RATE_GOOD_THRESHOLD = 25 // % - Yellow colour
-export const NUMBER_FREQUENCY_THRESHOLD = 0.1 // 10% - Highlight numbers appearing frequently
-export const WIN_CLASS_TIER_1_MAX = 3 // Classes 1-3 (highest prizes)
-export const WIN_CLASS_TIER_2_MAX = 7 // Classes 4-7 (medium prizes)
 export const LARGE_SIMULATION_THRESHOLD = 1000 // Export disabled above this
-export const HIGH_SIMULATION_WARNING_THRESHOLD = 5000 // Show warning above this
 
 // UI Timing Constants (milliseconds)
 export const WELCOME_DISPLAY_MS = 12000 // Welcome message auto-hide duration
@@ -61,6 +53,26 @@ export const DEFAULT_FETCH_TIMEOUT_MS = 8000 // Standard API timeout
 
 // EuroJackpot Draw Schedule
 export const EUROJACKPOT_DRAW_DAYS = [2, 5] as const // Tuesday = 2, Friday = 5
+export const DRAWS_PER_YEAR = EUROJACKPOT_DRAW_DAYS.length * 52
+
+// Slot machine reel timing (milliseconds)
+export const REEL_MIN_SPIN_MS = 500 // Reels spin at least this long, even if the draw returns instantly
+export const REEL_STAGGER_MS = 90 // Delay between one reel stopping and the next
+export const REEL_LAND_MS = 420 // Duration of a single reel's landing animation
+export const REEL_SETTLE_GRACE_MS = 400 // Wait this long for a result before giving up on a spin
+export const LED_TWEEN_MS = 600 // LED meters roll to their new value over this duration
+
+// Sound: volume multiplier per user-selected level
+export const SOUND_LEVEL_VOLUME = {
+  none: 0,
+  low: 0.3,
+  medium: 0.7,
+  high: 1,
+} as const
+export const REEL_STOP_SOUND_AT = 0.7 // Fraction of a reel's landing animation at which its stop is heard
+
+// Autoplay (Monte Carlo) chart resolution
+export const AUTOPLAY_CHART_POINTS = 50 // Progress updates requested per run; each becomes a chart point
 
 // Simulation Thresholds for Highlighting
 export const SIGNIFICANT_WIN_FRACTION_LARGE = 0.15 // 15% of wins for large simulations
@@ -108,6 +120,62 @@ export const POPULARITY_LUCKY_NUMBERS = new Set([3, 7, 11, 13, 17, 21]) // Commo
 export const POPULARITY_CANDIDATES_COUNT = 100 // Number of combinations to generate for unpopular selection
 export const POPULARITY_EURO_MONTH_SPREAD_THRESHOLD = 3 // Euro numbers spread threshold for month effect
 
+// Lotto Bayern bookmarklet integration (generation remains in /api/generate)
+export const LOTTO_BAYERN_ORIGIN = 'https://www.lotto-bayern.de'
+export const LOTTO_BAYERN_NORMAL_PATH = '/eurojackpot/normalschein'
+export const LOTTO_BAYERN_NORMAL_FIELD_MAX = 12
+export const GENERATE_API_PATH = '/api/generate'
+export const BOOKMARKLET_APP_ORIGIN = 'https://eurojackpot.vv42.workers.dev'
+export const BOOKMARKLET_FETCH_TIMEOUT_MS = 20000
+export const BOOKMARKLET_EDITOR_TIMEOUT_MS = 4500
+export const BOOKMARKLET_POLL_MS = 25
+export const BOOKMARKLET_CORS_MAX_AGE = 600
+export const BOOKMARKLET_ALGORITHMS = [
+  {
+    value: 'uniform',
+    label: 'Uniform random',
+    description: 'Every valid combination has equal selection probability.',
+  },
+  {
+    value: 'weighted',
+    label: 'Weighted by historical frequencies',
+    description:
+      'Uses square-root frequencies and sampling without replacement. Falls back to uniform if statistics are unavailable. No forced odd/even or high/low pattern.',
+  },
+  {
+    value: 'favorites',
+    label: 'Favourites',
+    description:
+      'Uses the app’s favourite weighting with historical frequencies. If statistics are unavailable, it includes favourites that fit and fills the remaining slots randomly.',
+  },
+  {
+    value: 'unpopular',
+    label: 'Unpopular combinations (heuristic)',
+    description:
+      'Ranks random candidates using the app’s human-choice heuristics. The score is not measured player popularity or a calibrated prize-sharing probability.',
+  },
+] as const
+
+// EuroJackpot payout rules (game rules since March 2022)
+// Half of every stake goes into the prize pool; the pool is split across the
+// 12 classes in fixed shares, and the rest feeds a reserve that tops up jackpots.
+export const EUROJACKPOT_PAYOUT_RATIO = 0.5
+export const EUROJACKPOT_PRIZE_POOL_SHARES: Readonly<Record<number, number>> = {
+  1: 0.36,
+  2: 0.086,
+  3: 0.0485,
+  4: 0.008,
+  5: 0.01,
+  6: 0.011,
+  7: 0.008,
+  8: 0.0255,
+  9: 0.0285,
+  10: 0.054,
+  11: 0.0675,
+  12: 0.203,
+}
+export const EUROJACKPOT_BOOSTER_FUND_SHARE = 0.09
+
 // EuroJackpot System Constants (for popularity scoring)
 export const EUROJACKPOT_TOTAL_COMBINATIONS = 139_838_160 // C(50,5) * C(12,2)
 
@@ -122,9 +190,6 @@ export const SIMPLE_MODE_METHOD = 'random' as const
 export const SIMULATION_OPTION_VALUES = [
   100, 250, 500, 1000, 2500, 5000, 10000,
 ] as const
-
-// Batch Size Options
-export const BATCH_SIZE_OPTIONS = [50, 100, 200] as const
 
 // Frequency Ratio Thresholds
 export const FREQ_RATIO_STRONG = 1.15

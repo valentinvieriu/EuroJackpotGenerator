@@ -159,22 +159,6 @@ export const useOddsStore = defineStore('odds', () => {
     return payoutMap
   }
 
-  /**
-   * Get cache statistics for debugging/monitoring
-   */
-  const getCacheStats = () => {
-    return {
-      hasData: !!cache.value.data,
-      cacheAge: cache.value.timestamp
-        ? Date.now() - cache.value.timestamp
-        : null,
-      isExpired: isExpired.value,
-      isLoading: cache.value.isLoading,
-      hasError: !!cache.value.error,
-      error: cache.value.error,
-    }
-  }
-
   // Return store interface
   return {
     // State
@@ -193,7 +177,6 @@ export const useOddsStore = defineStore('odds', () => {
     clearCache,
     clearError,
     getPayoutMap,
-    getCacheStats,
   }
 })
 

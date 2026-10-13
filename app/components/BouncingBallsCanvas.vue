@@ -1,7 +1,8 @@
 <template>
   <canvas
     ref="canvasRef"
-    class="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-40"
+    class="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-25"
+    aria-hidden="true"
   />
 </template>
 
@@ -26,6 +27,9 @@ const PARAMS = {
   WHEEL_GAIN: 0.0008,
   SWIRL: 0.07, // a bit more swirl for visual interest
 }
+
+const SMALL_SCREEN_PX = 640
+const BALL_COUNT_SMALL = 12
 
 // --- Collision tunables (shared with worker) ---
 const COLLISION = {
@@ -370,6 +374,10 @@ function fbTick(t = 0) {
 onMounted(() => {
   const el = canvasRef.value
   if (!el) return
+  // Purely decorative motion: leave the canvas blank for users who ask for less
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  // Fewer balls on small screens: less to simulate, less behind the content
+  if (window.innerWidth < SMALL_SCREEN_PX) PARAMS.BALL_COUNT = BALL_COUNT_SMALL
   const supportsOffscreen: boolean =
     'transferControlToOffscreen' in HTMLCanvasElement.prototype
 

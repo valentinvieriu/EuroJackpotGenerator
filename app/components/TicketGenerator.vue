@@ -1,263 +1,210 @@
 <template>
   <div>
-    <!-- Hero Section for Simple Mode or Empty State -->
-    <HeroSection v-if="!ticketsStore.hasTickets" />
+    <SlotMachine @customize="showCustomizationOverlay = true" />
 
-    <!-- Main Content Grid -->
+    <!-- Welcome message for shared Lucky Numbers -->
     <div
-      v-if="ticketsStore.hasTickets || ticketsStore.isCustomMode"
-      :class="[
-        'transition-all duration-500 ease-in-out',
-        tickets.length > 0
-          ? 'flex flex-col-reverse gap-6 lg:grid lg:grid-cols-5 lg:items-stretch lg:gap-6'
-          : 'block',
-      ]"
+      v-if="showWelcomeMessage"
+      class="casino-card-premium mx-auto mt-8 flex max-w-3xl items-start gap-3 rounded-2xl p-4"
     >
-      <!-- Welcome message for shared Lucky Numbers -->
-      <div
-        v-if="showWelcomeMessage"
-        class="casino-card glow-gold relative col-span-full mb-6 rounded-lg p-4"
+      <div class="flex-1">
+        <h2 class="mb-1 font-semibold text-brand-gold-light">
+          Lucky Numbers “{{ welcomeLuckyCode }}”
+        </h2>
+        <p class="text-sm text-content-secondary">
+          Someone shared their ticket setup with you. It is loaded below: spin
+          to see how it does.
+        </p>
+      </div>
+      <button
+        type="button"
+        class="rounded-full p-1.5 text-content-muted transition-colors duration-150 hover:text-content-secondary"
+        aria-label="Dismiss"
+        @click="hideWelcome"
       >
-        <div class="flex items-start gap-3">
-          <div class="text-2xl">🎯</div>
-          <div class="flex-1">
-            <h3 class="mb-1 text-lg font-semibold text-brand-gold-light">
-              Welcome to Lucky Numbers "{{ welcomeLuckyCode }}"!
-            </h3>
-            <p class="text-sm text-content-secondary">
-              Someone shared their ticket configuration with you. The settings
-              below have been loaded automatically. Click "Generate Numbers" to
-              create the exact same tickets they had!
+        ✕
+      </button>
+    </div>
+
+    <!-- Before the first spin: the paytable, as printed on any slot machine -->
+    <section
+      v-if="!ticketsStore.hasTickets"
+      class="casino-card mx-auto mt-10 max-w-3xl rounded-2xl p-5 sm:p-6"
+      aria-labelledby="paytable-heading"
+    >
+      <h2
+        id="paytable-heading"
+        class="text-lg font-semibold text-content-primary"
+      >
+        Paytable
+      </h2>
+      <p class="mt-1 mb-4 text-sm text-content-muted">
+        Every machine shows what it pays. This one also shows how unlikely each
+        prize is.
+      </p>
+      <PaytableTable />
+    </section>
+
+    <div v-else class="mt-10 grid gap-6 lg:grid-cols-5 lg:items-start">
+      <!-- Tickets -->
+      <section
+        class="casino-card min-w-0 rounded-2xl p-3 sm:p-5 lg:sticky lg:top-6 lg:col-span-2"
+        aria-labelledby="tickets-heading"
+      >
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2
+              id="tickets-heading"
+              class="text-lg font-semibold text-content-primary"
+            >
+              Your tickets
+            </h2>
+            <p class="text-sm text-content-muted">
+              {{ tickets.length }}
+              {{ tickets.length === 1 ? 'ticket' : 'tickets' }} ·
+              {{ formatEuro(ticketsStore.stakePerDraw) }} per draw
             </p>
           </div>
-          <button
-            class="p-1 text-content-muted transition duration-150 hover:text-content-secondary"
-            title="Dismiss"
-            @click="dismissWelcomeMessage"
-          >
-            ✕
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="rounded-lg px-2 py-1 text-sm text-brand-gold underline underline-offset-4 transition-colors duration-150 hover:text-brand-gold-light"
+              title="Create a shareable link for this setup"
+              @click="ticketsStore.share"
+            >
+              Share
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-casino-blue/50 px-3 py-1 text-sm text-content-secondary transition-colors duration-150 hover:border-casino-blue-light hover:text-content-primary"
+              @click="showCustomizationOverlay = true"
+            >
+              Customize
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-casino-blue/50 px-3 py-1 text-sm text-content-secondary transition-colors duration-150 hover:border-error hover:text-error-light"
+              @click="resetTickets"
+            >
+              Reset
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div
-        :class="[
-          'space-y-6 transition-all duration-500',
-          tickets.length > 0 ? 'lg:col-span-2' : 'w-full',
-        ]"
-      >
-        <!-- Lucky Numbers Sharing Dialog -->
-        <div
-          v-if="showSharingDialog"
-          class="casino-card-premium rounded-lg p-6"
-        >
-          <div class="mb-4 flex items-start justify-between">
+        <!-- Lucky Numbers sharing dialog -->
+        <div v-if="showSharingDialog" class="well mb-4 p-4">
+          <div class="mb-3 flex items-start justify-between gap-3">
             <div>
-              <h3 class="mb-1 text-lg font-semibold text-brand-gold-light">
-                🎉 Lucky Numbers Created!
+              <h3 class="font-semibold text-brand-gold-light">
+                Lucky Numbers “{{ sharingLuckyCode }}”
               </h3>
               <p class="text-sm text-content-muted">
-                Your configuration has been saved as "{{ sharingLuckyCode }}"
+                Share this link to pass on your setup: ticket format, number of
+                tickets and selection method.
               </p>
             </div>
             <button
-              class="text-content-muted transition duration-150 hover:text-content-secondary"
-              title="Close"
+              type="button"
+              class="rounded-full p-1.5 text-content-muted transition-colors duration-150 hover:text-content-secondary"
+              aria-label="Close"
               @click="hideSharing"
             >
               ✕
             </button>
           </div>
-
-          <div class="space-y-4">
-            <div>
-              <label class="mb-2 block text-sm font-medium text-content-muted">
-                Shareable link:
-              </label>
-              <div class="flex gap-2">
-                <input
-                  :value="shareableUrl"
-                  readonly
-                  class="flex-1 rounded-md border border-casino-blue-light/50 bg-surface-primary px-3 py-2 font-mono text-sm text-content-secondary focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
-                />
-                <button
-                  :class="[
-                    'rounded-md px-4 py-2 text-sm font-medium transition duration-150 focus:ring-2 focus:ring-brand-gold-400 focus:outline-none',
-                    copySuccess
-                      ? 'bg-interactive-success text-content-primary hover:bg-interactive-success-hover'
-                      : 'bg-brand-gold text-casino-blue-dark hover:bg-brand-gold-light',
-                  ]"
-                  @click="copyShareableUrl"
-                >
-                  {{ copySuccess ? '✓ Copied!' : 'Copy Link' }}
-                </button>
-              </div>
-            </div>
-
-            <div
-              class="rounded-md bg-surface-primary/40 p-3 text-xs text-content-muted"
+          <div class="flex gap-2">
+            <input
+              :value="shareableUrl"
+              readonly
+              aria-label="Shareable link"
+              class="form-select min-w-0 flex-1 font-mono text-sm"
+            />
+            <button
+              type="button"
+              :class="[
+                'rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150',
+                copySuccess
+                  ? 'bg-interactive-success text-content-inverse'
+                  : 'bg-brand-gold text-content-inverse hover:bg-brand-gold-light',
+              ]"
+              @click="copyShareableUrl"
             >
-              <strong>💡 How it works:</strong> Anyone with this link can
-              recreate your exact ticket configuration and numbers. The lucky
-              code "{{ sharingLuckyCode }}" ensures the same results every time.
-            </div>
+              {{ copySuccess ? 'Copied' : 'Copy link' }}
+            </button>
           </div>
         </div>
 
-        <!-- Generated Tickets Section (moved to left column) -->
-        <div
-          v-if="
-            tickets.length &&
-            !loading &&
-            (!showGenerationForm || !ticketsStore.isCustomMode)
-          "
+        <TransitionGroup
+          name="ticket"
+          tag="ul"
+          class="space-y-2 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto lg:pr-1"
         >
-          <div class="casino-card-premium rounded-lg p-6">
-            <div class="mb-4 flex items-center justify-between">
-              <h2
-                class="text-casino-gold text-premium-glow text-xl font-semibold"
-              >
-                Generated Tickets ({{ tickets.length }})
-              </h2>
-              <div class="flex flex-col gap-2 sm:flex-row">
-                <button
-                  class="cursor-pointer rounded px-2 py-1 text-sm text-brand-gold underline transition duration-150 hover:text-brand-gold-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
-                  title="Create shareable link for these numbers"
-                  @click="ticketsStore.share"
-                >
-                  Share
-                </button>
-                <button
-                  v-if="ticketsStore.isCustomMode"
-                  class="cursor-pointer rounded-md bg-surface-secondary px-3 py-1 text-sm text-content-primary transition duration-150 hover:bg-surface-card-hover focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
-                  @click="toggleGenerationForm()"
-                >
-                  Modify
-                </button>
-                <button
-                  v-else
-                  class="cursor-pointer rounded-md bg-surface-secondary px-3 py-1 text-sm text-content-primary transition duration-150 hover:bg-surface-card-hover focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
-                  @click="handleCustomizeFromSimpleMode()"
-                >
-                  Customize
-                </button>
-                <button
-                  class="cursor-pointer rounded-md border border-border-primary px-3 py-1 text-sm text-brand-gold transition duration-150 hover:bg-brand-gold hover:text-casino-blue-dark focus:ring-2 focus:ring-brand-gold-400 focus:outline-none"
-                  @click="resetTickets"
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
+          <TicketItem
+            v-for="(ticket, index) in tickets"
+            :key="ticket.id"
+            :ticket="ticket"
+            :ticket-number="ticket.id"
+            :has-draw="hasDraw"
+            :style="{ '--entry-delay': `${Math.min(index, 12) * 30}ms` }"
+            @delete="ticketsStore.removeTicket"
+          />
+        </TransitionGroup>
+      </section>
 
-            <TransitionGroup
-              name="ticket-entry"
-              tag="div"
-              class="space-y-4"
-              appear
-            >
-              <TicketComponent
-                v-for="(ticket, index) in tickets"
-                :key="ticket.id"
-                :ticket="ticket"
-                :ticket-number="ticket.id"
-                :style="{ '--entry-delay': `${index * 150}ms` }"
-                @delete="handleDeleteTicket"
-              />
-            </TransitionGroup>
-          </div>
-        </div>
-      </div>
-
-      <div
-        v-if="tickets.length > 0"
-        :class="['transition-all duration-500', 'lg:col-span-3']"
+      <!-- The long run -->
+      <section
+        class="casino-card min-w-0 rounded-2xl p-4 sm:p-6 lg:col-span-3"
+        aria-labelledby="long-run-heading"
       >
-        <div class="casino-card-premium rounded-lg p-6">
-          <div class="mb-6 flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-brand-gold-light">
-              Simulation
-            </h2>
-            <div
-              v-if="!loading"
-              class="flex border-b border-casino-blue-light/30"
-            >
-              <button
-                :class="[
-                  'relative border-b-2 px-3 py-1 text-sm font-medium transition-colors duration-200',
-                  activeMode === 'single'
-                    ? 'border-border-primary text-brand-gold'
-                    : 'border-transparent text-content-muted hover:text-content-secondary',
-                ]"
-                @click="handleModeChange('single')"
-              >
-                Single Draw
-              </button>
-              <button
-                :class="[
-                  'relative border-b-2 px-3 py-1 text-sm font-medium transition-colors duration-200',
-                  activeMode === 'montecarlo'
-                    ? 'border-border-primary text-brand-gold'
-                    : 'border-transparent text-content-muted hover:text-content-secondary',
-                ]"
-                @click="handleModeChange('montecarlo')"
-              >
-                Monte Carlo
-              </button>
-            </div>
-          </div>
-
-          <div v-if="loading" class="my-8 text-center text-content-muted">
-            <svg
-              class="mx-auto h-8 w-8 animate-spin text-brand-gold-light"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              />
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            <p class="mt-2">Processing {{ currentOperation }}...</p>
-          </div>
-
-          <div
-            v-else-if="error"
-            class="rounded-md border border-error bg-error-dark/50 p-4 text-center text-error"
-            role="alert"
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2
+            id="long-run-heading"
+            class="text-lg font-semibold text-content-primary"
           >
-            {{ error }}
-          </div>
-
-          <div v-else-if="!loading" class="relative">
-            <Transition name="mode-switch" mode="out-in">
-              <SingleDrawPanel
-                v-if="activeMode === 'single'"
-                key="single"
-                :tickets="tickets"
-              />
-              <MonteCarloPanel
-                v-else-if="activeMode === 'montecarlo'"
-                key="montecarlo"
-                :tickets="tickets"
-              />
-            </Transition>
+            The long run
+          </h2>
+          <div class="tab-list" role="tablist" aria-label="Long-run views">
+            <button
+              v-for="tab in TABS"
+              :id="`tab-${tab.id}`"
+              :key="tab.id"
+              type="button"
+              role="tab"
+              class="tab"
+              :aria-selected="activeTab === tab.id"
+              :aria-controls="`panel-${tab.id}`"
+              @click="activeTab = tab.id"
+            >
+              {{ tab.label }}
+            </button>
           </div>
         </div>
-      </div>
+
+        <!-- v-show keeps a running autoplay alive while the paytable is open -->
+        <div
+          v-show="activeTab === 'autoplay'"
+          id="panel-autoplay"
+          role="tabpanel"
+          aria-labelledby="tab-autoplay"
+        >
+          <MonteCarloPanel :tickets="tickets" />
+        </div>
+        <div
+          v-show="activeTab === 'paytable'"
+          id="panel-paytable"
+          role="tabpanel"
+          aria-labelledby="tab-paytable"
+        >
+          <PaytableTable />
+        </div>
+      </section>
     </div>
 
-    <!-- Customization Overlay -->
+    <p class="mt-10 text-center text-sm text-content-muted">
+      Educational tool only. No real money is involved, and nothing here helps
+      you win.
+    </p>
+
     <CustomizationOverlay
       :is-open="showCustomizationOverlay"
       @close="showCustomizationOverlay = false"
@@ -268,243 +215,107 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useSimulationPanelState } from '~/composables/useAppState'
-import HeroSection from './HeroSection.vue'
-import SingleDrawPanel from './SingleDrawPanel.vue'
+import SlotMachine from './SlotMachine.vue'
 import MonteCarloPanel from './MonteCarloPanel.vue'
-import TicketComponent from './TicketItem.vue'
+import PaytableTable from './PaytableTable.vue'
+import TicketItem from './TicketItem.vue'
+import CustomizationOverlay from './CustomizationOverlay.vue'
 import { logger } from '~/utils/logger'
+import { formatEuro } from '~/utils/format'
 import {
   formatTicketType,
   copyConfigUrl,
   getAppConfigUrl,
   type AppConfig,
 } from '~/utils/urlHash'
-import CustomizationOverlay from './CustomizationOverlay.vue'
 
-// Store
+const TABS = [
+  { id: 'autoplay', label: 'Autoplay' },
+  { id: 'paytable', label: 'Paytable' },
+] as const
+
 const ticketsStore = useTicketsStore()
+const simStore = useSimulationStore()
+const { drawRevealed } = useSimulationPanelState()
 
-// Use store-derived decorated tickets (with highlights)
-const tickets = computed(() =>
-  ticketsStore.getDecoratedTickets(activeMode.value)
-)
-const loading = computed(() => ticketsStore.isGenerating)
-
-// Error handling using centralized state
-const error = computed(() => ticketsStore.state.error || '')
-
-// UI mode (using shared simulation panel state)
-const { activeMode, setMode } = useSimulationPanelState()
-
-// Store-derived decorated tickets automatically update when simulation results change
-// No manual highlight application needed - tickets computed property handles this reactively
-
-// UI state (now using centralized state management)
 const {
-  showGenerationForm,
-  toggleGenerationForm,
   showSharingDialog,
   sharingLuckyCode,
   copySuccess,
   showWelcomeMessage,
   welcomeLuckyCode,
-  currentOperation,
   hideWelcome,
   hideSharing,
   setCopySuccess,
 } = useUIState()
 
-// Overlay state
 const showCustomizationOverlay = ref(false)
+const activeTab = ref<(typeof TABS)[number]['id']>('autoplay')
 
-// Computed shareable URL based on current configuration and sharing lucky code
-const shareableUrl = computed(() => {
-  if (!sharingLuckyCode.value) return ''
+// Matches stay hidden until the reels have landed, so the tickets don't spoil the draw
+const hasDraw = computed(
+  () => drawRevealed.value && simStore.hasSingleDrawResults
+)
+const tickets = computed(() =>
+  drawRevealed.value
+    ? ticketsStore.getDecoratedTickets('single')
+    : [...ticketsStore.state.tickets].sort((a, b) => a.id - b.id)
+)
 
-  const config: AppConfig = {
-    system: formatTicketType(
-      ticketsStore.state.config.mainCount,
-      ticketsStore.state.config.euroCount
-    ),
-    tickets: ticketsStore.state.config.ticketCount,
-    method: ticketsStore.state.config.method,
-    lucky: sharingLuckyCode.value,
-  }
+const shareConfig = computed<AppConfig>(() => ({
+  system: formatTicketType(
+    ticketsStore.state.config.mainCount,
+    ticketsStore.state.config.euroCount
+  ),
+  tickets: ticketsStore.state.config.ticketCount,
+  method: ticketsStore.state.config.method,
+  lucky: sharingLuckyCode.value,
+}))
 
-  return getAppConfigUrl(config)
-})
+const shareableUrl = computed(() =>
+  sharingLuckyCode.value ? getAppConfigUrl(shareConfig.value) : ''
+)
 
-// Configuration helpers no longer needed; URL sync handled in store
-
-const handleModeChange = (m: 'single' | 'montecarlo'): void => {
-  setMode(m)
-  ticketsStore.clearError()
-
-  // Highlights will automatically update via computed tickets property
-}
-
-const clearTickets = (): void => {
-  // Use semantic action for user-initiated reset
-  // Tickets store will notify simulation store internally
-  ticketsStore.reset()
-}
-
-const resetTickets = (): void => {
-  clearTickets()
-  if (showGenerationForm.value) toggleGenerationForm()
-  hideWelcome()
-}
-
-const handleDeleteTicket = (ticketId: number): void => {
-  // Use semantic action - let the store handle the entire deletion process
-  ticketsStore.removeTicket(ticketId)
-}
-
-const handleCustomizeFromSimpleMode = (): void => {
-  showCustomizationOverlay.value = true
-}
-
-// Sharing functions (now simplified using centralized state)
 const copyShareableUrl = async (): Promise<void> => {
   try {
-    const config: AppConfig = {
-      system: formatTicketType(
-        ticketsStore.state.config.mainCount,
-        ticketsStore.state.config.euroCount
-      ),
-      tickets: ticketsStore.state.config.ticketCount,
-      method: ticketsStore.state.config.method,
-      lucky: sharingLuckyCode.value,
-    }
-
-    await copyConfigUrl(config)
-    setCopySuccess(2000)
+    await copyConfigUrl(shareConfig.value)
+    setCopySuccess()
   } catch (error) {
     logger.error('Failed to copy URL:', error)
   }
 }
 
-// URL handling for configuration restoration
-
-const dismissWelcomeMessage = (): void => {
+const resetTickets = (): void => {
+  // Tickets store notifies the simulation store internally
+  ticketsStore.reset()
   hideWelcome()
+  hideSharing()
 }
 
-// Load configuration from URL on mount
+// Restore a shared or bookmarked configuration from the URL
 onMounted(() => {
-  // Use tickets store to handle URL configuration
   ticketsStore.handleUrlConfiguration()
 })
 </script>
 
 <style scoped>
-input[type='number']::-webkit-inner-spin-button,
-input[type='number']::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type='number'] {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-@media (min-width: 1024px) {
-  .grid {
-    transition: grid-template-columns 500ms ease-in-out;
-  }
-}
-
-/* Ticket generation entry animations */
-.ticket-entry-enter-active {
-  transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+.ticket-enter-active {
+  transition:
+    opacity 0.3s var(--ease-standard),
+    transform 0.3s var(--ease-standard);
   transition-delay: var(--entry-delay, 0ms);
 }
-
-.ticket-entry-leave-active {
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+.ticket-leave-active {
+  transition: opacity 0.2s var(--ease-standard);
 }
-
-.ticket-entry-enter-from {
+.ticket-enter-from {
   opacity: 0;
-  transform: translateY(40px) scale(0.95) rotateX(10deg);
+  transform: translateY(8px);
 }
-
-.ticket-entry-leave-to {
+.ticket-leave-to {
   opacity: 0;
-  transform: translateY(-20px) scale(0.95) rotateX(-5deg);
 }
-
-.ticket-entry-enter-to,
-.ticket-entry-leave-from {
-  opacity: 1;
-  transform: translateY(0) scale(1) rotateX(0deg);
-}
-
-/* Smooth reordering transitions */
-.ticket-entry-move {
-  transition: transform 0.4s ease;
-}
-
-/* Add a subtle entrance animation for the entire tickets section */
-@keyframes tickets-section-appear {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Mode switching animations */
-.mode-switch-enter-active,
-.mode-switch-leave-active {
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.mode-switch-enter-from {
-  opacity: 0;
-  transform: translateX(20px) scale(0.98);
-}
-
-.mode-switch-leave-to {
-  opacity: 0;
-  transform: translateX(-20px) scale(0.98);
-}
-
-.mode-switch-enter-to,
-.mode-switch-leave-from {
-  opacity: 1;
-  transform: translateX(0) scale(1);
-}
-
-/* Enhanced tab buttons with sliding indicator */
-.flex.border-b {
-  position: relative;
-  overflow: hidden;
-}
-
-.flex.border-b::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  width: 50%;
-  background: linear-gradient(
-    90deg,
-    var(--color-brand-gold-400),
-    var(--color-brand-gold-light)
-  );
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(0);
-}
-
-.flex.border-b:has(button:nth-child(2).text-brand-gold)::after {
-  transform: translateX(100%);
+.ticket-move {
+  transition: transform 0.35s var(--ease-standard);
 }
 </style>

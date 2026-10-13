@@ -5,7 +5,6 @@ import {
   calculateSimulationStatistics,
   calculatePercentile,
   simulateSingleDraw,
-  calculateTheoreticalExpectedValue,
 } from '../batchStatistics'
 import { combinationCount } from '../combinatorics'
 
@@ -284,33 +283,5 @@ describe('batchStatistics', () => {
     expect(dist.totalWins).toBe(1)
     expect(dist.totalLosses).toBe(1)
     expect(dist.winsByClass[12]).toBe(1)
-  })
-
-  it('calculateTheoreticalExpectedValue sums probabilities * amount * lines', () => {
-    const data = {
-      eurojackpotGameCycle: {
-        cycleNo: 1,
-        cycleYear: 2025,
-        eventDate: Date.now(),
-        eventWeekday: 5,
-        gametableValidFrom: null,
-        gametableValidTo: null,
-        key: 'x',
-        variantNo: 1,
-      },
-      eurojackpotOdds: [
-        {
-          amount: 1000,
-          numberOfWins: 0,
-          winningClass: 12,
-          sequence: 12,
-          jackpot: false,
-        },
-      ],
-      eurojackpotTurnover: [{ amount: 0, jurisdiction: 0 }],
-    }
-    const ev = calculateTheoreticalExpectedValue(2, 5, 2, data as any)
-    // lines per ticket = 1 -> total lines = 2; probability for class 12 = 1/49
-    expect(ev).toBeCloseTo((1 / 49) * 1000 * 2, 6)
   })
 })

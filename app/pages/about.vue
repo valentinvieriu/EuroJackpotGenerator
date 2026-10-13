@@ -1,7 +1,5 @@
 <template>
   <div class="relative min-h-screen bg-surface-primary text-content-primary">
-    <BouncingBallsCanvas />
-
     <div class="relative z-10 container mx-auto px-4 py-12">
       <!-- Header Section -->
       <div class="mb-12 text-center">
@@ -351,8 +349,6 @@
 </template>
 
 <script setup lang="ts">
-import BouncingBallsCanvas from '~/components/BouncingBallsCanvas.vue'
-
 // SEO and meta information
 useHead({
   title: 'About - EuroJackpot Simulator',

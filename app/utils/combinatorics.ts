@@ -1,44 +1,5 @@
 import { determineWinClass } from './winningClasses'
 
-/**
- * Generate all k-combinations from an array
- */
-export function kCombinations<T>(arr: T[], k: number): T[][] {
-  if (k === 0) return [[]]
-  if (k > arr.length) return []
-
-  const res: T[][] = []
-  const choose = (start: number, combo: T[]) => {
-    if (combo.length === k) {
-      res.push(combo.slice())
-      return
-    }
-    for (let i = start; i <= arr.length - (k - combo.length); i++) {
-      combo.push(arr[i])
-      choose(i + 1, combo)
-      combo.pop()
-    }
-  }
-  choose(0, [])
-  return res
-}
-
-/**
- * Expand system ticket selections into all possible lines
- */
-export function expandSystemLines(main: number[], euro: number[]) {
-  const mainLines = kCombinations(main, 5)
-  const euroLines = kCombinations(euro, 2)
-  const lines: { main: number[]; euro: number[] }[] = []
-
-  for (const m of mainLines) {
-    for (const e of euroLines) {
-      lines.push({ main: m, euro: e })
-    }
-  }
-  return lines
-}
-
 export function combinationCount(m: number, e: number): number {
   return nCr(m, 5) * nCr(e, 2)
 }

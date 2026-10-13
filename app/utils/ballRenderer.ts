@@ -22,11 +22,6 @@ export const BALL_PALETTE = {
   ivory: '#FFFFF0',
   // Updated to match our casino blue theme
   mutedNavy: '#1B2A3D', // closer to our surface colors
-  star: {
-    light: '#F5E6A3',
-    base: '#D4B356',
-    dark: '#A68B2E',
-  },
   // Premium casino blue - optimised for maximum text readability
   steel: {
     light: '#B8C5D9', // oklch(0.78 0.04 229) - very bright casino blue light
@@ -51,13 +46,6 @@ export interface BallRenderOptions {
   devicePixelRatio?: number
   /** Adds a soft ground shadow for a more 3D "token" look (default: false). */
   withShadow?: boolean
-}
-
-export interface StarRenderOptions {
-  number: number
-  radius: number
-  isWinner?: boolean
-  devicePixelRatio?: number
 }
 
 /* ===========
@@ -443,107 +431,6 @@ export function renderBall(
   } catch {
     // Optional
   }
-}
-
-/* ===========
-   Star rendering
-   =========== */
-
-/**
- * Renders a 3D star with gradients, shadows, and text.
- * Uses the same cached text-overlay mechanism as balls for performance.
- */
-export function renderStar(
-  ctx: Ctx2D,
-  cx: number,
-  cy: number,
-  options: StarRenderOptions
-): void {
-  const { number, radius: outerR, isWinner = false } = options
-  const innerR = outerR * 0.6
-  const spikes = 5
-
-  setQualityHints(ctx)
-
-  // Outline path
-  ctx.beginPath()
-  for (let i = 0; i < spikes * 2; i++) {
-    const ang = (i * Math.PI) / spikes
-    const rr = i % 2 === 0 ? outerR : innerR
-    const x = cx + Math.cos(ang) * rr
-    const y = cy + Math.sin(ang) * rr
-    if (i === 0) ctx.moveTo(x, y)
-    else ctx.lineTo(x, y)
-  }
-  ctx.closePath()
-
-  // Palette
-  const baseLight = isWinner
-    ? BALL_PALETTE.star.light
-    : BALL_PALETTE.steel.light
-  const baseMid = isWinner ? BALL_PALETTE.star.base : BALL_PALETTE.steel.mid
-  const baseDark = isWinner ? BALL_PALETTE.star.dark : BALL_PALETTE.steel.dark
-
-  // Fill gradient
-  const g = ctx.createRadialGradient(
-    cx - outerR * 0.3,
-    cy - outerR * 0.3,
-    outerR * 0.1,
-    cx,
-    cy,
-    outerR
-  )
-  g.addColorStop(0, baseLight)
-  g.addColorStop(0.6, baseMid)
-  g.addColorStop(1, baseDark)
-  ctx.fillStyle = g
-  ctx.fill()
-
-  // Screened highlight
-  ctx.save()
-  ctx.globalCompositeOperation = 'screen'
-  const hi = ctx.createRadialGradient(
-    cx - outerR * 0.35,
-    cy - outerR * 0.35,
-    0,
-    cx - outerR * 0.35,
-    cy - outerR * 0.35,
-    outerR * 0.7
-  )
-  hi.addColorStop(0, 'rgba(255,255,255,0.6)')
-  hi.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = hi
-  ctx.fill()
-  ctx.restore()
-
-  // Winner ring
-  if (isWinner) {
-    const ringGrad = ctx.createLinearGradient(
-      cx - outerR,
-      cy - outerR,
-      cx + outerR,
-      cy + outerR
-    )
-    ringGrad.addColorStop(0, BALL_PALETTE.gold.light)
-    ringGrad.addColorStop(0.5, BALL_PALETTE.gold.base)
-    ringGrad.addColorStop(1, BALL_PALETTE.gold.dark)
-    ctx.strokeStyle = ringGrad
-    ctx.lineWidth = clamp(outerR * 0.16, 6, 10)
-    ctx.stroke()
-  }
-
-  // Text (cached overlay)
-  const text = String(number)
-  const fontSize = outerR * 0.6
-  const font = `700 ${fontSize}px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
-  const baseText = isWinner ? BALL_PALETTE.midnight : BALL_PALETTE.midnight
-  const overlay = getTextOverlay(text, outerR, baseText, font)
-
-  const y = cy + (overlay.ascent - (overlay.ascent + overlay.descent) / 2)
-  const destX = Math.round(cx - overlay.tw / 2 - overlay.pad)
-  const destY = Math.round(y - overlay.ascent - overlay.pad)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ctx.drawImage(overlay.canvas as any, destX, destY)
 }
 
 /* ===========

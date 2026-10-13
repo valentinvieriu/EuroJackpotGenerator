@@ -28,11 +28,11 @@ vi.mock('~/utils/urlHash', () => ({
 }))
 
 vi.mock('~/utils/pricing', () => ({
+  PRICE_PER_LINE: 2,
   systemPrice: vi.fn((m: number, e: number) => (m === 5 && e === 2 ? 2 : 4)),
 }))
 
 const uiState = {
-  setLoading: vi.fn(),
   showWelcome: vi.fn(),
   showSharing: vi.fn(),
 }
@@ -92,7 +92,7 @@ describe('Tickets Store', () => {
 
     const ticketsStore = useTicketsStore()
     const simStore = useSimulationStore()
-    const spyGenerate = vi.spyOn(simStore, 'generateTickets')
+    const spyGenerate = vi.spyOn(simStore, 'ticketsGenerated')
 
     // Configure store
     ticketsStore.updateConfig({
@@ -116,9 +116,7 @@ describe('Tickets Store', () => {
     expect(ticketsStore.state.phase).toBe('ready')
     expect(ticketsStore.state.tickets).toEqual(ticketsApiResponse)
     expect(ticketsStore.state.lastGenerated).toBeGreaterThan(0)
-    expect(spyGenerate).toHaveBeenCalledWith(ticketsApiResponse)
-    expect(uiState.setLoading).toHaveBeenCalledWith('generate')
-    expect(uiState.setLoading).toHaveBeenLastCalledWith(null)
+    expect(spyGenerate).toHaveBeenCalledTimes(1)
   })
 
   it('adds seed when luckyCode is set', async () => {
@@ -349,7 +347,7 @@ describe('Tickets Store', () => {
   it('reset clears tickets and URL, and notifies simulation store', async () => {
     const ticketsStore = useTicketsStore()
     const simStore = useSimulationStore()
-    const spyResetTickets = vi.spyOn(simStore, 'resetTickets')
+    const spyResetTickets = vi.spyOn(simStore, 'ticketsReset')
 
     // Ensure there are tickets first via generate()
     // @ts-expect-error – global mock
@@ -698,7 +696,7 @@ describe('Tickets Store', () => {
 
       const ticketsStore = useTicketsStore()
       const simStore = useSimulationStore()
-      const spyRemove = vi.spyOn(simStore, 'removeTicket')
+      const spyRemove = vi.spyOn(simStore, 'ticketRemoved')
 
       // Configure for 3 tickets
       ticketsStore.updateConfig({ ticketCount: 3 })
@@ -714,7 +712,7 @@ describe('Tickets Store', () => {
       expect(ticketsStore.state.tickets).toHaveLength(2)
       expect(ticketsStore.state.tickets.map((t) => t.id)).toEqual([1, 3])
       expect(ticketsStore.state.config.ticketCount).toBe(2)
-      expect(spyRemove).toHaveBeenCalledWith(2)
+      expect(spyRemove).toHaveBeenCalledTimes(1)
     })
 
     it('handles removing non-existent ticket gracefully', async () => {
@@ -731,7 +729,7 @@ describe('Tickets Store', () => {
 
       const ticketsStore = useTicketsStore()
       const simStore = useSimulationStore()
-      const spyRemove = vi.spyOn(simStore, 'removeTicket')
+      const spyRemove = vi.spyOn(simStore, 'ticketRemoved')
 
       // First generate a ticket
       await ticketsStore.generate()
@@ -760,7 +758,7 @@ describe('Tickets Store', () => {
 
       const ticketsStore = useTicketsStore()
       const simStore = useSimulationStore()
-      const spyRemove = vi.spyOn(simStore, 'removeTicket')
+      const spyRemove = vi.spyOn(simStore, 'ticketRemoved')
 
       // First generate a ticket
       await ticketsStore.generate()
@@ -774,7 +772,7 @@ describe('Tickets Store', () => {
       expect(ticketsStore.state.config.ticketCount).toBe(0)
       expect(ticketsStore.state.phase).toBe('fresh')
       expect(ticketsStore.state.error).toBeNull()
-      expect(spyRemove).toHaveBeenCalledWith(1)
+      expect(spyRemove).toHaveBeenCalledTimes(1)
     })
 
     it('updates browser URL after ticket removal', async () => {

@@ -4,11 +4,14 @@ import { describe, it, expect } from 'vitest'
 async function simulateApiCall(body?: Record<string, unknown>) {
   const { default: handler } = await import('../simulate')
 
-  // Minimal H3-like event with a test-friendly body the handler can read
+  // Minimal H3-like event: enough for h3's own readBody to parse a JSON request
+  const method = body ? 'POST' : 'GET'
   const mockEvent = {
+    method,
     node: {
       req: {
-        method: body ? 'POST' : 'GET',
+        method,
+        headers: body ? { 'content-type': 'application/json' } : {},
         body: body ? JSON.stringify(body) : undefined,
       },
     },

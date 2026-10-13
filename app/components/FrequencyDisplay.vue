@@ -125,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTicketsStore } from '~~/stores/tickets'
 import { FREQ_RATIO_STRONG, FREQ_RATIO_MILD } from '~/utils/constants'
@@ -139,6 +140,10 @@ const {
   allEuroNumbers,
   frequencyStats,
 } = storeToRefs(ticketsStore)
+
+onMounted(() => {
+  if (!hasFrequencyData.value) void ticketsStore.fetchFrequencyData()
+})
 
 // Helper functions for visual styling and tooltips
 

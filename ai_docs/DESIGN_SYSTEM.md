@@ -98,10 +98,23 @@ See Tailwind v4 "Theme variables" docs for how tokens map to classes. :contentRe
 
 We ship premium utilities in `theme.css`:
 
-- **Cards**: `.casino-card`, `.casino-card-premium`
+- **Cards**: `.casino-card` (quiet panel), `.casino-card-premium` (panel with a gold hairline), `.well` (inset area inside a panel)
 - **Buttons**: `.btn-casino-gold`, `.btn-casino-blue`, with `.focus-casino` / `.focus-gold`
-- **Text**: `.text-casino-gold`, `.text-premium-glow`, `.font-heading`, `.font-body`, `.font-numbers`, `.font-cta`
-- **Overlays & Effects**: `.glass-luxury`, `.overlay-casino`, `.overlay-premium`, glow/ripple/hover-lift animations
+- **Text**: `.text-casino-gold`, `.text-hero`, `.label-plate` (small engraved caps), `.font-heading`, `.font-body`, `.font-numbers`, `.font-cta`
+- **Overlays & Effects**: `.glass-luxury`, `.overlay-casino`, `.overlay-premium`, static glows, `.hover-lift`
+
+The slot machine pieces live in **`app/assets/css/machine.css`** (imported by `theme.css`):
+
+- **Balls**: `.lotto-ball` with `--euro`, `--hit`, `--dim`, `--socket`, `--sm`, `--lg`. Pure CSS; every dimension derives from `--ball-size`, which a container may set to resize the balls inside it
+- **Cabinet**: `.cabinet`, `.bulbs`, `.reel-window`, `.reel`, `.lever`
+- **Readouts**: `.led-panel`, `.led`, `.led__value` (`--loss`, `--gain`)
+- **Small parts**: `.chip` (`--gold`), `.tab-list` / `.tab`, `.stat-tile`, `.ticket-row` (`--hit`), `.meter-bar`
+
+**Hierarchy rule:** gold belongs to the cabinet, the primary button and things that were hit. Panels stay quiet so those stand out. Nothing pulses or glows on a loop; motion is reserved for the spin.
+
+**Type roles:** the serif (Cinzel) is for the marquee only. Headings and body use Inter, labels on the machine use Oswald caps (`.label-plate`), and numbers on balls and LED meters use JetBrains Mono.
+
+**Charts** use `--color-chart-won` (accent), `--color-chart-paid` (muted context) and `--color-chart-lost`. Chart text always uses content tokens, never the series colour.
 
 > These classes encapsulate multi-property recipes (gradients, borders, shadows) while still using tokens under the hood.
 

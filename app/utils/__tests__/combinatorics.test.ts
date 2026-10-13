@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   nCr,
   combinationCount,
-  kCombinations,
-  expandSystemLines,
   calculateWinningLineCounts,
 } from '../combinatorics'
 import { determineWinClass } from '../winningClasses'
@@ -22,22 +20,6 @@ describe('combinatorics', () => {
     expect(combinationCount(5, 2)).toBe(1)
     // System 6/3: C(6,5)*C(3,2)=6*3=18
     expect(combinationCount(6, 3)).toBe(18)
-  })
-
-  it('kCombinations produces correct count', () => {
-    const combos = kCombinations([1, 2, 3, 4, 5], 3)
-    expect(combos.length).toBe(nCr(5, 3)) // 10
-    expect(combos.some((c) => c.join(',') === '1,2,3')).toBe(true)
-  })
-
-  it('expandSystemLines produces Cartesian of C(m,5) and C(e,2)', () => {
-    const lines = expandSystemLines([1, 2, 3, 4, 5, 6], [1, 2, 3])
-    expect(lines.length).toBe(nCr(6, 5) * nCr(3, 2)) // 6*3=18
-    // Ensure each line has 5 + 2
-    for (const l of lines) {
-      expect(l.main.length).toBe(5)
-      expect(l.euro.length).toBe(2)
-    }
   })
 
   it('calculateWinningLineCounts maps to known classes', () => {

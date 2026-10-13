@@ -23,7 +23,6 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
-          hid: 'description',
           name: 'description',
           content:
             'Generate EuroJackpot numbers based on historical draw frequencies.',
@@ -39,7 +38,7 @@ export default defineNuxtConfig({
         },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Cinzel:wght@600..800&family=Inter:wght@400..700&family=JetBrains+Mono:wght@600..700&family=Oswald:wght@500..700&display=swap',
         },
       ],
     },
@@ -65,18 +64,18 @@ export default defineNuxtConfig({
     clientRouteRules: false,
   },
   routeRules: {
-    // Global security headers
-    // '/**': {
-    //   headers: {
-    //     'Content-Security-Policy':
-    //       "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests; block-all-mixed-content",
-    //     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    //     'X-Content-Type-Options': 'nosniff',
-    //     'X-Frame-Options': 'DENY',
-    //     'Permissions-Policy':
-    //       'camera=(), microphone=(), geolocation=(), interest-cohort=()',
-    //   },
-    // },
+    // Security headers on every response.
+    // There is deliberately no Content-Security-Policy here: Nuxt inlines its
+    // hydration payload, so a policy needs per-request nonces or hashes (for
+    // example via the nuxt-security module). A static one would break the app.
+    '/**': {
+      headers: {
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      },
+    },
 
     // External odds endpoint is semi-static → cache at edge
     '/api/fetchWinningData': {

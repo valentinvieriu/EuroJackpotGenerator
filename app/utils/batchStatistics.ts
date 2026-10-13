@@ -4,13 +4,8 @@ import type {
   SimulationStatistics,
   IndividualSimulationResult,
   Ticket,
-  EurojackpotHistoricOdds,
 } from '~/schemas'
-import {
-  calculateWinningLineCounts,
-  combinationCount,
-} from '~/utils/combinatorics'
-import { getWinClassProbability } from '~/utils/winProbabilities'
+import { calculateWinningLineCounts } from '~/utils/combinatorics'
 
 /**
  * Sanitizes numbers to avoid Infinity/NaN in JSON serialization
@@ -21,12 +16,6 @@ const finiteOrNull = (n: number): number | null =>
 
 const finitePercentageOrNull = (n: number): number | null =>
   Number.isFinite(n) && n >= 0 && n <= 100 ? n : null
-
-/**
- * Clamps tiny values to zero to prevent "-0.00" display noise
- */
-export const clampTiny = (n: number, eps = 1e-10): number =>
-  Math.abs(n) < eps ? 0 : n
 
 /**
  * Type-safe win class key for better compiler checking
@@ -368,31 +357,4 @@ export function simulateSingleDraw(
     netProfit,
     winsByClass,
   }
-}
-
-/**
- * Theoretical EV for the given ticket configuration and odds.
- * Uses public EuroJackpot class probabilities.
- */
-export function calculateTheoreticalExpectedValue(
-  ticketCount: number,
-  systemMain: number,
-  systemEuro: number,
-  winningData: EurojackpotHistoricOdds
-): number {
-  if (!winningData?.eurojackpotOdds?.length) return 0
-
-  const linesPerTicket = combinationCount(systemMain, systemEuro)
-  const totalLines = ticketCount * linesPerTicket
-
-  let expectedValue = 0
-  for (const odd of winningData.eurojackpotOdds) {
-    if (odd.winningClass >= 1 && odd.winningClass <= 12 && odd.amount > 0) {
-      const probability = getWinClassProbability(odd.winningClass)
-      if (probability > 0) {
-        expectedValue += probability * odd.amount * totalLines
-      }
-    }
-  }
-  return expectedValue
 }

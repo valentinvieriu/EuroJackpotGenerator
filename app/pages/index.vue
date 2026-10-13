@@ -1,10 +1,9 @@
 <template>
-  <div class="relative container mx-auto min-h-screen px-4 py-12">
-    <BouncingBallsCanvas />
-    <div class="relative z-10">
-      <TicketGenerator />
-    </div>
-  </div>
+  <main
+    class="relative z-10 container mx-auto min-h-screen px-4 py-10 sm:py-14"
+  >
+    <TicketGenerator />
+  </main>
 </template>
 
 <script setup lang="ts">
@@ -17,12 +16,8 @@ useHead({
     {
       name: 'description',
       content:
-        'Generate and simulate EuroJackpot tickets with a premium casino feel. Explore system tickets and check potential winnings.',
+        'A slot machine that shows its meter: spin EuroJackpot draws, watch what you pay in and win back, and see the odds for every prize.',
     },
   ],
 })
 </script>
-
-<style>
-/* Optional: Add global font styles or overrides here */
-</style>

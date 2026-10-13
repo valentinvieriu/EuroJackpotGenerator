@@ -3,156 +3,102 @@
     <div
       v-if="error"
       role="alert"
-      aria-live="assertive"
-      class="mb-4 rounded-md border border-error bg-error-dark/50 p-3 text-center text-error"
+      class="mb-4 rounded-xl border border-error bg-error-dark/50 p-3 text-center text-error-light"
     >
       {{ error }}
     </div>
 
     <BatchSimulationConfig
-      v-if="tickets.length > 0 && viewState.phase === 'config'"
-      :ticket-count="tickets.length"
-      :cost-per-simulation="costPerSimulation"
-      :tickets="tickets"
-      :disabled="viewState.isRunning"
-      :can-cancel="viewState.canCancel"
-      :show-cancel-button="viewState.isRunning"
+      v-if="phase !== 'running' && !results"
+      :cost-per-draw="costPerDraw"
+      :disabled="tickets.length === 0"
       @start="handleStart"
-      @cancel="handleCancel"
     />
 
     <BatchSimulationProgress
-      v-if="viewState.phase === 'running'"
-      :current-simulation="viewState.currentSimulation"
-      :total-simulations="viewState.totalSimulations"
-      :elapsed-time="viewState.elapsedTime"
-      :estimated-time-remaining="viewState.estimatedTimeRemaining"
-      :can-cancel="viewState.canCancel"
-      :partial-results="viewState.partialResults"
-      @cancel="handleCancel"
+      v-else-if="phase === 'running'"
+      :current-simulation="progress?.currentSimulation ?? 0"
+      :total-simulations="
+        progress?.totalSimulations ??
+        simStore.state.config?.simulationCount ??
+        0
+      "
+      :elapsed-time="progress?.elapsedTime ?? 0"
+      :estimated-time-remaining="progress?.estimatedTimeRemaining ?? null"
+      :can-cancel="simStore.state.canCancel"
+      :partial-results="progress?.partialResults ?? null"
+      :trajectory="simStore.trajectory"
+      :cost-per-draw="costPerDraw"
+      @cancel="simStore.cancelSimulation()"
     />
 
     <BatchSimulationResults
-      v-if="viewState.phase === 'results' && viewState.results"
-      :results="viewState.results"
+      v-else-if="results"
+      :results="results"
       :tickets="tickets"
-      @reset="handleReset"
+      :trajectory="simStore.trajectory"
+      @reset="simStore.resetToConfig()"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, watch, computed, type PropType } from 'vue'
-import type {
-  Ticket,
-  BatchSimulationRequest,
-  BatchSimulationResult,
-} from '~/schemas'
+import { onUnmounted, watch, computed } from 'vue'
+import type { Ticket } from '~/schemas'
 import BatchSimulationConfig from './BatchSimulationConfig.vue'
 import BatchSimulationProgress from './BatchSimulationProgress.vue'
 import BatchSimulationResults from './BatchSimulationResults.vue'
-import { playWinSound } from '~/utils/audioUtils'
 import { logger } from '~/utils/logger'
-import { getCostPerSimulation } from '~/utils/simulationMath'
-// useSimulationStore is auto-imported via @pinia/nuxt configuration
+import { calculateTotalSimulationCost } from '~/utils/simulationMath'
+import { useMachineSounds } from '~/composables/useMachineSounds'
 
-const props = defineProps({
-  tickets: { type: Array as PropType<Ticket[]>, required: true },
-})
+interface Props {
+  tickets: Ticket[]
+}
 
-// No emits; parent reads odds via store
+const props = defineProps<Props>()
 
-// Use centralized error handling
-const { addError: addTransientError } = useTransientErrors()
 const simStore = useSimulationStore()
+const sounds = useMachineSounds()
+
+const phase = computed(() => simStore.state.phase)
+const progress = computed(() => simStore.state.progress)
+const results = computed(() =>
+  phase.value === 'results' ? simStore.state.results : null
+)
 const error = computed(() => simStore.state.error || '')
-const viewState = computed(() => {
-  const s = simStore.state
-  const p = s.progress
-  return {
-    phase: s.phase as 'config' | 'running' | 'results',
-    isRunning: simStore.isRunning,
-    canCancel: s.canCancel,
-    currentSimulation: p?.currentSimulation ?? 0,
-    totalSimulations: p?.totalSimulations ?? s.config?.simulationCount ?? 0,
-    startTime: s.startTime,
-    elapsedTime: p?.elapsedTime ?? 0,
-    estimatedTimeRemaining: p?.estimatedTimeRemaining ?? undefined,
-    partialResults: p?.partialResults ?? undefined,
-    results: s.results as BatchSimulationResult | null,
-  }
-})
 
-// Cost per simulation across all provided tickets (all lines)
-const costPerSimulation = computed(() => getCostPerSimulation(props.tickets))
+// Stake for one draw across all tickets (every line of every ticket)
+const costPerDraw = computed(() => calculateTotalSimulationCost(props.tickets))
 
-// Highlights are derived reactively via stores; no event emission needed
-
-const handleStart = async (cfg: BatchSimulationRequest): Promise<void> => {
+const handleStart = async (config: {
+  simulationCount: number
+  batchSize: number
+}): Promise<void> => {
   if (!props.tickets.length) return
   simStore.clearError()
 
-  // Warm odds cache for prize tooltips using centralized odds store
+  // Warm the prize table so the paytable and ticket prizes are ready
   try {
-    const oddsStore = useOddsStore()
-    await oddsStore.fetchOdds()
-  } catch (winningDataError) {
-    logger.warn('Failed to fetch winning data for tooltips:', winningDataError)
+    await useOddsStore().fetchOdds()
+  } catch (oddsError) {
+    logger.warn('Failed to fetch prize data before autoplay:', oddsError)
   }
 
-  // Set store config and start simulation in store
-  simStore.setConfig({
-    simulationCount: cfg.simulationCount,
-    batchSize: cfg.batchSize ?? 100,
-  })
-
-  try {
-    const ticketsStore = useTicketsStore()
-    await simStore.startSimulation(ticketsStore.totalPrice, {
-      simulationCount: cfg.simulationCount,
-      batchSize: cfg.batchSize ?? 100,
-    })
-  } catch (err: unknown) {
-    logger.error('Batch simulation error:', err)
-    // Error will also be reflected in store; show human-friendly transient error
-    const anyErr = err as Record<string, unknown>
-    const msg =
-      (anyErr?.data as Record<string, unknown> | undefined)?.message ||
-      (anyErr?.message as string | undefined) ||
-      'An error occurred during batch simulation.'
-    addTransientError(String(msg), 5000)
-  } finally {
-    // Store manages running/cancel flags
-  }
-}
-
-const handleCancel = (): void => {
-  simStore.cancelSimulation()
-}
-
-const handleReset = (): void => {
-  // Preserve tickets and config; just return to config phase
-  simStore.resetToConfig()
+  simStore.setConfig(config)
+  await simStore.startSimulation(config)
 }
 
 onUnmounted(() => {
   simStore.cancelSimulation()
 })
 
-// When results are ready in the store, apply highlights and play sound
-watch(
-  () => simStore.state.phase,
-  async (phase) => {
-    if (phase === 'results' && simStore.state.results) {
-      // Highlights update reactively via Tickets + Simulation stores
-      // Double-check results still exist after async operation
-      if (simStore.state.results && simStore.state.results.roiPercentage > 0) {
-        const r = simStore.state.results
-        playWinSound(r.totalWinnings, r.totalCost)
-      }
-    }
+// The run gets the same verdict as a single spin: bells that climb with what
+// came back, which for most runs means a short run that never resolves
+watch(phase, (current) => {
+  const finished = simStore.state.results
+  if (current === 'results' && finished) {
+    sounds.result(finished.totalWinnings, finished.totalCost)
   }
-)
+})
 </script>
-
-<style scoped></style>

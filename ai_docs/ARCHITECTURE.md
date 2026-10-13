@@ -243,20 +243,23 @@ const handleStartSimulation = () => {
 
 **Key Components**:
 
-- **HeroSection**: Entry point component providing simple mode quick-start with interactive stepper and progressive disclosure to custom mode
-- **TicketGenerator**: Orchestrates ticket configuration and generation through `TicketsStore` with dual-mode support
+- **SlotMachine**: The cabinet that anchors the page in every state. Holds the reels (`SlotReels`), the LED session meters (`LedMeter`), the stake stepper and the spin button; the first spin buys simple-mode tickets, later spins re-draw against the tickets on the table
+- **SlotReels**: Spins while a draw is in flight and lands the drawn numbers reel by reel. Emits `spin`, `reelStop` and `settled`, which the machine uses to time the reveal and the sounds
+- **LottoBall**: Pure-CSS 3D ball used for every number (tickets and reels); replaces the former per-number canvas
+- **TicketGenerator**: Page layout around the machine: paytable before the first spin, then tickets and the long-run panel
+- **PaytableTable**: Exact odds and last-paid prize per class; with a finished autoplay run it also shows hits against expected hits
+- **BankrollChart**: SVG line chart of money paid in vs won back, with crosshair tooltip, keyboard stepping and a table view
 - **CustomizationOverlay**: Centralized modal overlay for all customization interfaces, providing consistent user experience across both first screen and results screen
 - **FavoriteNumbersSelector**: Visual interface for custom number selection with add/remove functionality
 - **UnpopularityDisplay**: Educational component explaining unpopular combination factors and cognitive biases
 - **FrequencyDisplay**: Comprehensive frequency visualization with bar charts and statistical analysis
-- **TicketItem**: Individual ticket display with deletion capability and visual highlight support
-- **SimulationPanels**: Handle single-draw and Monte Carlo simulation UIs via `SimulationStore`
-- **Progress Components**: Real-time NDJSON stream visualization with cancellation support
+- **TicketItem**: One compact row per ticket with deletion, matched numbers in gold and the prize line
+- **MonteCarloPanel**: "Autoplay": configuration, live progress and results for the Monte Carlo run via `SimulationStore`
+- **Progress Components**: Real-time NDJSON stream visualization (the bankroll chart grows as batches arrive) with cancellation support
 
 **Utility Organization**:
 
 - **Constants Management**: All numeric bounds centralized in `app/utils/constants.ts` including simple mode configuration
-- **Scroll Utilities**: Smooth navigation utilities in `app/utils/scrollUtils.ts` for mode transitions
 - **Pure Functions**: Mathematical calculations, data transformations in dedicated utilities
 - **Type Safety**: Comprehensive TypeScript coverage with Zod schema integration
 
@@ -359,7 +362,7 @@ The application supports four distinct number generation methods, each serving d
 
 **Simple Mode Flow**:
 
-1. **One-Click Start**: User clicks "Generate Random Tickets" in HeroSection
+1. **One-Click Start**: User clicks "Spin" on the SlotMachine
 1. **Auto-Configuration**: System applies simple mode defaults (10 tickets, 5+2 format, random method)
 1. **Generation**: Server generates tickets using uniform random algorithm
 1. **Auto-Simulation**: System automatically triggers single draw simulation
@@ -411,14 +414,15 @@ The application supports four distinct number generation methods, each serving d
 
 **Audio Engine Architecture**:
 
-- **Musical Sound Design**: ROI-scaled audio feedback using C major scale progression (C4 → C5 → C6) for intuitive win-size recognition
-- **Premium Audio Processing**: Multi-stage audio pipeline with reverb, chorus, compression, and stereo panning effects
-- **Performance Optimisation**: Web Audio API with efficient context management and automatic cleanup
-- **Accessibility**: Volume controls and respectful audio behaviour (user-initiated only)
+- **Slot machine soundscape**: lever clack and reel ratchet on spin, a thunk plus a rising note as each reel stops, then the verdict: a run of coin-bells for a win or a quiet dud for none
+- **Pitch follows the win**: `app/utils/soundDesign.ts` (pure, tested) maps winnings ÷ stake to a win program. Bigger wins get a longer run that climbs higher; the resolving chord is reserved for wins that cover the stake, and a fanfare for wins of 5× and up
+- **Synthesis**: `app/utils/audioUtils.ts` renders those programs with the Web Audio API (no audio files) through a shared chorus/reverb/compressor chain
+- **Timing lives with the animation**: `useMachineSounds` is driven by `SlotReels` events, so sounds land with the reels rather than when the API responds. Stores do not play audio
+- **Accessibility**: one mute toggle on the cabinet; audio only ever starts from a user action
 
 **Canvas Animation System**:
 
-- **Web Worker Architecture**: Bouncing balls animation runs in dedicated worker thread to prevent main thread blocking
+- **Web Worker Architecture**: Bouncing balls animation runs in dedicated worker thread to prevent main thread blocking. It is mounted once in `app/app.vue` for the whole app, and not started at all under `prefers-reduced-motion`
 - **Fallback Strategy**: Graceful degradation to main-thread rendering when OffscreenCanvas unsupported
 - **Performance Tuned**: Optimised collision detection, reduced particle count, and efficient sprite rendering
 - **Interactive Elements**: User scroll and wheel events influence ball physics for engaging background motion
@@ -466,6 +470,8 @@ The application supports four distinct number generation methods, each serving d
 ### State Management Best Practices
 
 **Store Composition**: Each store handles a specific domain with clear boundaries
+**One Owner per Fact**: Tickets live only in `TicketsStore`. `SimulationStore` reads them from there and is told when they change (`ticketsGenerated`, `ticketRemoved`, `ticketsReset`); it never keeps a copy
+**Derive, Don't Store**: A single draw is stored as the drawn numbers and prize data only. How the tickets did (`singleDrawResults`: matches, winnings, stake, net) is a computed built by the pure `scoreDraw()` in `app/utils/drawScoring.ts`, so changing or deleting tickets re-scores the same draw with no extra code
 **Action Patterns**: Async actions handle loading states and error conditions consistently
 **Computed Properties**: Derived state computed reactively rather than stored redundantly
 **SSR Compatibility**: Pinia stores avoid readonly() wrappers to prevent hydration conflicts during server-side rendering

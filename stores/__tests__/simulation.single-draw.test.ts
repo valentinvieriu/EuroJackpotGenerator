@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useSimulationStore } from '../simulation'
 import { useOddsStore } from '../odds'
+import { useTicketsStore } from '../tickets'
+import type { Ticket } from '~/schemas'
 
 // Mocks that must be hoisted before module import
 vi.mock('~/utils/ticketHighlighting', () => ({
@@ -16,16 +18,17 @@ vi.mock('~/utils/ticketHighlighting', () => ({
   ),
 }))
 
+// The simulation store reads tickets from the tickets store, whose setup pulls
+// in Nuxt-only UI composables
 vi.mock('~/composables/useAppState', () => ({
-  useAudioState: () => ({
-    audioEnabled: { value: true },
-    winSoundLevel: { value: 'medium' },
-  }),
+  useUIState: () => ({ showWelcome: vi.fn(), showSharing: vi.fn() }),
+  useTransientErrors: () => ({ addError: vi.fn() }),
 }))
 
-vi.mock('~/utils/audioUtils', () => ({
-  playWinSound: vi.fn(),
-}))
+/** Put tickets on the table the way the app does: in the tickets store */
+const seedTickets = (tickets: unknown) => {
+  useTicketsStore().state.tickets = tickets as Ticket[]
+}
 
 describe('Simulation Store - Single Draw & Highlighting', () => {
   beforeEach(() => {
@@ -38,7 +41,7 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     vi.unstubAllGlobals()
   })
 
-  it('runs single draw, computes winnings/ROI, and plays audio when enabled', async () => {
+  it('runs single draw and computes winnings/ROI', async () => {
     const sim = useSimulationStore()
     const odds = useOddsStore()
 
@@ -57,7 +60,7 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
         linesCount: 2,
       },
     ]
-    sim.generateTickets(tickets as any)
+    seedTickets(tickets as any)
 
     // Mock simulate endpoint
     // @ts-expect-error – global mock
@@ -99,15 +102,15 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     }
     vi.spyOn(odds, 'fetchOdds').mockResolvedValue(mockOdds as any)
 
-    // Total price passed by UI (approximate): 1*2 + 2*2 = €6
-    await sim.runSingleDraw(6)
+    // Stake comes from the tickets: (1 + 2) lines × €2 = €6
+    await sim.runSingleDraw()
 
     expect(sim.hasSingleDrawResults).toBe(true)
     expect(sim.state.singleDraw.winningNumbers).toEqual({
       mainNumbers: [1, 11, 12, 13, 14],
       euroNumbers: [1, 9],
     })
-    const results = sim.state.singleDraw.results!
+    const results = sim.singleDrawResults!
     // Based on mocked highlight builder: each ticket has class 2 count = 1
     // Two tickets → totalWinnings = 2 * 5000
     expect(results.totalWinnings).toBe(10_000)
@@ -115,7 +118,7 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     expect(Number.isFinite(results.roiPercentage)).toBe(true)
   })
 
-  it('re-highlights single draw results when tickets change, preserving draw and odds', async () => {
+  it('re-scores the same draw when the tickets change', async () => {
     const sim = useSimulationStore()
     const odds = useOddsStore()
 
@@ -128,7 +131,7 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
         linesCount: 1,
       },
     ]
-    sim.generateTickets(initialTickets as any)
+    seedTickets(initialTickets as any)
 
     // Mock simulate endpoint and odds for the run
     // @ts-expect-error – global mock
@@ -160,10 +163,10 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
       eurojackpotTurnover: [],
     } as any)
 
-    await sim.runSingleDraw(2) // price €2
-    expect(sim.hasSingleDrawResults.valueOf()).toBe(true)
+    await sim.runSingleDraw()
+    expect(sim.hasSingleDrawResults).toBe(true)
 
-    // New tickets trigger rehighlight (preserve single draw)
+    // New tickets on the table: the same draw is scored against them
     const newTickets = [
       {
         id: 1,
@@ -178,9 +181,9 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
         linesCount: 1,
       },
     ]
-    sim.generateTickets(newTickets as any)
+    seedTickets(newTickets as any)
 
-    const res = sim.state.singleDraw.results!
+    const res = sim.singleDrawResults!
     expect(res.ticketHighlights.length).toBe(2)
     // Amount per class 2 = 1000, counts from mock builder = 1 each → 2*1000 total
     expect(res.totalWinnings).toBe(2000)
@@ -188,11 +191,11 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     expect(res.netProfit).toBe(2000 - 6)
   })
 
-  it('generateTickets resets Monte Carlo when results exist and preserves single draw', async () => {
+  it('new tickets reset a finished Monte Carlo run but keep the single draw', async () => {
     const sim = useSimulationStore()
 
     // Seed single draw results to be preserved later
-    sim.generateTickets([
+    seedTickets([
       {
         id: 99,
         mainNumbers: [1, 2, 3, 4, 5],
@@ -249,15 +252,15 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
       eurojackpotTurnover: [],
     } as any)
 
-    await sim.runSingleDraw(2)
+    await sim.runSingleDraw()
     expect(sim.state.singleDraw.phase).toBe('results')
 
     // Start Monte Carlo to reach results state (tickets already present)
-    await sim.startSimulation(2, { simulationCount: 10, batchSize: 5 })
+    await sim.startSimulation({ simulationCount: 10, batchSize: 5 })
     expect(sim.state.phase).toBe('results')
 
     // Generate new tickets → should reset Monte Carlo to config and rehighlight single draw
-    sim.generateTickets([
+    seedTickets([
       {
         id: 2,
         mainNumbers: [6, 7, 8, 9, 10],
@@ -265,11 +268,80 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
         linesCount: 1,
       },
     ] as any)
+    sim.ticketsGenerated()
 
     expect(sim.state.phase).toBe('config')
     expect(sim.state.results).toBeNull()
     expect(sim.state.singleDraw.phase).toBe('results')
     // Ensure results still consistent (preserved and recalculated)
-    expect(sim.state.singleDraw.results).toBeTruthy()
+    expect(sim.singleDrawResults).toBeTruthy()
+  })
+
+  it('keeps a running session ledger across draws and clears it on reset', async () => {
+    const sim = useSimulationStore()
+    const odds = useOddsStore()
+
+    seedTickets([
+      {
+        id: 1,
+        mainNumbers: [1, 2, 3, 4, 5],
+        euroNumbers: [1, 2],
+        linesCount: 1,
+      },
+    ] as any)
+
+    // @ts-expect-error – global mock
+    global.$fetch = vi.fn().mockResolvedValue({
+      draw: { mainNumbers: [1, 11, 12, 13, 14], euroNumbers: [1, 9] },
+      meta: {},
+    })
+    vi.spyOn(odds, 'fetchOdds').mockResolvedValue({
+      eurojackpotOdds: [
+        {
+          winningClass: 2,
+          amount: 5,
+          numberOfWins: 0,
+          sequence: 2,
+          jackpot: false,
+        },
+      ],
+    } as any)
+
+    expect(sim.session).toEqual({ draws: 0, spent: 0, won: 0 })
+
+    // Mocked highlight builder awards one class-2 win (€5) per ticket
+    await sim.runSingleDraw()
+    expect(sim.session).toEqual({ draws: 1, spent: 2, won: 5 })
+
+    await sim.runSingleDraw()
+    expect(sim.session).toEqual({ draws: 2, spent: 4, won: 10 })
+
+    sim.ticketsReset()
+    expect(sim.session).toEqual({ draws: 0, spent: 0, won: 0 })
+  })
+
+  it('does not charge the session ledger when a draw fails', async () => {
+    const sim = useSimulationStore()
+    const odds = useOddsStore()
+
+    seedTickets([
+      {
+        id: 1,
+        mainNumbers: [1, 2, 3, 4, 5],
+        euroNumbers: [1, 2],
+        linesCount: 1,
+      },
+    ] as any)
+
+    // @ts-expect-error – global mock
+    global.$fetch = vi.fn().mockRejectedValue(new Error('network down'))
+    vi.spyOn(odds, 'fetchOdds').mockResolvedValue({
+      eurojackpotOdds: [],
+    } as any)
+
+    await sim.runSingleDraw()
+
+    expect(sim.state.singleDraw.phase).toBe('error')
+    expect(sim.session).toEqual({ draws: 0, spent: 0, won: 0 })
   })
 })

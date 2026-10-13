@@ -1,6 +1,9 @@
 /**
- * Simulation Store - Manages Monte Carlo simulation state
- * Centralizes complex simulation state management with type safety
+ * Simulation Store - single draws and Monte Carlo (autoplay) runs
+ *
+ * Owns the draw and the run lifecycle. Tickets are owned by the tickets store
+ * and read from there, and everything about "how did these tickets do" is
+ * derived from the tickets, the draw and the prizes rather than stored.
  */
 
 import { defineStore } from 'pinia'
@@ -12,16 +15,19 @@ import type {
   EurojackpotHistoricOdds,
 } from '~/schemas'
 import { parseNdjsonEvent } from '~/utils/ndjsonParser'
-import { buildTicketHighlightUpdates } from '~/utils/ticketHighlighting'
-import { buildOddsMap } from '~/utils/payout'
-import { playWinSound } from '~/utils/audioUtils'
-import { useAudioState } from '~/composables/useAppState'
+import {
+  scoreDraw,
+  type DrawScore,
+  type TicketHighlight,
+  type WinningNumbers,
+} from '~/utils/drawScoring'
 import { useOddsStore } from './odds'
+import { useTicketsStore } from './tickets'
 import {
   LARGE_SIMULATION_THRESHOLD,
-  NUMBER_FREQUENCY_THRESHOLD,
+  SIGNIFICANT_WIN_FRACTION_LARGE,
+  SIGNIFICANT_WIN_ABS_MIN,
 } from '~/utils/constants'
-import { PRICE_PER_LINE } from '~/utils/pricing'
 import { logger } from '~/utils/logger'
 import { extractErrorMessage } from '~/utils/errors'
 
@@ -64,29 +70,29 @@ export interface SimulationConfig {
 
 export type SingleDrawPhase = 'idle' | 'running' | 'results' | 'error'
 
-export interface SingleDrawResults {
-  totalWinnings: number
-  netProfit: number
-  roiPercentage: number
-  timestamp: number
-  ticketHighlights: Array<{
-    id: number
-    winningMainNumbers: number[]
-    winningEuroNumbers: number[]
-    winClassCounts: Record<number, number>
-    winClass?: number
-  }>
-}
+/** How the tickets on the table did in the current single draw */
+export type SingleDrawResults = DrawScore
 
+/** The draw itself. What it means for the tickets is derived, not stored. */
 export interface SingleDrawState {
   phase: SingleDrawPhase
-  winningNumbers: {
-    mainNumbers: number[]
-    euroNumbers: number[]
-  } | null
+  winningNumbers: WinningNumbers | null
   oddsData: EurojackpotHistoricOdds | null
-  results: SingleDrawResults | null
   error: string | null
+}
+
+/** Running tally of every single draw played this session */
+export interface SessionLedger {
+  draws: number
+  spent: number
+  won: number
+}
+
+/** Cumulative money in / money out after a number of autoplay draws */
+export interface TrajectoryPoint {
+  draws: number
+  spent: number
+  won: number
 }
 
 export interface SimulationState {
@@ -98,22 +104,21 @@ export interface SimulationState {
   startTime: number
   canCancel: boolean
   abortController: AbortController | null
-  currentTickets: Ticket[] | null
   singleDraw: SingleDrawState
 }
 
-/**
- * Simulation store for managing Monte Carlo simulation state
- * Provides centralized state management for complex simulation workflows
- */
 export const useSimulationStore = defineStore('simulation', () => {
-  // Default single draw state
-  const createDefaultSingleDrawState = (): SingleDrawState => ({
+  const createIdleSingleDraw = (): SingleDrawState => ({
     phase: 'idle',
     winningNumbers: null,
     oddsData: null,
-    results: null,
     error: null,
+  })
+
+  const createEmptyLedger = (): SessionLedger => ({
+    draws: 0,
+    spent: 0,
+    won: 0,
   })
 
   // State
@@ -126,9 +131,18 @@ export const useSimulationStore = defineStore('simulation', () => {
     startTime: 0,
     canCancel: false,
     abortController: null,
-    currentTickets: null,
-    singleDraw: createDefaultSingleDrawState(),
+    singleDraw: createIdleSingleDraw(),
   })
+
+  // What the machine has taken and paid out across all single draws
+  const session = ref<SessionLedger>(createEmptyLedger())
+
+  // Cumulative paid in / won back over the current autoplay run (one point per progress update)
+  const trajectory = ref<TrajectoryPoint[]>([])
+
+  // Tickets have one owner. Resolved on use, never during setup: the tickets
+  // store sets this store up, so reaching back at that point would loop.
+  const tickets = computed<Ticket[]>(() => useTicketsStore().state.tickets)
 
   // Computed getters
   const isRunning = computed(() => state.value.phase === 'running')
@@ -138,332 +152,138 @@ export const useSimulationStore = defineStore('simulation', () => {
   const hasError = computed(
     () => state.value.phase === 'error' && !!state.value.error
   )
-  const canStart = computed(
-    () => state.value.phase === 'config' && !!state.value.config
-  )
 
-  // Single Draw computed getters
   const isSingleDrawRunning = computed(
     () => state.value.singleDraw.phase === 'running'
-  )
-  const hasSingleDrawResults = computed(
-    () =>
-      state.value.singleDraw.phase === 'results' &&
-      !!state.value.singleDraw.results
   )
   const hasSingleDrawError = computed(
     () =>
       state.value.singleDraw.phase === 'error' && !!state.value.singleDraw.error
   )
 
-  // Tickets are now managed explicitly without automatic resets
+  /**
+   * The current draw scored against the tickets on the table. Because it is
+   * derived, swapping or deleting tickets re-scores the same draw by itself.
+   */
+  const singleDrawResults = computed<SingleDrawResults | null>(() => {
+    const { phase, winningNumbers, oddsData } = state.value.singleDraw
+    if (phase !== 'results' || !winningNumbers || tickets.value.length === 0) {
+      return null
+    }
+    return scoreDraw(tickets.value, winningNumbers, oddsData)
+  })
+
+  const hasSingleDrawResults = computed(() => !!singleDrawResults.value)
 
   // Actions
+
   const setConfig = (config: SimulationConfig) => {
     state.value.config = config
     state.value.phase = 'config'
     clearError()
   }
 
-  // Semantic actions that encode business logic
+  const clearError = () => {
+    state.value.error = null
+    if (state.value.phase === 'error') {
+      state.value.phase = 'config'
+    }
+  }
 
-  const generateTickets = (tickets: Ticket[]) => {
-    logger.debug('SimulationStore: User generated new tickets')
-    state.value.currentTickets = tickets
+  // --- Notifications from the tickets store ---
 
-    // Business logic: Reset Monte Carlo when user generates new tickets
-    if (shouldResetOnTicketChange()) {
-      logger.debug(
-        'SimulationStore: Resetting Monte Carlo for new user-generated tickets'
-      )
+  /** A new set of tickets replaced the old one: a finished run no longer describes them */
+  const ticketsGenerated = () => {
+    if (state.value.phase === 'results' || state.value.phase === 'error') {
       resetToConfig()
     }
-
-    // Business logic: PRESERVE Single Draw and re-highlight with new tickets
-    logger.debug(`Single Draw current phase: ${state.value.singleDraw.phase}`)
-    const shouldReset = shouldResetSingleDrawOnTicketChange()
-    logger.debug(`shouldResetSingleDrawOnTicketChange returned: ${shouldReset}`)
-
-    if (shouldReset) {
-      logger.debug(
-        'SimulationStore: Resetting Single Draw for new user-generated tickets'
-      )
-      resetSingleDraw()
-    } else if (state.value.singleDraw.phase === 'results') {
-      // Re-calculate highlights for new tickets using preserved winning numbers
-      logger.debug(
-        'SimulationStore: Re-highlighting new tickets against preserved Single Draw results'
-      )
-      reHighlightSingleDrawResults()
-    } else {
-      logger.debug(
-        `SimulationStore: Single Draw phase is '${state.value.singleDraw.phase}', no action needed`
-      )
-    }
   }
 
-  const resetTickets = () => {
-    logger.debug('SimulationStore: User reset tickets')
-    state.value.currentTickets = []
-
-    // Business logic: Always reset both simulations when user explicitly resets
-    resetToConfig() // Reset Monte Carlo
-    resetSingleDraw() // Reset Single Draw
-  }
-
-  const removeTicket = (ticketId: number) => {
-    logger.debug('SimulationStore: Removing ticket from simulation', {
-      ticketId,
-    })
-
-    // Remove the ticket from current tickets
-    if (state.value.currentTickets) {
-      state.value.currentTickets = state.value.currentTickets.filter(
-        (ticket) => ticket.id !== ticketId
-      )
-    }
-
-    // Business logic: For single draw results, just re-highlight remaining tickets
-    // The winning numbers remain the same, but we need to update highlights
-    if (state.value.singleDraw.phase === 'results') {
-      logger.debug(
-        'SimulationStore: Re-highlighting remaining tickets after removal'
-      )
-      reHighlightSingleDrawResults()
-    }
-
-    // Business logic: For Monte Carlo, we should reset since removing tickets
-    // changes the overall simulation context significantly
+  /** One ticket was removed: a finished run no longer describes the tickets */
+  const ticketRemoved = () => {
     if (state.value.phase === 'results') {
-      logger.debug(
-        'SimulationStore: Resetting Monte Carlo after ticket removal'
-      )
       resetToConfig()
     }
   }
 
-  // Note: No component-level sync; tickets are owned by TicketsStore
-  // and provided via semantic actions (generateTickets/resetTickets/removeTicket).
-
-  const shouldResetOnTicketChange = (): boolean => {
-    // Business rule: Reset simulation when user changes tickets and we have results/errors
-    return state.value.phase === 'results' || state.value.phase === 'error'
+  /** The user started over: clear the run, the draw and the session tally */
+  const ticketsReset = () => {
+    resetToConfig()
+    resetSingleDraw()
+    session.value = createEmptyLedger()
   }
 
-  const shouldResetSingleDrawOnTicketChange = (): boolean => {
-    // Business rule: PRESERVE Single Draw results when tickets change
-    // Only reset on explicit reset action, not on ticket changes
-    const shouldReset = false
-    logger.debug(
-      `shouldResetSingleDrawOnTicketChange: returning ${shouldReset}`
-    )
-    return shouldReset
-  }
+  // --- Single draw ---
 
-  // Single Draw Actions
-
-  const runSingleDraw = async (totalPrice: number): Promise<void> => {
+  const runSingleDraw = async (): Promise<void> => {
     if (state.value.singleDraw.phase === 'running') {
       logger.warn('Single draw already running')
       return
     }
 
-    if (
-      !state.value.currentTickets ||
-      state.value.currentTickets.length === 0
-    ) {
+    if (tickets.value.length === 0) {
       logger.warn('No tickets available for single draw')
       return
     }
 
-    // Set running state
-    state.value.singleDraw = {
-      phase: 'running',
-      winningNumbers: null,
-      oddsData: null,
-      results: null,
-      error: null,
-    }
+    state.value.singleDraw = { ...createIdleSingleDraw(), phase: 'running' }
 
     try {
-      const runtimeConfig = useRuntimeConfig()
-      const apiBaseUrl = runtimeConfig.public.apiBase
-      const oddsStore = useOddsStore()
+      const apiBaseUrl = useRuntimeConfig().public.apiBase
 
-      // Make parallel API calls - simulation and odds
-      const [simResponse, winDataResponse] = await Promise.all([
+      const [simResponse, oddsData] = await Promise.all([
         $fetch<{
-          draw: { mainNumbers: number[]; euroNumbers: number[] }
+          draw: WinningNumbers
           meta: Record<string, unknown>
         }>(`${apiBaseUrl}/simulate`),
-        oddsStore.fetchOdds(), // Use centralized odds store
+        useOddsStore().fetchOdds(),
       ])
 
-      // Validate simulation result
       if (!simResponse.draw?.mainNumbers || !simResponse.draw?.euroNumbers) {
         throw new Error('Invalid simulation result received from API.')
       }
 
-      const winningNumbers = {
+      const winningNumbers: WinningNumbers = {
         mainNumbers: simResponse.draw.mainNumbers,
         euroNumbers: simResponse.draw.euroNumbers,
       }
 
-      // Calculate ticket highlights
-      const ticketHighlights = buildTicketHighlightUpdates(
-        state.value.currentTickets,
-        winningNumbers.mainNumbers,
-        winningNumbers.euroNumbers
-      )
-
-      // Calculate total winnings
-      let totalWinnings = 0
-      if (winDataResponse?.eurojackpotOdds?.length) {
-        const oddsMap = buildOddsMap(winDataResponse)
-        for (const update of ticketHighlights) {
-          for (const [clsStr, count] of Object.entries(update.winClassCounts)) {
-            const amount = oddsMap.get(Number(clsStr)) ?? 0
-            totalWinnings += amount * (count as number)
-          }
-        }
-      }
-
-      // Calculate ROI
-      const netProfit = totalWinnings - totalPrice
-      const roiPercentage =
-        totalPrice > 0
-          ? (netProfit / totalPrice) * 100
-          : totalWinnings > 0
-            ? Infinity
-            : 0
-
-      // Set results state
       state.value.singleDraw = {
         phase: 'results',
         winningNumbers,
-        oddsData: winDataResponse,
-        results: {
-          totalWinnings: Number(totalWinnings.toFixed(2)),
-          netProfit: Number(netProfit.toFixed(2)),
-          roiPercentage,
-          timestamp: Date.now(),
-          ticketHighlights,
-        },
+        oddsData,
         error: null,
       }
 
-      // Play win sound (respect user audio preferences)
-      const { audioEnabled, winSoundLevel } = useAudioState()
-      if (audioEnabled.value && winSoundLevel.value !== 'none') {
-        // Map sound level to volume multiplier
-        const volumeMap = {
-          low: 0.3,
-          medium: 0.7,
-          high: 1.0,
-          none: 0.0, // Should never reach this due to the check above
-        }
-        const volumeMultiplier = volumeMap[winSoundLevel.value]
-        playWinSound(totalWinnings, totalPrice, volumeMultiplier)
+      // The stake is paid on the tickets as they were when the draw ran
+      const score = scoreDraw(tickets.value, winningNumbers, oddsData)
+      session.value = {
+        draws: session.value.draws + 1,
+        spent: session.value.spent + score.stake,
+        won: session.value.won + score.totalWinnings,
       }
     } catch (error: unknown) {
       logger.error('Single draw error:', error)
-
-      let errorMessage = 'An error occurred during simulation.'
-      if (typeof error === 'object' && error !== null) {
-        const anyErr = error as Record<string, unknown>
-        errorMessage =
-          ((anyErr.data as Record<string, unknown> | undefined)
-            ?.message as string) ||
-          (anyErr.message as string | undefined) ||
-          errorMessage
-      }
-
       state.value.singleDraw = {
+        ...createIdleSingleDraw(),
         phase: 'error',
-        winningNumbers: null,
-        oddsData: null,
-        results: null,
-        error: String(errorMessage),
+        error: extractErrorMessage(error),
       }
     }
   }
 
   const resetSingleDraw = () => {
-    logger.debug('SimulationStore: Resetting single draw')
-    state.value.singleDraw = createDefaultSingleDrawState()
+    state.value.singleDraw = createIdleSingleDraw()
   }
 
-  const reHighlightSingleDrawResults = () => {
-    // Re-calculate highlights for current tickets using preserved winning numbers and odds
-    if (
-      !state.value.currentTickets ||
-      state.value.currentTickets.length === 0 ||
-      !state.value.singleDraw.winningNumbers ||
-      !state.value.singleDraw.oddsData
-    ) {
-      logger.warn(
-        'Cannot re-highlight: missing tickets, winning numbers, or odds data'
-      )
-      return
-    }
+  // --- Monte Carlo (autoplay) ---
 
-    const { winningNumbers, oddsData } = state.value.singleDraw
-
-    // Re-calculate ticket highlights with new tickets
-    const ticketHighlights = buildTicketHighlightUpdates(
-      state.value.currentTickets,
-      winningNumbers.mainNumbers,
-      winningNumbers.euroNumbers
-    )
-
-    // Re-calculate total winnings with new tickets
-    let totalWinnings = 0
-    if (oddsData?.eurojackpotOdds?.length) {
-      const oddsMap = buildOddsMap(oddsData)
-      for (const update of ticketHighlights) {
-        for (const [clsStr, count] of Object.entries(update.winClassCounts)) {
-          const amount = oddsMap.get(Number(clsStr)) ?? 0
-          totalWinnings += amount * (count as number)
-        }
-      }
-    }
-
-    // Calculate total ticket price for new tickets
-    const totalPrice = state.value.currentTickets.reduce(
-      (sum, ticket) => sum + (ticket.linesCount || 0) * PRICE_PER_LINE,
-      0
-    )
-
-    // Re-calculate ROI
-    const netProfit = totalWinnings - totalPrice
-    const roiPercentage =
-      totalPrice > 0
-        ? (netProfit / totalPrice) * 100
-        : totalWinnings > 0
-          ? Infinity
-          : 0
-
-    // Update results with new calculations while preserving winning numbers and odds
-    state.value.singleDraw.results = {
-      totalWinnings: Number(totalWinnings.toFixed(2)),
-      netProfit: Number(netProfit.toFixed(2)),
-      roiPercentage,
-      timestamp: Date.now(), // Update timestamp to show when re-calculated
-      ticketHighlights,
-    }
-
-    logger.debug(
-      `Re-highlighted ${state.value.currentTickets.length} tickets against preserved winning numbers`
-    )
-  }
-
+  /** Back to the setup screen, keeping the chosen config */
   const resetToConfig = () => {
-    // Cancel any running simulation first
     if (state.value.phase === 'running') {
       cancelSimulation()
     }
 
-    // Reset to config state while preserving config and tickets
     state.value = {
       ...state.value,
       phase: 'config',
@@ -473,33 +293,28 @@ export const useSimulationStore = defineStore('simulation', () => {
       startTime: 0,
       canCancel: false,
       abortController: null,
-      // Preserve: config, currentTickets
     }
+    trajectory.value = []
   }
 
-  const startSimulation = async (
-    costPerSimulation: number,
-    config: SimulationConfig
-  ): Promise<void> => {
+  const startSimulation = async (config: SimulationConfig): Promise<void> => {
     if (state.value.phase === 'running') {
       logger.warn('Simulation already running')
       return
     }
 
-    // Use tickets from our state; TicketsStore updates this via semantic actions
-    const tickets = state.value.currentTickets
-
-    if (!tickets || tickets.length === 0) {
+    const runTickets = tickets.value
+    if (runTickets.length === 0) {
       state.value.phase = 'error'
       state.value.error = 'No tickets available for simulation.'
       return
     }
 
-    // Reset state for simulation start
+    const abortController = new AbortController()
     state.value = {
+      ...state.value,
       phase: 'running',
       config,
-      currentTickets: tickets, // Store tickets in state for fingerprint tracking
       progress: {
         currentSimulation: 0,
         totalSimulations: config.simulationCount,
@@ -512,16 +327,15 @@ export const useSimulationStore = defineStore('simulation', () => {
       error: null,
       startTime: Date.now(),
       canCancel: true,
-      abortController: new AbortController(),
-      singleDraw: state.value.singleDraw, // Preserve single draw state during Monte Carlo
+      abortController,
     }
+    trajectory.value = [{ draws: 0, spent: 0, won: 0 }]
 
     try {
-      const runtimeConfig = useRuntimeConfig()
-      const apiBaseUrl = runtimeConfig.public.apiBase
+      const apiBaseUrl = useRuntimeConfig().public.apiBase
 
       const request: BatchSimulationRequest = {
-        tickets: tickets.map((t) => ({
+        tickets: runTickets.map((t) => ({
           id: t.id,
           mainNumbers: t.mainNumbers,
           euroNumbers: t.euroNumbers,
@@ -529,10 +343,11 @@ export const useSimulationStore = defineStore('simulation', () => {
         })),
         simulationCount: config.simulationCount,
         batchSize: config.batchSize,
-        includeIndividualResults: config.simulationCount <= 1000,
+        includeIndividualResults:
+          config.simulationCount <= LARGE_SIMULATION_THRESHOLD,
       }
 
-      // Use Nuxt $fetch to request NDJSON streaming from the API
+      // Request a ReadableStream back for progressive NDJSON updates
       const stream = await $fetch<ReadableStream>(
         `${apiBaseUrl}/batchSimulate`,
         {
@@ -542,19 +357,14 @@ export const useSimulationStore = defineStore('simulation', () => {
             'Content-Type': 'application/json',
           },
           body: request,
-          // Request a ReadableStream back for progressive updates
           responseType: 'stream',
-          signal: state.value.abortController!.signal,
+          signal: abortController.signal,
         }
       )
 
-      // Process the NDJSON stream for progress and final result
       await processNDJSONStream(stream)
     } catch (error: unknown) {
-      if (
-        typeof (error as { name?: string }).name === 'string' &&
-        (error as { name?: string }).name === 'AbortError'
-      ) {
+      if ((error as { name?: string })?.name === 'AbortError') {
         state.value.phase = 'cancelled'
       } else {
         state.value.phase = 'error'
@@ -574,34 +384,26 @@ export const useSimulationStore = defineStore('simulation', () => {
     }
   }
 
-  const resetSimulation = () => {
-    // Cancel any running simulation first
-    if (state.value.phase === 'running') {
-      cancelSimulation()
-    }
+  /** Apply one NDJSON event; returns true once the stream has delivered its last word */
+  const applyStreamLine = (line: string, allowProgress: boolean): boolean => {
+    const event = parseNdjsonEvent(JSON.parse(line))
+    if (!event) return false
 
-    state.value = {
-      phase: 'config',
-      config: state.value.config, // Keep config for reuse
-      currentTickets: null, // Clear tickets for full reset
-      progress: null,
-      results: null,
-      error: null,
-      startTime: 0,
-      canCancel: false,
-      abortController: null,
-      singleDraw: createDefaultSingleDrawState(), // Reset single draw state too
+    if (event.type === 'progress') {
+      if (allowProgress) updateProgress(event.progress, event.summary)
+      return false
     }
+    if (event.type === 'result') {
+      state.value.results = event.result
+      state.value.progress = null
+      state.value.phase = 'results'
+    } else {
+      state.value.phase = 'error'
+      state.value.error = event.error || 'Simulation stream error'
+    }
+    return true
   }
 
-  const clearError = () => {
-    state.value.error = null
-    if (state.value.phase === 'error') {
-      state.value.phase = 'config'
-    }
-  }
-
-  // Helper function to process NDJSON stream
   const processNDJSONStream = async (stream: ReadableStream): Promise<void> => {
     const reader = stream.getReader()
     const decoder = new TextDecoder()
@@ -619,54 +421,26 @@ export const useSimulationStore = defineStore('simulation', () => {
           buffer = buffer.slice(idx + 1)
           if (!line) continue
           try {
-            const raw = JSON.parse(line)
-            const event = parseNdjsonEvent(raw)
-            if (event) {
-              if (event.type === 'progress') {
-                updateProgress(event.progress, event.summary)
-              } else if (event.type === 'result') {
-                setResults(event.result)
-                state.value.phase = 'results'
-                buffer = ''
-                return
-              } else if (event.type === 'error') {
-                state.value.phase = 'error'
-                state.value.error = event.error || 'Simulation stream error'
-                buffer = ''
-                return
-              }
-            }
+            if (applyStreamLine(line, true)) return
           } catch (parseError) {
             logger.warn('Failed to parse NDJSON line:', parseError)
           }
         }
       }
-      // Flush any trailing line (optional)
+
+      // A final line may arrive without a trailing newline
       const tail = buffer.trim()
       if (tail) {
         try {
-          const raw = JSON.parse(tail)
-          const event = parseNdjsonEvent(raw)
-          if (event) {
-            if (event.type === 'result') {
-              setResults(event.result)
-              state.value.phase = 'results'
-            } else if (event.type === 'error') {
-              state.value.phase = 'error'
-              state.value.error = event.error || 'Simulation stream error'
-            }
-          }
+          applyStreamLine(tail, false)
         } catch {
-          // Ignore incomplete tail
+          // Ignore an incomplete tail
         }
       }
     } finally {
       reader.releaseLock()
     }
   }
-
-  // Removed broad normalization: server now guarantees zod-validated NDJSON.
-  // Retained minimal fallback in processNDJSONStream for progress/result/error.
 
   const updateProgress = (
     progress: {
@@ -685,16 +459,24 @@ export const useSimulationStore = defineStore('simulation', () => {
       roiPercentage: number
       netProfit: number
       maxWin: number
+      totalCost?: number
+      totalWinnings?: number
     }
   ) => {
     if (!state.value.progress) return
 
-    const now = Date.now()
-    const elapsed = now - state.value.startTime
+    if (
+      typeof summary?.totalCost === 'number' &&
+      typeof summary?.totalWinnings === 'number'
+    ) {
+      trajectory.value.push({
+        draws: progress.currentSimulation,
+        spent: summary.totalCost,
+        won: summary.totalWinnings,
+      })
+    }
 
-    const winsByClass = summary?.winDistribution?.winsByClass
-      ? normalizeWinsByClass(summary.winDistribution.winsByClass)
-      : {}
+    const elapsed = Date.now() - state.value.startTime
 
     state.value.progress = {
       currentSimulation: progress.currentSimulation,
@@ -713,272 +495,69 @@ export const useSimulationStore = defineStore('simulation', () => {
             currentROI: summary.roiPercentage || 0,
             netProfit: summary.netProfit || 0,
             maxWin: summary.maxWin || 0,
-            winsByClass,
+            winsByClass: summary.winDistribution?.winsByClass
+              ? normalizeWinsByClass(summary.winDistribution.winsByClass)
+              : {},
           }
         : null,
     }
   }
 
-  const setResults = (results: BatchSimulationResult) => {
-    state.value.results = results
-    state.value.progress = null // Clear progress when results are available
-  }
-
-  // Centralized Highlighting Functions
+  // --- Highlights ---
 
   /**
-   * Returns Single Draw highlights (computed from current state)
+   * Per-ticket highlights for a finished Monte Carlo run: the numbers that
+   * took part in wins, and every win class the ticket landed.
    */
-  const deriveSingleDrawHighlights = computed(() => {
-    return state.value.singleDraw.results?.ticketHighlights || []
-  })
+  const monteCarloHighlights = computed<TicketHighlight[]>(() => {
+    const results = state.value.results
+    if (!hasResults.value || !results?.highlightingData) return []
 
-  /**
-   * Derives Monte Carlo highlights from highlighting data using optimized algorithm
-   */
-  const deriveMonteCarloHighlights = (
-    highlightingData: {
-      ticketStats: Record<
-        number,
-        {
-          totalWins: number
-          mainNumberFrequency: Record<number, number>
-          euroNumberFrequency: Record<number, number>
-          winClassCounts: Record<number, number>
-        }
-      >
-    },
-    totalSimulations: number
-  ): Array<{
-    id: number
-    winningMainNumbers: number[]
-    winningEuroNumbers: number[]
-    winClassCounts: Record<number, number>
-    winClass?: number
-  }> => {
-    if (!state.value.currentTickets) return []
+    const { ticketStats } = results.highlightingData
+    // Long runs touch almost every number at least once, so only the standouts count
+    const isLargeRun = results.totalSimulations >= LARGE_SIMULATION_THRESHOLD
 
-    return state.value.currentTickets.map((ticket) => {
-      const stats = highlightingData.ticketStats[ticket.id]
+    return tickets.value.map((ticket) => {
+      const stats = ticketStats[ticket.id]
       if (!stats) {
         return {
           id: ticket.id,
           winningMainNumbers: [],
           winningEuroNumbers: [],
           winClassCounts: {},
-          winClass: undefined,
         }
       }
 
-      // SIMPLE & PRACTICAL highlighting: Show numbers that actually contributed to wins
-      // Adaptive highlighting: stricter for large simulations to avoid everything being highlighted
-      const isLargeSimulation = totalSimulations >= LARGE_SIMULATION_THRESHOLD
+      const minWins = isLargeRun
+        ? Math.max(
+            SIGNIFICANT_WIN_ABS_MIN,
+            Math.floor(stats.totalWins * SIGNIFICANT_WIN_FRACTION_LARGE)
+          )
+        : 1
 
-      // For large simulations, use higher threshold to show only standout performers
-      // For small simulations (like 100 draws), be much more lenient to show any meaningful wins
-      const minWinThreshold = isLargeSimulation
-        ? Math.max(5, Math.floor(stats.totalWins * 0.15)) // 15% of wins for large sims
-        : 1 // For small simulations, show any number that won at least once
-
-      // Highlight any number that appeared in winning combinations above threshold
-      const winningMainNumbers = ticket.mainNumbers.filter(
-        (n: number) => (stats.mainNumberFrequency[n] || 0) >= minWinThreshold
-      )
-      const winningEuroNumbers = ticket.euroNumbers.filter(
-        (n: number) => (stats.euroNumberFrequency[n] || 0) >= minWinThreshold
-      )
-
-      // Show ALL win classes that have any wins at all (no filtering)
-      const significantWinClasses = normalizeWinsByClass(stats.winClassCounts)
-
-      const winClass =
-        Object.keys(significantWinClasses).length > 0
-          ? Object.keys(significantWinClasses)
-              .map(Number)
-              .sort((a, b) => a - b)[0]
-          : undefined
+      const winClassCounts = normalizeWinsByClass(stats.winClassCounts)
+      const classes = Object.keys(winClassCounts).map(Number)
 
       return {
         id: ticket.id,
-        winningMainNumbers,
-        winningEuroNumbers,
-        winClassCounts: significantWinClasses, // Show all win classes
-        winClass,
+        winningMainNumbers: ticket.mainNumbers.filter(
+          (n) => (stats.mainNumberFrequency[n] || 0) >= minWins
+        ),
+        winningEuroNumbers: ticket.euroNumbers.filter(
+          (n) => (stats.euroNumberFrequency[n] || 0) >= minWins
+        ),
+        winClassCounts,
+        winClass: classes.length > 0 ? Math.min(...classes) : undefined,
       }
     })
-  }
+  })
 
-  /**
-   * Derives Monte Carlo highlights using individual simulation results (simplified fallback)
-   * Note: This provides basic highlighting based on number frequency across simulations
-   */
-  const deriveMonteCarloHighlightsFromIndividual = (
-    individualResults: Array<{
-      simulationIndex: number
-      winningNumbers: { mainNumbers: number[]; euroNumbers: number[] }
-      totalWinnings: number
-      netProfit: number
-      winsByClass: Record<string, number>
-    }>
-  ): Array<{
-    id: number
-    winningMainNumbers: number[]
-    winningEuroNumbers: number[]
-    winClassCounts: Record<number, number>
-    winClass?: number
-  }> => {
-    if (!state.value.currentTickets) return []
-
-    // Track how often each number appeared in winning simulations per ticket
-    const ticketNumberFrequency = new Map<
-      number,
-      {
-        mainNumbers: Map<number, number>
-        euroNumbers: Map<number, number>
-        totalMatches: number
-      }
-    >()
-
-    // Initialize tracking for each ticket
-    state.value.currentTickets.forEach((ticket) => {
-      ticketNumberFrequency.set(ticket.id, {
-        mainNumbers: new Map(),
-        euroNumbers: new Map(),
-        totalMatches: 0,
-      })
-    })
-
-    // Analyze each simulation
-    individualResults.forEach((simResult) => {
-      if (!simResult.winningNumbers) return
-
-      const simMain = simResult.winningNumbers.mainNumbers
-      const simEuro = simResult.winningNumbers.euroNumbers
-
-      // For each ticket, track which of its numbers matched in this simulation
-      state.value.currentTickets!.forEach((ticket) => {
-        const stats = ticketNumberFrequency.get(ticket.id)!
-
-        // Check which ticket numbers matched the winning numbers
-        const matchingMain = ticket.mainNumbers.filter((n) =>
-          simMain.includes(n)
-        )
-        const matchingEuro = ticket.euroNumbers.filter((n) =>
-          simEuro.includes(n)
-        )
-
-        // If this ticket had any matches, count the frequency
-        if (matchingMain.length > 0 || matchingEuro.length > 0) {
-          stats.totalMatches += 1
-
-          matchingMain.forEach((num) => {
-            stats.mainNumbers.set(num, (stats.mainNumbers.get(num) || 0) + 1)
-          })
-
-          matchingEuro.forEach((num) => {
-            stats.euroNumbers.set(num, (stats.euroNumbers.get(num) || 0) + 1)
-          })
-        }
-      })
-    })
-
-    // Apply highlighting based on frequency
-    return state.value.currentTickets.map((ticket) => {
-      const stats = ticketNumberFrequency.get(ticket.id)!
-
-      // Use a simple threshold: show numbers that matched in at least 10% of simulations
-      const minFrequency = Math.max(
-        1,
-        Math.floor(individualResults.length * NUMBER_FREQUENCY_THRESHOLD)
-      )
-
-      const winningMainNumbers = ticket.mainNumbers.filter(
-        (n: number) => (stats.mainNumbers.get(n) || 0) >= minFrequency
-      )
-      const winningEuroNumbers = ticket.euroNumbers.filter(
-        (n: number) => (stats.euroNumbers.get(n) || 0) >= minFrequency
-      )
-
-      return {
-        id: ticket.id,
-        winningMainNumbers,
-        winningEuroNumbers,
-        winClassCounts: {}, // Cannot derive win class counts from individual results structure
-        winClass: undefined,
-      }
-    })
-  }
-
-  /**
-   * Derives minimal Monte Carlo highlights when only win distribution is available
-   */
-  const deriveMonteCarloHighlightsMinimal = (): Array<{
-    id: number
-    winningMainNumbers: number[]
-    winningEuroNumbers: number[]
-    winClassCounts: Record<number, number>
-    winClass?: number
-  }> => {
-    if (!state.value.currentTickets) return []
-
-    // Without individual results, we can only show aggregate win data
-    return state.value.currentTickets.map((ticket) => ({
-      id: ticket.id,
-      winningMainNumbers: [], // No specific numbers to highlight
-      winningEuroNumbers: [], // No specific numbers to highlight
-      winClassCounts: {}, // Could potentially estimate from results.winDistribution
-      winClass: undefined,
-    }))
-  }
-
-  /**
-   * Returns highlights for Single Draw mode
-   */
-  const getCurrentSingleDrawHighlights = () => {
-    if (hasSingleDrawResults.value) {
-      return deriveSingleDrawHighlights.value
-    }
-    return []
-  }
-
-  /**
-   * Returns highlights for Monte Carlo mode
-   */
-  const getCurrentMonteCarloHighlights = () => {
-    if (hasResults.value && state.value.results) {
-      const results = state.value.results
-
-      // Use optimized highlighting data (preferred method)
-      if (results.highlightingData) {
-        return deriveMonteCarloHighlights(
-          results.highlightingData,
-          results.totalSimulations
-        )
-      }
-
-      // Fallback: use individual results if available (legacy support)
-      if (results.individualResults && results.individualResults.length > 0) {
-        return deriveMonteCarloHighlightsFromIndividual(
-          results.individualResults
-        )
-      }
-
-      // Last resort: minimal highlighting
-      return deriveMonteCarloHighlightsMinimal()
-    }
-    return []
-  }
-
-  /**
-   * Returns highlights for the specified mode
-   */
-  const getHighlightsForMode = (mode: 'single' | 'montecarlo') => {
-    if (mode === 'single') {
-      return getCurrentSingleDrawHighlights()
-    } else {
-      return getCurrentMonteCarloHighlights()
-    }
-  }
+  const getHighlightsForMode = (
+    mode: 'single' | 'montecarlo'
+  ): TicketHighlight[] =>
+    mode === 'single'
+      ? (singleDrawResults.value?.ticketHighlights ?? [])
+      : monteCarloHighlights.value
 
   // Utility functions
   const calculateETA = (
@@ -1006,46 +585,39 @@ export const useSimulationStore = defineStore('simulation', () => {
     }
   }
 
-  // Return store interface
   return {
     // State
     state,
+    session,
+    trajectory,
 
     // Computed
     isRunning,
     hasResults,
     hasError,
-    canStart,
-
-    // Single Draw computed
     isSingleDrawRunning,
     hasSingleDrawResults,
     hasSingleDrawError,
+    singleDrawResults,
 
-    // Centralized Highlighting
-    deriveSingleDrawHighlights,
-    deriveMonteCarloHighlights,
-    deriveMonteCarloHighlightsFromIndividual,
-    deriveMonteCarloHighlightsMinimal,
-    getCurrentSingleDrawHighlights,
-    getCurrentMonteCarloHighlights,
+    // Highlights
     getHighlightsForMode,
 
-    // Actions
+    // Notifications from the tickets store
+    ticketsGenerated,
+    ticketRemoved,
+    ticketsReset,
+
+    // Monte Carlo actions
     setConfig,
-    generateTickets,
-    resetTickets,
-    removeTicket,
     startSimulation,
     cancelSimulation,
-    resetSimulation,
     resetToConfig,
     clearError,
 
-    // Single Draw actions
+    // Single draw actions
     runSingleDraw,
     resetSingleDraw,
-    reHighlightSingleDrawResults,
   }
 })
 

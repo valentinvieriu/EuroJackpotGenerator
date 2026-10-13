@@ -5,7 +5,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import type { Ticket, StatisticsData } from '~/schemas'
 import type {
   AppConfig,
@@ -15,6 +15,7 @@ import type {
 } from '~/schemas/urlConfig'
 import { useSimulationStore } from './simulation'
 import { useUIState, useTransientErrors } from '~/composables/useAppState'
+import { calculateTotalSimulationCost } from '~/utils/simulationMath'
 import {
   encodeAppConfigToHash,
   decodeUrlHash,
@@ -67,7 +68,6 @@ export interface TicketsState {
   frequencyData: StatisticsData | null
   isLoadingFrequencies: boolean
   frequencyError: string | null
-  _urlUpdateTimer?: ReturnType<typeof setTimeout>
 }
 
 /**
@@ -101,17 +101,15 @@ export const useTicketsStore = defineStore('tickets', () => {
     frequencyData: null,
     isLoadingFrequencies: false,
     frequencyError: null,
-    _urlUpdateTimer: undefined,
   })
+
+  // Debounce handle for URL writes; plain bookkeeping, so it stays out of reactive state
+  let urlUpdateTimer: ReturnType<typeof setTimeout> | undefined
 
   // Computed getters
   const hasTickets = computed(() => state.value.tickets.length > 0)
   const isGenerating = computed(() => state.value.phase === 'generating')
   const hasError = computed(() => !!state.value.error)
-  const isShared = computed(() => state.value.appState === 'SHARED')
-  const isSimpleMode = computed(() => state.value.mode === 'simple')
-  const isCustomMode = computed(() => state.value.mode === 'custom')
-
   const hasFavoriteNumbers = computed(() => {
     const favorites = state.value.config.favoriteNumbers
     return !!(favorites?.mainNumbers.length || favorites?.euroNumbers.length)
@@ -123,13 +121,11 @@ export const useTicketsStore = defineStore('tickets', () => {
     return systemCost * config.ticketCount
   })
 
-  const ticketTypeLabel = computed(() => {
-    const { mainCount, euroCount } = state.value.config
-    const isStandard = mainCount === 5 && euroCount === 2
-    return isStandard
-      ? `${mainCount} main + ${euroCount} Euro numbers (standard)`
-      : `${mainCount} main + ${euroCount} Euro numbers`
-  })
+  // What one draw costs for the tickets on the table. `totalPrice` above prices
+  // the form's configuration, which can differ until tickets are regenerated.
+  const stakePerDraw = computed(() =>
+    calculateTotalSimulationCost(state.value.tickets)
+  )
 
   const systemCost = computed(() => {
     const { mainCount, euroCount } = state.value.config
@@ -139,9 +135,6 @@ export const useTicketsStore = defineStore('tickets', () => {
   // Frequency data computed getters
   const hasFrequencyData = computed(() => !!state.value.frequencyData)
   const hasFrequencyError = computed(() => !!state.value.frequencyError)
-  const shouldShowFrequencies = computed(
-    () => state.value.config.method === 'weighted'
-  )
 
   const allMainNumbers = computed(() => {
     if (!state.value.frequencyData) return []
@@ -253,22 +246,15 @@ export const useTicketsStore = defineStore('tickets', () => {
     state.value.autoSimulate = true
     state.value.config.mainCount = SIMPLE_MODE_SYSTEM_MAIN
     state.value.config.euroCount = SIMPLE_MODE_SYSTEM_EURO
-    // Keep current ticketCount (set by stepper in HeroSection)
+    // Keep current ticketCount (set by the stepper on the SlotMachine)
     state.value.config.method = SIMPLE_MODE_METHOD
 
     // Generate tickets using the regular generation logic
     await generate()
 
-    // If generation was successful and autoSimulate is enabled, trigger single draw
+    // A quick-start spin goes straight on to the draw
     if (state.value.phase === 'ready' && state.value.autoSimulate) {
-      logger.debug('TicketsStore: Auto-triggering single draw for simple mode')
-      setTimeout(async () => {
-        try {
-          await simulationStore.runSingleDraw(totalPrice.value)
-        } catch (error) {
-          logger.error('TicketsStore: Auto single draw failed:', error)
-        }
-      }, 100) // Small delay to ensure UI has updated
+      await simulationStore.runSingleDraw()
     }
   }
 
@@ -304,7 +290,6 @@ export const useTicketsStore = defineStore('tickets', () => {
     // Set generating state
     state.value.phase = 'generating'
     state.value.error = null
-    uiState.setLoading('generate')
 
     try {
       const runtimeConfig = useRuntimeConfig()
@@ -366,8 +351,8 @@ export const useTicketsStore = defineStore('tickets', () => {
         ),
       })
 
-      // Notify simulation store of new tickets
-      simulationStore.generateTickets(generatedTickets)
+      // A finished run no longer describes these tickets
+      simulationStore.ticketsGenerated()
 
       // Update URL to persist configuration
       updateBrowserUrl()
@@ -384,8 +369,6 @@ export const useTicketsStore = defineStore('tickets', () => {
         `Generation failed: ${errorMessage}`,
         TRANSIENT_ERROR_MS
       )
-    } finally {
-      uiState.setLoading(null)
     }
   }
 
@@ -401,8 +384,8 @@ export const useTicketsStore = defineStore('tickets', () => {
     state.value.luckyCode = ''
     state.value.error = null
 
-    // Notify simulation store of ticket reset
-    simulationStore.resetTickets()
+    // Clear the run, the draw and the session tally
+    simulationStore.ticketsReset()
 
     // Clear URL completely for fresh state
     updateBrowserUrl(null)
@@ -571,8 +554,8 @@ export const useTicketsStore = defineStore('tickets', () => {
 
     // Debounced URL update to avoid history spam
     // Using a simple timeout approach
-    clearTimeout(state.value._urlUpdateTimer)
-    state.value._urlUpdateTimer = setTimeout(() => {
+    clearTimeout(urlUpdateTimer)
+    urlUpdateTimer = setTimeout(() => {
       if (state.value.appState === 'FRESH') {
         updateBrowserUrl()
       }
@@ -742,8 +725,8 @@ export const useTicketsStore = defineStore('tickets', () => {
       logger.debug('TicketsStore: No tickets remaining, reset to fresh state')
     }
 
-    // Notify simulation store of ticket removal
-    simulationStore.removeTicket(ticketId)
+    // A finished run no longer describes the remaining tickets
+    simulationStore.ticketRemoved()
 
     // Update URL to persist configuration changes
     updateBrowserUrl()
@@ -837,35 +820,6 @@ export const useTicketsStore = defineStore('tickets', () => {
     }
   }
 
-  // Watch for method changes to auto-fetch frequency data
-  watch(
-    () => state.value.config.method,
-    async (newMethod) => {
-      // Skip auto-fetch in test environment or when no runtime config available
-      if (
-        process.env.NODE_ENV === 'test' ||
-        typeof useRuntimeConfig === 'undefined'
-      ) {
-        return
-      }
-
-      if (
-        newMethod === 'weighted' &&
-        !state.value.frequencyData &&
-        !state.value.isLoadingFrequencies
-      ) {
-        logger.debug('Auto-fetching frequency data for weighted method')
-        try {
-          await fetchFrequencyData()
-        } catch (error) {
-          // Silently fail for auto-fetch to avoid disrupting user flow
-          logger.warn('Auto-fetch of frequency data failed:', error)
-        }
-      }
-    },
-    { immediate: false } // Don't run immediately to avoid test issues
-  )
-
   // Return store interface
   return {
     // State
@@ -875,16 +829,12 @@ export const useTicketsStore = defineStore('tickets', () => {
     hasTickets,
     isGenerating,
     hasError,
-    isShared,
-    isSimpleMode,
-    isCustomMode,
     hasFavoriteNumbers,
     totalPrice,
-    ticketTypeLabel,
+    stakePerDraw,
     systemCost,
     hasFrequencyData,
     hasFrequencyError,
-    shouldShowFrequencies,
     allMainNumbers,
     allEuroNumbers,
     frequencyStats,

@@ -8,16 +8,24 @@
       <Transition name="modal" appear>
         <div
           v-if="isOpen"
-          class="casino-card-premium mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl"
+          class="casino-card-premium mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="customize-title"
         >
           <!-- Header -->
           <div class="flex items-center justify-between p-6 pb-4">
-            <h2 class="text-casino-gold text-premium-glow text-2xl font-bold">
-              Customize Your Tickets
+            <h2
+              id="customize-title"
+              class="text-xl font-semibold text-content-primary"
+            >
+              Customize your tickets
             </h2>
             <button
+              type="button"
               class="p-2 text-content-muted transition duration-150 hover:text-content-secondary"
               title="Close"
+              aria-label="Close"
               @click="closeOverlay"
             >
               <svg
@@ -243,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { systemPrice } from '~/utils/pricing'
 import { TICKET_COUNT_MAX } from '~/utils/constants'
 import StepperInput from './StepperInput.vue'
@@ -259,7 +267,7 @@ interface TicketType {
 }
 
 // Props
-defineProps<{
+const props = defineProps<{
   isOpen: boolean
 }>()
 
@@ -356,6 +364,13 @@ const totalPrice = computed(() => ticketsStore.totalPrice)
 const closeOverlay = () => {
   emit('close')
 }
+
+const onKeydown = (event: KeyboardEvent) => {
+  if (props.isOpen && event.key === 'Escape') closeOverlay()
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 const handleGenerate = async () => {
   if (ticketsStore.isGenerating) return

@@ -3,11 +3,13 @@
     <button
       type="button"
       :disabled="modelValue <= min"
+      aria-label="Decrease"
       class="flex h-10 w-10 items-center justify-center rounded-l-md border border-casino-blue-light/50 bg-surface-primary transition-colors duration-150 hover:bg-surface-primary-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       @click="decrement"
     >
       <svg
         class="h-4 w-4 text-content-secondary"
+        aria-hidden="true"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -26,6 +28,7 @@
       type="number"
       :min="min"
       :max="max"
+      :aria-label="label"
       class="h-10 w-20 border-t border-b border-casino-blue-light/50 bg-surface-primary px-3 text-center text-content-secondary [-moz-appearance:textfield] focus:ring-2 focus:ring-brand-gold-400 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       @input="onInput"
       @blur="onBlur"
@@ -34,11 +37,13 @@
     <button
       type="button"
       :disabled="modelValue >= max"
+      aria-label="Increase"
       class="flex h-10 w-10 items-center justify-center rounded-r-md border border-casino-blue-light/50 bg-surface-primary transition-colors duration-150 hover:bg-surface-primary-light focus:ring-2 focus:ring-brand-gold-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       @click="increment"
     >
       <svg
         class="h-4 w-4 text-content-secondary"
+        aria-hidden="true"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -61,11 +66,14 @@ interface Props {
   modelValue: number
   min?: number
   max?: number
+  /** Accessible name for the number field */
+  label?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   min: TICKET_COUNT_MIN,
   max: TICKET_COUNT_MAX,
+  label: 'Number of tickets',
 })
 
 const emit = defineEmits<{

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './machine.css';
 
 /* Map the built-in `dark:` variant to our data attribute so we can keep using `dark:*` classes
    while toggling <html data-theme="dark"> (or any ancestor) in the app. */
@@ -284,6 +285,39 @@
   --color-star-shadow: oklch(0.45 0.15 80);
   --color-star-winner: oklch(0.85 0.15 85);
 
+  /* 3D ball bodies: light → mid → dark stops of each sphere */
+  --color-ball-main-light: oklch(0.9 0.025 240);
+  --color-ball-main-mid: oklch(0.68 0.06 245);
+  --color-ball-main-dark: oklch(0.36 0.06 250);
+
+  --color-ball-euro-light: oklch(0.8 0.1 255);
+  --color-ball-euro-mid: oklch(0.55 0.19 258);
+  --color-ball-euro-dark: oklch(0.3 0.14 262);
+
+  --color-ball-gold-light: oklch(0.96 0.08 95);
+  --color-ball-gold-mid: oklch(0.84 0.15 88);
+  --color-ball-gold-dark: oklch(0.58 0.14 75);
+
+  /* Printed label disc and its ink */
+  --color-ball-label: oklch(0.995 0.005 90);
+  --color-ball-label-mid: oklch(0.94 0.012 90);
+  --color-ball-label-edge: oklch(0.83 0.02 90);
+  --color-ball-ink: oklch(0.2 0.03 250);
+
+  /* ---------- LED METERS ---------- */
+  --color-led-off: oklch(0.09 0.015 229);
+  --color-led-amber: oklch(0.88 0.14 85);
+  --color-led-red: oklch(0.7 0.2 22);
+  --color-led-green: oklch(0.8 0.17 155);
+
+  /* ---------- CHARTS ----------
+     "won" is the accent series; "paid" is deliberately a muted context line.
+     Validated on the panel surface: CVD ΔE 18.7, normal-vision ΔE 20.7, ≥3:1 contrast. */
+  --color-chart-won: oklch(0.8 0.14 85);
+  --color-chart-paid: oklch(0.68 0.03 240);
+  --color-chart-lost: oklch(0.6 0.2 15);
+  --color-chart-grid: oklch(1 0 0 / 0.08);
+
   /* ---------- SHADOWS & RINGS ---------- */
   /* Tailwind-v4 compatible shadow tokens (enable shadow-* utilities) */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
@@ -302,7 +336,8 @@
 
   --shadow-glow: 0 0 20px oklch(0.85 0.12 85);
   --shadow-glow-gold:
-    0 0 24px var(--color-brand-gold-400), 0 0 48px var(--color-brand-gold-300);
+    0 0 0 1px oklch(0.85 0.12 85 / 0.35),
+    0 0 28px -6px oklch(0.85 0.12 85 / 0.55);
   --shadow-glow-emerald:
     0 0 24px var(--color-premium-emerald-400),
     0 0 48px var(--color-premium-emerald-300);
@@ -312,18 +347,17 @@
 
   /* Casino-Style Enhanced Shadows (custom utilities below) */
   --shadow-casino-card:
-    0 8px 32px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px oklch(0.85 0.12 85 / 0.2);
+    inset 0 1px 0 oklch(1 0 0 / 0.06), 0 12px 32px -14px oklch(0 0 0 / 0.65);
   --shadow-casino-card-hover:
     0 12px 48px rgba(0, 0, 0, 0.4), 0 6px 24px rgba(0, 0, 0, 0.25),
     0 0 32px oklch(0.85 0.12 85 / 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 0 0 1px oklch(0.85 0.12 85 / 0.3);
   --shadow-casino-premium:
-    0 16px 64px rgba(0, 0, 0, 0.5), 0 8px 32px rgba(0, 0, 0, 0.3),
-    0 0 48px oklch(0.85 0.12 85 / 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.15),
-    0 0 0 2px oklch(0.85 0.12 85 / 0.4);
+    inset 0 1px 0 oklch(1 0 0 / 0.08), 0 20px 48px -18px oklch(0 0 0 / 0.75);
   --shadow-casino-button:
-    0 4px 16px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+    inset 0 1px 0 oklch(1 0 0 / 0.45),
+    inset 0 -2px 0 oklch(0.55 0.14 80 / 0.55),
+    0 6px 16px -6px oklch(0 0 0 / 0.6);
   --shadow-casino-button-hover:
     0 6px 24px rgba(0, 0, 0, 0.3), 0 3px 12px rgba(0, 0, 0, 0.2);
 
@@ -477,11 +511,21 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1,
-  h2,
-  h3 {
+  /* The serif is reserved for the marquee; working headings stay in the body face */
+  h1 {
     font-family: var(--font-serif);
     letter-spacing: 0.01em;
+  }
+
+  h2,
+  h3 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-gold-300);
+    outline-offset: 2px;
   }
 
   #__nuxt {
@@ -556,96 +600,93 @@
    🏆 PREMIUM CASINO UTILITY CLASSES
    ============================================ */
 @layer utilities {
-  /* Premium Card Styles */
+  /* Panels: quiet by default so the cabinet and the numbers carry the gold */
   .casino-card {
-    background: var(--gradient-glass-luxury);
-    border: 1px solid oklch(0.85 0.12 85 / 0.3);
+    background: linear-gradient(
+      180deg,
+      oklch(0.25 0.028 229 / 0.92),
+      oklch(0.2 0.025 229 / 0.92)
+    );
+    border: 1px solid oklch(1 0 0 / 0.07);
     box-shadow: var(--shadow-casino-card);
-    backdrop-filter: blur(12px);
-    transition: all var(--duration-300) var(--ease-standard);
-  }
-
-  .casino-card:hover {
-    box-shadow: var(--shadow-casino-card-hover);
-    transform: translateY(-2px);
-    border-color: oklch(0.88 0.15 85 / 0.5);
   }
 
   .casino-card-premium {
-    background: var(--gradient-royal-blue);
+    background: linear-gradient(
+      180deg,
+      oklch(0.24 0.03 229),
+      oklch(0.17 0.025 229)
+    );
+    border: 1px solid oklch(0.85 0.12 85 / 0.22);
     box-shadow: var(--shadow-casino-premium);
-    border: 2px solid oklch(0.85 0.12 85 / 0.4);
   }
 
-  /* Premium Button Enhancements */
+  /* Primary button: a physical, pressable gold key */
   .btn-casino-gold {
     background: var(--gradient-premium-gold);
     color: var(--color-content-inverse);
     box-shadow: var(--shadow-casino-button);
-    border: 1px solid oklch(0.78 0.16 85 / 0.6);
-    position: relative;
-    overflow: hidden;
+    border: 1px solid oklch(0.72 0.16 85 / 0.7);
     cursor: pointer;
-    transition: all var(--duration-300) var(--ease-standard);
+    transition:
+      transform var(--duration-150) var(--ease-standard),
+      filter var(--duration-150) var(--ease-standard),
+      box-shadow var(--duration-150) var(--ease-standard);
   }
 
-  .btn-casino-gold::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: var(--texture-gold-metallic);
-    transition: left 0.6s var(--ease-standard);
+  .btn-casino-gold:not(:disabled):hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
   }
 
-  .btn-casino-gold:hover::before {
-    left: 100%;
-  }
-
-  .btn-casino-gold:hover {
-    box-shadow: var(--shadow-casino-button-hover);
-    transform: translateY(-1px) scale(1.02);
-    background: var(--gradient-premium-gold-vertical);
+  .btn-casino-gold:not(:disabled):active {
+    filter: brightness(0.96);
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 5px oklch(0.45 0.12 80 / 0.6);
   }
 
   .btn-casino-blue {
     background: var(--gradient-royal-blue);
     color: var(--color-content-primary);
-    box-shadow: var(--shadow-casino-button);
-    border: 1px solid oklch(0.45 0.05 229 / 0.6);
+    box-shadow: 0 6px 16px -6px oklch(0 0 0 / 0.6);
+    border: 1px solid oklch(1 0 0 / 0.1);
     cursor: pointer;
+    transition:
+      transform var(--duration-150) var(--ease-standard),
+      filter var(--duration-150) var(--ease-standard);
   }
 
-  .btn-casino-blue:hover {
-    box-shadow: var(--shadow-casino-button-hover);
+  .btn-casino-blue:not(:disabled):hover {
+    filter: brightness(1.12);
     transform: translateY(-1px);
-    filter: brightness(1.1);
   }
 
-  /* Glow Effects */
+  .btn-casino-blue:not(:disabled):active {
+    transform: translateY(1px);
+  }
+
+  .btn-casino-gold:disabled,
+  .btn-casino-blue:disabled {
+    opacity: 0.55;
+  }
+
+  /* Glow: static, so nothing repaints while the page is idle */
   .glow-gold {
     box-shadow: var(--shadow-glow-gold);
-    animation: pulse-gold 2s ease-in-out infinite;
   }
 
   .glow-emerald {
-    box-shadow: var(--shadow-glow-emerald);
-    animation: pulse-emerald 2s ease-in-out infinite;
+    box-shadow: 0 0 28px -6px var(--color-premium-emerald-400);
   }
 
   .glow-orange {
-    box-shadow: var(--shadow-glow-orange);
-    animation: pulse-orange 2s ease-in-out infinite;
+    box-shadow: 0 0 28px -6px var(--color-interactive-primary);
   }
 
-  /* Glass Morphism */
   .glass-luxury {
-    background: var(--gradient-glass-luxury);
-    backdrop-filter: var(--blur-casino-light);
-    border: 1px solid oklch(0.85 0.12 85 / 0.2);
-    box-shadow: var(--shadow-glass);
+    background: oklch(0.2 0.025 229 / 0.8);
+    border: 1px solid oklch(1 0 0 / 0.08);
+    box-shadow: var(--shadow-casino-card);
   }
 
   /* Premium Text Styling */
@@ -655,14 +696,11 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
 
+  /* Kept for existing markup; the gold gradient no longer needs a halo behind it */
   .text-premium-glow {
-    text-shadow:
-      0 0 10px oklch(0.85 0.12 85 / 0.5),
-      0 0 20px oklch(0.85 0.12 85 / 0.3),
-      0 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: none;
   }
 
   /* Premium Typography System */
@@ -732,21 +770,15 @@
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow:
-      0 0 15px oklch(0.85 0.12 85 / 0.6),
-      0 0 30px oklch(0.85 0.12 85 / 0.4),
-      0 2px 6px rgba(0, 0, 0, 0.4);
+    filter: drop-shadow(0 2px 10px oklch(0.85 0.12 85 / 0.28));
     letter-spacing: 0.02em;
   }
 
   .text-section-title {
-    font-family: var(--font-heading);
+    font-family: var(--font-body);
     font-weight: 600;
-    color: var(--color-brand-gold-400);
-    text-shadow:
-      0 0 8px oklch(0.85 0.12 85 / 0.4),
-      0 2px 4px rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.01em;
+    color: var(--color-brand-gold-200);
+    letter-spacing: -0.01em;
   }
 
   .text-luxury-subtitle {
@@ -795,50 +827,13 @@
       oklch(0.12 0.02 229 / 0.9) 0%,
       oklch(0.08 0.02 229 / 0.95) 100%
     );
-    backdrop-filter: var(--blur-casino-heavy);
+    backdrop-filter: blur(8px);
   }
 }
 
 /* ============================================
    🎬 PREMIUM ANIMATIONS
    ============================================ */
-@keyframes pulse-gold {
-  0%,
-  100% {
-    box-shadow: var(--shadow-glow-gold);
-  }
-  50% {
-    box-shadow:
-      0 0 32px var(--color-brand-gold-400),
-      0 0 64px var(--color-brand-gold-300),
-      0 0 96px var(--color-brand-gold-200);
-  }
-}
-
-@keyframes pulse-emerald {
-  0%,
-  100% {
-    box-shadow: var(--shadow-glow-emerald);
-  }
-  50% {
-    box-shadow:
-      0 0 32px var(--color-premium-emerald-400),
-      0 0 64px var(--color-premium-emerald-300);
-  }
-}
-
-@keyframes pulse-orange {
-  0%,
-  100% {
-    box-shadow: var(--shadow-glow-orange);
-  }
-  50% {
-    box-shadow:
-      0 0 32px var(--color-interactive-primary),
-      0 0 64px var(--color-interactive-primary-light);
-  }
-}
-
 @keyframes float {
   0%,
   100% {
@@ -862,117 +857,43 @@
    🎯 ENHANCED INTERACTIVE STATES
    ============================================ */
 @layer components {
-  /* Enhanced focus states for accessibility */
-  .focus-casino:focus {
+  /* Focus rings: visible for keyboard users, no layout-shifting scale */
+  .focus-casino:focus-visible {
     outline: none;
     box-shadow: var(--ring-focus-primary);
-    transform: scale(1.02);
   }
-  .focus-gold:focus {
+  .focus-gold:focus-visible {
     outline: none;
     box-shadow: var(--ring-focus-secondary);
-    transform: scale(1.02);
   }
 
-  /* Premium hover states */
+  .hover-lift {
+    transition: transform var(--duration-200) var(--ease-standard);
+  }
   .hover-lift:hover {
-    transform: translateY(-4px) scale(1.02);
-    transition: all var(--duration-300) var(--ease-standard);
+    transform: translateY(-2px);
   }
 
+  .hover-glow {
+    transition:
+      filter var(--duration-200) var(--ease-standard),
+      box-shadow var(--duration-200) var(--ease-standard);
+  }
   .hover-glow:hover {
-    filter: brightness(1.1) saturate(1.1);
+    filter: brightness(1.08);
     box-shadow: var(--shadow-glow-gold);
-    transition: all var(--duration-300) ease;
   }
 
-  /* Interactive card states */
   .card-interactive {
     cursor: pointer;
-    transition: all var(--duration-300) var(--ease-standard);
+    transition:
+      transform var(--duration-200) var(--ease-standard),
+      box-shadow var(--duration-200) var(--ease-standard);
   }
 
   .card-interactive:hover {
-    transform: translateY(-3px) scale(1.01);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-casino-card-hover);
-  }
-
-  .card-interactive:active {
-    transform: translateY(-1px) scale(0.99);
-    transition: all var(--duration-150) ease-out;
-  }
-
-  /* Enhanced button interactions */
-  .btn-casino-gold,
-  .btn-casino-blue {
-    position: relative;
-    overflow: hidden;
-    transform-origin: center;
-    backface-visibility: hidden;
-    will-change: transform, box-shadow;
-  }
-
-  .btn-casino-gold:not(:disabled):hover,
-  .btn-casino-blue:not(:disabled):hover {
-    animation: button-float 0.3s ease-out forwards;
-  }
-
-  .btn-casino-gold:not(:disabled):active,
-  .btn-casino-blue:not(:disabled):active {
-    animation: button-tap 0.15s ease-out;
-  }
-
-  /* Ripple effect on button press */
-  .btn-casino-gold::after,
-  .btn-casino-blue::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition:
-      width var(--duration-300) ease,
-      height var(--duration-300) ease,
-      opacity var(--duration-300) ease;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .btn-casino-gold:active::after,
-  .btn-casino-blue:active::after {
-    width: 200px;
-    height: 200px;
-    opacity: 1;
-    transition:
-      width var(--duration-150) ease,
-      height var(--duration-150) ease,
-      opacity var(--duration-150) ease;
-  }
-
-  /* Button animations */
-  @keyframes button-float {
-    0% {
-      transform: translateY(0) scale(1);
-    }
-    100% {
-      transform: translateY(-2px) scale(1.02);
-    }
-  }
-
-  @keyframes button-tap {
-    0% {
-      transform: translateY(-2px) scale(1.02);
-    }
-    50% {
-      transform: translateY(0) scale(0.98);
-    }
-    100% {
-      transform: translateY(0) scale(1);
-    }
   }
 
   /* Success feedback animation */
@@ -992,33 +913,6 @@
     100% {
       transform: scale(1);
       box-shadow: 0 0 0 0 transparent;
-    }
-  }
-
-  /* Loading shimmer for disabled buttons */
-  .btn-casino-gold:disabled::before,
-  .btn-casino-blue:disabled::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.2),
-      transparent
-    );
-    animation: loading-shimmer 2s infinite ease-in-out;
-  }
-
-  @keyframes loading-shimmer {
-    0% {
-      left: -100%;
-    }
-    100% {
-      left: 100%;
     }
   }
 
@@ -1116,13 +1010,14 @@
   /* Standard form select styling */
   .form-select {
     width: 100%;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-casino-blue-light);
-    border-opacity: 0.5;
+    border-radius: var(--radius-lg);
+    border: 1px solid oklch(0.62 0.05 229 / 0.4);
     background-color: var(--color-surface-primary);
     padding: var(--spacing-2) var(--spacing-3);
     color: var(--color-content-secondary);
-    transition: all var(--duration-150) var(--ease-standard);
+    transition:
+      border-color var(--duration-150) var(--ease-standard),
+      box-shadow var(--duration-150) var(--ease-standard);
   }
 
   .form-select:focus {
@@ -1134,7 +1029,6 @@
   /* Variant with secondary border */
   .form-select-secondary {
     border-color: var(--color-border-secondary);
-    border-opacity: 0.5;
   }
 
   /* Dropdown appearance for custom selects */
@@ -1145,15 +1039,13 @@
   }
 
   /* Enhanced focus states */
-  .focus-success:focus {
+  .focus-success:focus-visible {
     outline: none;
     box-shadow: var(--ring-focus-success);
-    transform: scale(1.02);
   }
 
-  .focus-danger:focus {
+  .focus-danger:focus-visible {
     outline: none;
     box-shadow: var(--ring-focus-danger);
-    transform: scale(1.02);
   }
 }
