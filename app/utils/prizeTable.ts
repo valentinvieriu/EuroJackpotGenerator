@@ -160,3 +160,43 @@ export function splitReturnByReach(lines: number): ReachSplit {
     returnOutOfReach: Math.max(0, LONG_RUN_RETURN - returnWithinReach),
   }
 }
+
+/** Long-run payback per euro paid out as jackpots, the jackpot reserve included. */
+export const JACKPOT_RETURN =
+  (getPrizeClass(JACKPOT_CLASS)?.longRunReturn ?? 0) + BOOSTER_FUND_RETURN
+
+export interface ReturnByTier {
+  /** Payback from the prizes a player of `lines` lines expects to hit */
+  expected: number
+  /** The classes behind `expected` */
+  expectedClasses: PrizeClass[]
+  /** Payback from the prizes between those and the jackpot */
+  between: number
+  /** The classes behind `between` */
+  betweenClasses: PrizeClass[]
+  /** Payback paid out as jackpots */
+  jackpot: number
+}
+
+/**
+ * The game's long-run payback split three ways for someone who plays `lines`
+ * lines: the prizes they can expect, the jackpot, and the prizes in between.
+ * The three add up to the long-run payback.
+ */
+export function splitReturnByTier(lines: number): ReturnByTier {
+  const notJackpot = (prizeClass: PrizeClass) =>
+    prizeClass.winClass !== JACKPOT_CLASS
+  const { withinReach, outOfReach } = splitReturnByReach(lines)
+  const expectedClasses = withinReach.filter(notJackpot)
+  const expected = expectedClasses.reduce(
+    (sum, prizeClass) => sum + prizeClass.longRunReturn,
+    0
+  )
+  return {
+    expected,
+    expectedClasses,
+    between: Math.max(0, LONG_RUN_RETURN - expected - JACKPOT_RETURN),
+    betweenClasses: outOfReach.filter(notJackpot),
+    jackpot: JACKPOT_RETURN,
+  }
+}

@@ -153,6 +153,13 @@ export const EUROJACKPOT_PRIZE_POOL_SHARES: Readonly<Record<number, number>> = {
 }
 export const EUROJACKPOT_BOOSTER_FUND_SHARE = 0.09
 
+// About page: the examples its explanation is built on
+export const LIFETIME_EXAMPLE_LINES_PER_DRAW = 2 // Two lines every draw...
+export const LIFETIME_EXAMPLE_YEARS = 50 // ...for fifty years
+export const SYSTEM_EXAMPLE_MAIN = 7 // A 7 + 3 system ticket
+export const SYSTEM_EXAMPLE_EURO = 3
+export const ABOUT_AUTOPLAY_EXAMPLES = [1_000, 1_000_000] as const // Autoplay sizes given as playing time
+
 // EuroJackpot System Constants (for popularity scoring)
 export const EUROJACKPOT_TOTAL_COMBINATIONS = 139_838_160 // C(50,5) * C(12,2)
 

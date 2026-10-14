@@ -1,375 +1,418 @@
 <template>
-  <div class="relative min-h-screen bg-surface-primary text-content-primary">
-    <div class="relative z-10 container mx-auto px-4 py-12">
-      <!-- Header Section -->
-      <div class="mb-12 text-center">
-        <h1 class="text-hero mb-4 text-3xl md:text-4xl">
-          About EuroJackpot Simulator
-        </h1>
-        <p class="text-luxury-subtitle mx-auto max-w-3xl text-base md:text-lg">
-          An educational tool designed to demystify lottery mathematics through
-          realistic simulations and evidence-based analysis.
-        </p>
-      </div>
+  <main
+    class="relative z-10 container mx-auto min-h-screen px-4 py-10 sm:py-14"
+  >
+    <div class="mx-auto max-w-3xl space-y-8">
+      <header class="mb-12 text-center">
+        <h1 class="text-hero mb-4 text-3xl md:text-4xl">Why we built this</h1>
+        <div
+          class="mx-auto max-w-2xl space-y-3 text-base text-balance text-content-secondary md:text-lg"
+        >
+          <p>
+            EuroJackpot is built so that its players, taken together, lose. That
+            is no secret: it is in the rules.
+          </p>
+          <p>
+            But knowing a number is not the same as feeling it. This machine
+            plays by the same rules and lets you play years of draws in seconds,
+            so you can see what they do to your money, and decide for yourself.
+          </p>
+        </div>
+      </header>
 
-      <!-- Main Content -->
-      <div class="mx-auto max-w-4xl space-y-12">
-        <!-- Why We Built This -->
-        <section class="casino-card rounded-2xl p-8">
-          <div class="mb-6 flex items-center gap-3">
-            <div class="text-3xl">🎓</div>
-            <h2 class="font-heading text-2xl text-brand-gold">
-              Why We Built This
-            </h2>
-          </div>
+      <section
+        class="casino-card rounded-2xl p-5 sm:p-8"
+        aria-labelledby="euro-heading"
+      >
+        <h2 id="euro-heading" class="about-heading">Where your euro goes</h2>
+        <div class="led-panel about-leds mb-6">
+          <LedMeter label="Staked" :value="1" />
+          <LedMeter label="Paid back on average" :value="LONG_RUN_RETURN" />
+        </div>
 
-          <div class="space-y-4 text-content-secondary">
-            <p class="text-lg">
-              Most lottery players make decisions based on myths rather than
-              mathematics. They believe in "lucky numbers," avoid recently drawn
-              combinations, or choose birthdays thinking it improves their
-              chances.
-            </p>
-            <p>
-              We built this simulator to bridge the gap between lottery
-              marketing and mathematical reality. Our mission is simple: help
-              people understand what they're really buying when they purchase
-              system tickets, and make informed decisions based on evidence
-              rather than superstition.
-            </p>
-            <p>
-              This isn't about encouraging gambling—it's about promoting
-              mathematical literacy and responsible understanding through
-              hands-on exploration.
-            </p>
-          </div>
-        </section>
-
-        <!-- What Value It Provides -->
-        <section class="casino-card rounded-2xl p-8">
-          <div class="mb-6 flex items-center gap-3">
-            <div class="text-3xl">💡</div>
-            <h2 class="font-heading text-2xl text-brand-gold">
-              What Value It Provides
-            </h2>
-          </div>
-
-          <div class="grid gap-6 md:grid-cols-2">
-            <div class="space-y-4">
-              <div class="flex items-start gap-3">
-                <span
-                  class="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-premium-emerald-400"
-                ></span>
-                <div>
-                  <h3 class="font-semibold text-content-primary">
-                    Understanding System Costs
-                  </h3>
-                  <p class="text-sm text-content-secondary">
-                    See exactly how ticket count and system size affect both
-                    your costs and winning probabilities. No hidden
-                    surprises—just transparent mathematics.
-                  </p>
-                </div>
-              </div>
-
-              <div class="flex items-start gap-3">
-                <span
-                  class="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-premium-emerald-400"
-                ></span>
-                <div>
-                  <h3 class="font-semibold text-content-primary">
-                    Myth Debunking
-                  </h3>
-                  <p class="text-sm text-content-secondary">
-                    Discover why "lucky numbers" perform the same as random
-                    selection over time. See the mathematical truth behind
-                    common lottery misconceptions.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="space-y-4">
-              <div class="flex items-start gap-3">
-                <span
-                  class="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-premium-emerald-400"
-                ></span>
-                <div>
-                  <h3 class="font-semibold text-content-primary">
-                    Strategy Comparison
-                  </h3>
-                  <p class="text-sm text-content-secondary">
-                    Compare different approaches: random selection, historical
-                    frequencies, favourite numbers, and even unpopular
-                    combinations that might reduce prize sharing.
-                  </p>
-                </div>
-              </div>
-
-              <div class="flex items-start gap-3">
-                <span
-                  class="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-premium-emerald-400"
-                ></span>
-                <div>
-                  <h3 class="font-semibold text-content-primary">
-                    Realistic Expectations
-                  </h3>
-                  <p class="text-sm text-content-secondary">
-                    Learn about actual win rates and return on investment
-                    through large-scale simulations. Understand the difference
-                    between mathematical expectation and real-world variance.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- How To Use It -->
-        <section class="casino-card rounded-2xl p-8">
-          <div class="mb-6 flex items-center gap-3">
-            <div class="text-3xl">🚀</div>
-            <h2 class="font-heading text-2xl text-brand-gold">How To Use It</h2>
-          </div>
-
-          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <div class="text-center">
-              <div class="mb-3 flex justify-center">
-                <div
-                  class="flex h-12 w-12 items-center justify-center rounded-xl bg-interactive-primary/20 text-2xl"
-                >
-                  🎲
-                </div>
-              </div>
-              <h3 class="mb-2 font-semibold text-content-primary">
-                Quick Start
-              </h3>
-              <p class="text-sm text-content-secondary">
-                Generate random tickets instantly to see immediate results.
-                Perfect for first-time exploration.
-              </p>
-            </div>
-
-            <div class="text-center">
-              <div class="mb-3 flex justify-center">
-                <div
-                  class="flex h-12 w-12 items-center justify-center rounded-xl bg-interactive-primary/20 text-2xl"
-                >
-                  ⚙️
-                </div>
-              </div>
-              <h3 class="mb-2 font-semibold text-content-primary">
-                Custom Configuration
-              </h3>
-              <p class="text-sm text-content-secondary">
-                Choose your own numbers, system sizes, or favourite combinations
-                for personalised analysis.
-              </p>
-            </div>
-
-            <div class="text-center">
-              <div class="mb-3 flex justify-center">
-                <div
-                  class="flex h-12 w-12 items-center justify-center rounded-xl bg-interactive-primary/20 text-2xl"
-                >
-                  🔬
-                </div>
-              </div>
-              <h3 class="mb-2 font-semibold text-content-primary">
-                Strategy Testing
-              </h3>
-              <p class="text-sm text-content-secondary">
-                Try different number selection methods and compare their
-                long-term performance.
-              </p>
-            </div>
-
-            <div class="text-center">
-              <div class="mb-3 flex justify-center">
-                <div
-                  class="flex h-12 w-12 items-center justify-center rounded-xl bg-interactive-primary/20 text-2xl"
-                >
-                  📊
-                </div>
-              </div>
-              <h3 class="mb-2 font-semibold text-content-primary">
-                Large-Scale Analysis
-              </h3>
-              <p class="text-sm text-content-secondary">
-                Run hundreds or thousands of simulations to see statistical
-                patterns emerge over time.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Educational Insights -->
-        <section class="casino-card rounded-2xl p-8">
-          <div class="mb-6 flex items-center gap-3">
-            <div class="text-3xl">🧠</div>
-            <h2 class="font-heading text-2xl text-brand-gold">
-              What You'll Learn
-            </h2>
-          </div>
-
-          <div class="space-y-6">
-            <div class="border-l-4 border-brand-gold pl-4">
-              <h3 class="mb-2 font-semibold text-content-primary">
-                The Birthday Bias Reality
-              </h3>
-              <p class="text-content-secondary">
-                Many players choose numbers 1-31 based on birthdays, but this
-                doesn't improve odds—it just increases the chance of sharing
-                prizes. Our unpopular combination generator helps you understand
-                this bias.
-              </p>
-            </div>
-
-            <div class="border-l-4 border-premium-emerald-400 pl-4">
-              <h3 class="mb-2 font-semibold text-content-primary">
-                Why "Lucky Numbers" Aren't Lucky
-              </h3>
-              <p class="text-content-secondary">
-                Each number has exactly the same probability of being drawn,
-                regardless of past results or cultural significance. Our
-                simulations prove this through statistical evidence you can see
-                for yourself.
-              </p>
-            </div>
-
-            <div class="border-l-4 border-premium-sapphire-400 pl-4">
-              <h3 class="mb-2 font-semibold text-content-primary">
-                System Size vs. Winning Probability
-              </h3>
-              <p class="text-content-secondary">
-                System tickets increase both your costs and winning chances, but
-                not linearly. A 7+3 system costs 21x more than standard 5+2 but
-                only covers 3x more combinations. Understanding this
-                relationship helps you make informed decisions about whether the
-                additional coverage justifies the exponential cost increase.
-              </p>
-            </div>
-
-            <div class="border-l-4 border-premium-burgundy-400 pl-4">
-              <h3 class="mb-2 font-semibold text-content-primary">
-                Mathematical Expectation vs. Reality
-              </h3>
-              <p class="text-content-secondary">
-                While mathematical expectation shows the average outcome,
-                real-world variance means actual results can differ
-                dramatically. Our Monte Carlo simulations demonstrate this
-                critical concept.
-              </p>
-            </div>
-
-            <div class="border-l-4 border-premium-pearl-400 pl-4">
-              <h3 class="mb-2 font-semibold text-content-primary">
-                Making Statistics Tangible
-              </h3>
-              <p class="text-content-secondary">
-                Instead of abstract "1 in 139 million" odds, see what happens
-                when you run 1000 real simulations. Watch win distributions,
-                calculate actual ROI, and observe how different strategies
-                perform over time with real data you can explore.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Call to Action -->
-        <section class="text-center">
-          <div class="casino-card rounded-2xl p-8">
-            <h2 class="mb-4 font-heading text-2xl text-brand-gold">
-              Ready to Explore?
-            </h2>
-            <p class="mb-6 text-content-secondary">
-              Start with a quick simulation or dive deep into custom analysis.
-              Every number tells a story—let the mathematics guide you.
-            </p>
-
-            <div class="flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <NuxtLink
-                to="/"
-                class="btn-casino-gold focus-gold inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all duration-300 hover:scale-105"
-              >
-                <span class="text-xl">🎲</span>
-                <span>Start Exploring</span>
-              </NuxtLink>
-
-              <a
-                href="https://en.wikipedia.org/wiki/EuroJackpot"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-gold/30 bg-transparent px-6 py-3 font-medium text-brand-gold transition-all duration-300 hover:scale-105 hover:bg-brand-gold/10"
-              >
-                <span>Learn About EuroJackpot</span>
-                <svg
-                  class="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <!-- Educational Disclaimer -->
-        <section class="text-center">
+        <div class="meter-bar euro-bar" role="img" :aria-label="euroBarLabel">
           <div
-            class="glass-luxury inline-flex items-center rounded-full px-6 py-3"
+            v-for="segment in euroSegments"
+            :key="segment.key"
+            :class="`euro-bar__${segment.key}`"
+            :style="{ inlineSize: `${segment.share * 100}%` }"
+          />
+        </div>
+        <ul
+          class="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2"
+        >
+          <li
+            v-for="segment in euroSegments"
+            :key="segment.key"
+            class="flex items-baseline gap-2"
           >
-            <svg
-              class="mr-2 h-5 w-5 text-premium-emerald-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span class="text-content-secondary">
-              This is an educational tool. No real money is involved. Play
-              responsibly if you choose to participate in actual lotteries.
-            </span>
+            <span
+              :class="`euro-swatch euro-bar__${segment.key}`"
+              aria-hidden="true"
+            />
+            <strong class="font-semibold text-content-primary tabular-nums">
+              {{ segmentCents(segment.share) }}
+            </strong>
+            <span class="text-content-muted">{{ segment.label }}</span>
+          </li>
+        </ul>
+
+        <p class="mt-6 leading-relaxed text-content-secondary">
+          Half of every stake goes into the prize pool. The other half pays for
+          lottery tax, the money the states give to public causes, and running
+          the game. The pool is not spread evenly: {{ jackpotShareOfPool }}% of
+          it goes to the jackpot, which a line hits at odds of 1 in
+          {{ jackpotOdds }}.
+        </p>
+      </section>
+
+      <section
+        class="casino-card rounded-2xl p-5 sm:p-8"
+        aria-labelledby="lifetime-heading"
+      >
+        <h2 id="lifetime-heading" class="about-heading">
+          {{ LIFETIME_EXAMPLE_YEARS }} years of playing
+        </h2>
+        <p class="mb-5 text-content-secondary">
+          {{ LIFETIME_EXAMPLE_LINES_PER_DRAW }} lines every Tuesday and Friday,
+          for {{ LIFETIME_EXAMPLE_YEARS }} years:
+        </p>
+        <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div
+            v-for="tile in lifetimeTiles"
+            :key="tile.label"
+            class="well stat-tile"
+          >
+            <dt class="label-plate mb-1">{{ tile.label }}</dt>
+            <dd class="stat-tile__value">{{ tile.value }}</dd>
+            <dd class="mt-0.5 text-xs text-content-muted">{{ tile.note }}</dd>
           </div>
-        </section>
-      </div>
+        </dl>
+        <p class="mt-5 leading-relaxed text-content-secondary">
+          The {{ formatCents(LONG_RUN_RETURN) }} average is real, but a large
+          part of it goes to a few jackpot winners. What a regular player gets
+          back is mostly the small prizes.
+        </p>
+      </section>
+
+      <section
+        class="casino-card rounded-2xl p-5 sm:p-8"
+        aria-labelledby="smarter-heading"
+      >
+        <h2 id="smarter-heading" class="about-heading">
+          Can you play smarter?
+        </h2>
+        <p class="mb-5 text-content-secondary">
+          Not in a way that changes the
+          {{ formatCents(LONG_RUN_RETURN) }}. You can test each of these on the
+          machine.
+        </p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <article v-for="idea in ideas" :key="idea.title" class="well p-4">
+            <h3 class="mb-1.5 font-semibold text-content-primary">
+              {{ idea.title }}
+            </h3>
+            <p class="text-sm leading-relaxed text-content-secondary">
+              {{ idea.text }}
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="casino-card rounded-2xl p-5 sm:p-8"
+        aria-labelledby="try-heading"
+      >
+        <h2 id="try-heading" class="about-heading">Try it on the machine</h2>
+        <ol class="space-y-4">
+          <li
+            v-for="(step, index) in steps"
+            :key="step.title"
+            class="flex items-start gap-4"
+          >
+            <span class="step-number font-numbers" aria-hidden="true">
+              {{ index + 1 }}
+            </span>
+            <div>
+              <h3 class="font-semibold text-content-primary">
+                {{ step.title }}
+              </h3>
+              <p class="text-sm leading-relaxed text-content-secondary">
+                {{ step.text }}
+              </p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="pt-4 text-center" aria-labelledby="decision-heading">
+        <h2 id="decision-heading" class="about-heading">Your decision</h2>
+        <p
+          class="mx-auto mb-8 max-w-2xl leading-relaxed text-balance text-content-secondary"
+        >
+          Many people play for the few days of hoping, and that can be worth the
+          price. If you decide to play, the simulator can fill in Lotto Bayern’s
+          form for you with its
+          <NuxtLink
+            to="/bookmarklet"
+            class="text-brand-gold underline underline-offset-4 transition-colors duration-150 hover:text-brand-gold-light"
+            >number filler</NuxtLink
+          >. Either way, you now know the price.
+        </p>
+        <NuxtLink
+          to="/"
+          class="btn-casino-gold focus-gold inline-flex items-center justify-center rounded-2xl px-8 py-4 font-cta text-lg"
+        >
+          Back to the machine
+        </NuxtLink>
+      </section>
+
+      <section
+        class="well mt-12 p-5 text-sm leading-relaxed text-content-muted sm:p-6"
+        aria-labelledby="numbers-heading"
+      >
+        <h2 id="numbers-heading" class="label-plate mb-3">
+          How the numbers are calculated
+        </h2>
+        <p>
+          The odds are calculated exactly from the game format:
+          {{ MAIN_NUMBERS_COUNT }} of {{ MAIN_NUMBER_MAX }} numbers and
+          {{ EURO_NUMBERS_COUNT }} of {{ EURO_NUMBER_MAX }}. Prizes use the
+          prize-class shares in force since March 2022. Real draws vary with the
+          jackpot size and the number of winners sharing a prize, but over many
+          draws they settle to these averages. Autoplay runs in your browser,
+          and you can replay any run exactly from its seed. There are no
+          accounts and no money involved.
+          <a
+            href="https://en.wikipedia.org/wiki/EuroJackpot"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="whitespace-nowrap text-content-secondary underline underline-offset-4 transition-colors duration-150 hover:text-content-primary"
+            >EuroJackpot on Wikipedia ↗</a
+          >
+        </p>
+      </section>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">
-// SEO and meta information
+import LedMeter from '~/components/LedMeter.vue'
+import {
+  ABOUT_AUTOPLAY_EXAMPLES,
+  DRAWS_PER_YEAR,
+  EURO_NUMBER_MAX,
+  EURO_NUMBERS_COUNT,
+  EUROJACKPOT_TOTAL_COMBINATIONS,
+  LIFETIME_EXAMPLE_LINES_PER_DRAW,
+  LIFETIME_EXAMPLE_YEARS,
+  MAIN_NUMBER_MAX,
+  MAIN_NUMBERS_COUNT,
+  SYSTEM_EXAMPLE_EURO,
+  SYSTEM_EXAMPLE_MAIN,
+} from '~/utils/constants'
+import {
+  JACKPOT_RETURN,
+  LONG_RUN_PRIZES,
+  LONG_RUN_RETURN,
+  expectedHits,
+  splitReturnByTier,
+  type PrizeClass,
+} from '~/utils/prizeTable'
+import { PRICE_PER_LINE, systemPrice } from '~/utils/pricing'
+import { combinationCount } from '~/utils/combinatorics'
+import {
+  formatCents,
+  formatCount,
+  formatEuro,
+  formatOdds,
+  formatPlayingTime,
+} from '~/utils/format'
+
+const wholeEuro = (amount: number) => formatEuro(amount, { decimals: 0 })
+
+const jackpotOdds = formatCount(EUROJACKPOT_TOTAL_COMBINATIONS)
+const jackpotShareOfPool = Math.round((JACKPOT_RETURN / LONG_RUN_RETURN) * 100)
+
+// --- A lifetime of modest, regular playing ---
+
+const lifetimeLines =
+  LIFETIME_EXAMPLE_LINES_PER_DRAW * DRAWS_PER_YEAR * LIFETIME_EXAMPLE_YEARS
+const lifetimeStake = lifetimeLines * PRICE_PER_LINE
+const tiers = splitReturnByTier(lifetimeLines)
+
+// The average prize of the cheapest and dearest class in a tier
+const prizeRange = (classes: PrizeClass[]) => {
+  const prizes = classes.map((c) => LONG_RUN_PRIZES[c.winClass] ?? 0)
+  return { min: Math.min(...prizes), max: Math.max(...prizes) }
+}
+const smallPrizes = prizeRange(tiers.expectedClasses)
+const biggerPrizes = prizeRange(tiers.betweenClasses)
+
+const biggerHits = tiers.betweenClasses.reduce(
+  (sum, c) => sum + expectedHits(c.winClass, lifetimeLines),
+  0
+)
+
+const lifetimeTiles = [
+  {
+    label: 'You pay in',
+    value: wholeEuro(lifetimeStake),
+    note: `${formatCount(lifetimeLines)} lines at ${wholeEuro(PRICE_PER_LINE)}`,
+  },
+  {
+    label: 'Small prizes pay back',
+    value: `${formatCents(tiers.expected)} per €1`,
+    note: `about ${wholeEuro(lifetimeStake * tiers.expected)} in all`,
+  },
+  {
+    label: 'Bigger prizes',
+    value: `${biggerHits.toFixed(1)} on average`,
+    note: `from ${wholeEuro(biggerPrizes.min)} each`,
+  },
+  {
+    label: 'Chance of a jackpot',
+    value: formatOdds(expectedHits(1, lifetimeLines)),
+    note: `in all ${LIFETIME_EXAMPLE_YEARS} years`,
+  },
+]
+
+// --- One euro staked, followed to where it ends up ---
+
+const euroSegments = [
+  {
+    key: 'small',
+    share: tiers.expected,
+    label: `small prizes, ${wholeEuro(smallPrizes.min)}–${wholeEuro(smallPrizes.max)} each`,
+  },
+  {
+    key: 'bigger',
+    share: tiers.between,
+    label: `bigger prizes, from ${wholeEuro(biggerPrizes.min)}`,
+  },
+  { key: 'jackpot', share: tiers.jackpot, label: 'the jackpot' },
+  { key: 'kept', share: 1 - LONG_RUN_RETURN, label: 'kept by the game' },
+]
+
+// To a tenth of a cent where needed, so the four parts visibly add up to €1
+const segmentCents = (share: number) =>
+  formatCents(share, Number.isInteger(Math.round(share * 1000) / 10) ? 0 : 1)
+
+const euroBarLabel = `Of each euro: ${euroSegments
+  .map((s) => `${segmentCents(s.share)} ${s.label}`)
+  .join(', ')}.`
+
+// --- What people try, and what it changes ---
+
+const systemLines = combinationCount(SYSTEM_EXAMPLE_MAIN, SYSTEM_EXAMPLE_EURO)
+const systemCost = wholeEuro(
+  systemPrice(SYSTEM_EXAMPLE_MAIN, SYSTEM_EXAMPLE_EURO)
+)
+
+const ideas = [
+  {
+    title: 'Lucky numbers',
+    text: `Every combination has the same chance: 1 in ${jackpotOdds}. A birthday is no more and no less likely than any other.`,
+  },
+  {
+    title: 'Hot and cold numbers',
+    text: 'The draw has no memory. A number that came up often last year is no more likely next Friday. The machine can weight tickets by past draws: see whether the meter notices.',
+  },
+  {
+    title: 'System tickets',
+    text: `A ${SYSTEM_EXAMPLE_MAIN} + ${SYSTEM_EXAMPLE_EURO} system is ${systemLines} ordinary lines for ${systemCost}: ${systemLines} times the chance at ${systemLines} times the price. Per euro, nothing changes. More tickets work the same way.`,
+  },
+  {
+    title: 'Unpopular numbers',
+    text: 'They win just as rarely. If they do win, fewer people may share the prize. The machine pays every prize its average, so it does not show that effect.',
+  },
+]
+
+// --- How to see it for yourself ---
+
+const [shortAutoplay, longAutoplay] = ABOUT_AUTOPLAY_EXAMPLES
+
+const steps = [
+  {
+    title: 'Spin',
+    text: `Each spin buys tickets at ${wholeEuro(PRICE_PER_LINE)} a line and runs one draw. Watch what you paid in and what came back.`,
+  },
+  {
+    title: 'Autoplay',
+    text: `×${formatCount(shortAutoplay)} is ${formatPlayingTime(shortAutoplay)} of Tuesdays and Fridays, done in a second. ×${formatCount(longAutoplay)} is ${formatPlayingTime(longAutoplay)}.`,
+  },
+  {
+    title: 'Change anything',
+    text: 'Pick your own numbers, play a large system, or weight tickets by past draws, and see whether the meter moves.',
+  },
+]
+
 useHead({
-  title: 'About - EuroJackpot Simulator',
+  title: 'Why we built this - EuroJackpot Simulator',
   meta: [
     {
       name: 'description',
       content:
-        'Learn about EuroJackpot Simulator: an educational tool that demystifies lottery mathematics through realistic simulations. Understand the reality behind lucky numbers, birthday bias, and system ticket costs.',
-    },
-    {
-      name: 'keywords',
-      content:
-        'lottery education, EuroJackpot, mathematical simulation, probability, lottery myths, system tickets, educational tool',
+        'How EuroJackpot works, and what its rules mean for your money: play years of draws in seconds and decide for yourself.',
     },
   ],
 })
 </script>
 
 <style scoped>
-/* Ensure proper z-index layering for canvas background */
-.relative {
-  position: relative;
+.about-heading {
+  margin-block-end: 1rem;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  color: var(--color-content-primary);
+}
+
+/* Two meters, staked and paid back, side by side at every width */
+.about-leds {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* One euro, split by where it goes: three shades of prize, then the house */
+.euro-bar > div {
+  min-inline-size: 2px;
+}
+.euro-bar > div:first-child {
+  border-radius: 9999px 0 0 9999px;
+}
+.euro-bar > div:last-child {
+  border-radius: 0 9999px 9999px 0;
+}
+.euro-bar__small {
+  background: var(--color-chart-won);
+}
+.euro-bar__bigger {
+  background: color-mix(in oklch, var(--color-chart-won) 55%, transparent);
+}
+.euro-bar__jackpot {
+  background: color-mix(in oklch, var(--color-chart-won) 25%, transparent);
+}
+.euro-bar__kept {
+  background: var(--color-chart-lost);
+}
+
+.euro-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  border-radius: 9999px;
+  translate: 0 0.05rem;
+}
+
+.step-number {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border-secondary);
+  color: var(--color-content-primary);
 }
 </style>

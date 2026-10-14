@@ -9,6 +9,8 @@ import {
   LONG_RUN_RETURN,
   LONG_RUN_PRIZES,
   BOOSTER_FUND_RETURN,
+  JACKPOT_RETURN,
+  splitReturnByTier,
 } from '~/utils/prizeTable'
 import { PRICE_PER_LINE } from '~/utils/pricing'
 import { EUROJACKPOT_TOTAL_COMBINATIONS } from '~/utils/constants'
@@ -172,5 +174,38 @@ describe('splitReturnByReach', () => {
     const split = splitReturnByReach(10_000_000)
     expect(split.outOfReach.map((c) => c.winClass)).toEqual([1])
     expect(split.returnOutOfReach).toBeCloseTo(0.18 + BOOSTER_FUND_RETURN, 10)
+  })
+})
+
+describe('splitReturnByTier', () => {
+  it('pays 22.5¢ per €1 as jackpots, reserve included', () => {
+    expect(JACKPOT_RETURN).toBeCloseTo(0.225, 10)
+  })
+
+  it('splits a lifetime of two lines a draw into expected, between and jackpot', () => {
+    // Two lines every Tuesday and Friday for 50 years
+    const tiers = splitReturnByTier(10_400)
+    expect(tiers.expected).toBeCloseTo(0.18925, 5)
+    expect(tiers.expectedClasses.map((c) => c.winClass)).toEqual([
+      8, 9, 10, 11, 12,
+    ])
+    expect(tiers.between).toBeCloseTo(0.08575, 5)
+    expect(tiers.betweenClasses.map((c) => c.winClass)).toEqual([
+      2, 3, 4, 5, 6, 7,
+    ])
+    expect(tiers.jackpot).toBeCloseTo(0.225, 10)
+  })
+
+  it('always adds up to the long-run payback', () => {
+    for (const lines of [1, 10_000, 1e6, 1e9]) {
+      const { expected, between, jackpot } = splitReturnByTier(lines)
+      expect(expected + between + jackpot).toBeCloseTo(LONG_RUN_RETURN, 10)
+    }
+  })
+
+  it('never counts the jackpot twice, even once it is within reach', () => {
+    const tiers = splitReturnByTier(1e9)
+    expect(tiers.between).toBe(0)
+    expect(tiers.expected).toBeCloseTo(LONG_RUN_RETURN - JACKPOT_RETURN, 10)
   })
 })
