@@ -32,7 +32,7 @@
           :disabled="locked"
           :title="
             locked
-              ? 'Autoplay is playing these tickets'
+              ? 'The machine is playing these tickets'
               : 'Choose other tickets'
           "
           @click="emit('customize')"
@@ -195,8 +195,12 @@ const {
 
 const showLottoBayern = ref(false)
 
-// A run is scored on the tickets it started with, so they hold still meanwhile
-const locked = computed(() => simStore.isRunning)
+// A spin or a run is scored on the tickets it started with, so they hold still
+// until it is over: changing them then would split it across two rounds
+const locked = computed(
+  () =>
+    simStore.isRunning || simStore.isSingleDrawRunning || !drawRevealed.value
+)
 
 // Matches stay hidden until the reels have landed, so the tickets don't spoil the draw
 const hasDraw = computed(

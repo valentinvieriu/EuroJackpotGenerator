@@ -175,6 +175,7 @@ export const SIMULATION_OPTION_VALUES = [
   100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000,
 ] as const
 export const AUTOPLAY_DEFAULT_DRAWS = 1_000 // Preselected on the cabinet's autoplay control
+export const ROUND_SLIP_MAX_ROWS = 6 // Closed rounds listed on the slip; the total still covers every round
 
 // Frequency Ratio Thresholds
 export const FREQ_RATIO_STRONG = 1.15

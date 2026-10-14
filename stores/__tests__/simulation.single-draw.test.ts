@@ -195,10 +195,10 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     expect(res.netProfit).toBe(2000 - 6)
   })
 
-  it('new tickets reset a finished Monte Carlo run but keep the single draw', async () => {
+  it('new tickets clear a finished Monte Carlo run and the single draw', async () => {
     const sim = useSimulationStore()
 
-    // Seed single draw results to be preserved later
+    // Seed tickets for the run and the draw
     seedTickets([
       {
         id: 99,
@@ -254,7 +254,7 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     await sim.runSingleDraw()
     expect(sim.state.singleDraw.phase).toBe('results')
 
-    // Generate new tickets → should reset Monte Carlo to config and rehighlight single draw
+    // New tickets: both the run and the draw belonged to the old ones
     seedTickets([
       {
         id: 2,
@@ -267,12 +267,11 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
 
     expect(sim.state.phase).toBe('config')
     expect(sim.state.results).toBeNull()
-    expect(sim.state.singleDraw.phase).toBe('results')
-    // Ensure results still consistent (preserved and recalculated)
-    expect(sim.singleDrawResults).toBeTruthy()
+    expect(sim.state.singleDraw.phase).toBe('idle')
+    expect(sim.singleDrawResults).toBeNull()
   })
 
-  it('keeps a running session ledger across draws and clears it on reset', async () => {
+  it('keeps a running round across draws and clears it on reset', async () => {
     const sim = useSimulationStore()
     const odds = useOddsStore()
 
@@ -302,20 +301,20 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
       ],
     } as any)
 
-    expect(sim.session).toEqual({ draws: 0, spent: 0, won: 0 })
+    expect(sim.round).toEqual({ draws: 0, spent: 0, won: 0 })
 
     // Mocked highlight builder awards one class-2 win (€5) per ticket
     await sim.runSingleDraw()
-    expect(sim.session).toEqual({ draws: 1, spent: 2, won: 5 })
+    expect(sim.round).toEqual({ draws: 1, spent: 2, won: 5 })
 
     await sim.runSingleDraw()
-    expect(sim.session).toEqual({ draws: 2, spent: 4, won: 10 })
+    expect(sim.round).toEqual({ draws: 2, spent: 4, won: 10 })
 
     sim.ticketsReset()
-    expect(sim.session).toEqual({ draws: 0, spent: 0, won: 0 })
+    expect(sim.round).toEqual({ draws: 0, spent: 0, won: 0 })
   })
 
-  it('does not charge the session ledger when a draw fails', async () => {
+  it('does not charge the round when a draw fails', async () => {
     const sim = useSimulationStore()
     const odds = useOddsStore()
 
@@ -337,6 +336,6 @@ describe('Simulation Store - Single Draw & Highlighting', () => {
     await sim.runSingleDraw()
 
     expect(sim.state.singleDraw.phase).toBe('error')
-    expect(sim.session).toEqual({ draws: 0, spent: 0, won: 0 })
+    expect(sim.round).toEqual({ draws: 0, spent: 0, won: 0 })
   })
 })

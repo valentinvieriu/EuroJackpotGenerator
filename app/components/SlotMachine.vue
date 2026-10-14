@@ -87,21 +87,9 @@
         :tone="net < 0 ? 'loss' : net > 0 ? 'gain' : 'neutral'"
       />
     </div>
-    <div
-      v-if="shownMeter.draws > 0"
-      class="mt-2 flex flex-wrap items-baseline justify-center gap-x-4 gap-y-1 text-xs"
-    >
-      <p class="text-center text-content-muted">{{ keptLine }}</p>
-      <button
-        type="button"
-        class="text-content-secondary underline underline-offset-4 transition-colors duration-150 hover:text-content-primary disabled:cursor-not-allowed disabled:opacity-50"
-        title="Walk away: the meters go back to zero, your tickets stay"
-        :disabled="busy"
-        @click="cashOut"
-      >
-        Cash out
-      </button>
-    </div>
+    <p v-if="keptLine" class="mt-2 text-center text-xs text-content-muted">
+      {{ keptLine }}
+    </p>
 
     <div class="mt-6 flex flex-col items-center gap-4">
       <div v-if="!hasTickets" class="flex items-center gap-3">
@@ -169,6 +157,18 @@
             </option>
           </select>
         </div>
+
+        <!-- Start over: the meters and the rounds go back to zero -->
+        <button
+          v-if="hasPlayed"
+          type="button"
+          class="btn-casino-blue min-h-12 rounded-2xl px-5 font-cta text-lg disabled:cursor-wait"
+          title="Clear the meters and every round. Your tickets stay."
+          :disabled="busy"
+          @click="startOver"
+        >
+          Start over
+        </button>
       </div>
 
       <p
@@ -212,6 +212,8 @@
       </div>
     </div>
 
+    <RoundSlip :current="shownMeter" />
+
     <!-- Decorative lever: pulls on every spin, and works as a second spin button for mouse users -->
     <button
       type="button"
@@ -240,6 +242,7 @@ import {
 } from 'vue'
 import SlotReels from './SlotReels.vue'
 import LedMeter from './LedMeter.vue'
+import RoundSlip from './RoundSlip.vue'
 import StepperInput from './StepperInput.vue'
 import {
   useAudioState,
@@ -256,6 +259,7 @@ import {
 import { useMachineSounds } from '~/composables/useMachineSounds'
 import { systemPrice } from '~/utils/pricing'
 import { formatEuro, formatCount, formatPlayingTime } from '~/utils/format'
+import { keptShare, type Round } from '~/utils/rounds'
 
 const emit = defineEmits<{ customize: []; paytable: [] }>()
 
@@ -319,14 +323,18 @@ watchEffect(() => {
 const net = computed(() => shownMeter.value.won - shownMeter.value.spent)
 
 const keptLine = computed(() => {
-  const { spent, won } = shownMeter.value
-  if (spent <= 0) return ''
-  if (won >= spent) {
+  const share = keptShare(shownMeter.value)
+  if (share === null) return ''
+  if (share <= 0) {
     return 'You are ahead for now. Keep spinning and watch what the meter does.'
   }
-  const keptShare = Math.round(((spent - won) / spent) * 100)
-  return `So far the machine has kept ${keptShare}% of everything you put in.`
+  return `So far the machine has kept ${Math.round(share * 100)}% of everything these tickets put in.`
 })
+
+// Anything on the meters or the slip that Start over would clear
+const hasPlayed = computed(
+  () => shownMeter.value.draws > 0 || simStore.rounds.length > 0
+)
 
 // --- Autoplay ---
 
@@ -399,37 +407,44 @@ const autoplayLine = computed(() => {
   return ''
 })
 
-// --- Cash out ---
+// --- Rounds ---
 
-// What the meters read when the player walked away
-const cashedOut = ref<{ draws: number; spent: number; won: number } | null>(
-  null
-)
-
-const cashOut = () => {
+const startOver = () => {
   if (busy.value) return
-  cashedOut.value = { ...simStore.meter }
-  simStore.cashOut()
-  lastEvent.value = 'cashout'
+  simStore.startOver()
+  lastEvent.value = 'startover'
 }
 
-const cashOutLine = computed(() => {
-  if (!cashedOut.value) return ''
-  const { draws, spent, won } = cashedOut.value
-  const spins = `${formatCount(draws)} ${draws === 1 ? 'spin' : 'spins'}`
-  const amount = formatEuro(Math.abs(won - spent))
-  if (won < spent) {
-    return `You cashed out ${amount} down after ${spins}. The meters are back at zero.`
+// The round that went on the slip when other tickets came to the table
+const closedRound = ref<Round | null>(null)
+watch(
+  () => simStore.rounds.length,
+  (count, previous) => {
+    if (count <= previous) return
+    closedRound.value = simStore.rounds[count - 1] ?? null
+    lastEvent.value = 'round'
   }
-  return won > spent
-    ? `You cashed out ${amount} ahead after ${spins}. Walking away is the only way to keep it.`
-    : `You cashed out even after ${spins}. The meters are back at zero.`
+)
+
+const roundLine = computed(() => {
+  if (!closedRound.value) return ''
+  const { draws } = closedRound.value
+  const share = keptShare(closedRound.value) ?? 0
+  const spins = `${formatCount(draws)} ${draws === 1 ? 'spin' : 'spins'}`
+  const verdict =
+    share > 0
+      ? `the machine kept ${Math.round(share * 100)}% over ${spins}`
+      : `you came out ahead over ${spins}`
+  const next = hasTickets.value
+    ? ' The meters start again for the tickets now on the table.'
+    : ''
+  return `Round on the slip: ${verdict}.${next}`
 })
 
 // --- Status line ---
 
 // What the machine did last decides what the status line talks about
-const lastEvent = ref<'spin' | 'autoplay' | 'cashout' | null>(null)
+const lastEvent = ref<'spin' | 'autoplay' | 'round' | 'startover' | null>(null)
 watch(
   () => simStore.isSingleDrawRunning,
   (running) => {
@@ -442,8 +457,9 @@ watch(
     if (running) lastEvent.value = 'autoplay'
   }
 )
+// With the table cleared, only a round that just went on the slip is still news
 watch(hasTickets, (has) => {
-  if (!has) lastEvent.value = null
+  if (!has && lastEvent.value !== 'round') lastEvent.value = null
 })
 
 const statusLine = computed(() => {
@@ -453,8 +469,13 @@ const statusLine = computed(() => {
   if (lastEvent.value === 'autoplay' && autoplayLine.value) {
     return autoplayLine.value
   }
-  if (lastEvent.value === 'cashout' && cashOutLine.value) {
-    return cashOutLine.value
+  if (lastEvent.value === 'round' && roundLine.value) {
+    return roundLine.value
+  }
+  if (lastEvent.value === 'startover') {
+    return hasTickets.value
+      ? 'Back to zero: the meters and the rounds are cleared. Your tickets are still loaded.'
+      : 'Back to zero: the meters and the rounds are cleared.'
   }
 
   const results = simStore.singleDrawResults
@@ -462,14 +483,6 @@ const statusLine = computed(() => {
     return hasTickets.value
       ? 'Your tickets are loaded. Spin to run a draw.'
       : 'Choose how many tickets to buy, then spin.'
-  }
-
-  // Tickets were swapped or removed after the draw: the result on show is that
-  // draw re-scored, not what the spin itself cost
-  if (spinStake.value !== null && results.stake !== spinStake.value) {
-    return results.totalWinnings > 0
-      ? `Against that draw, the tickets now on the table win ${formatEuro(results.totalWinnings)} on a ${formatEuro(results.stake)} stake.`
-      : 'Against that draw, the tickets now on the table win nothing.'
   }
 
   if (results.totalWinnings <= 0) {
@@ -480,9 +493,6 @@ const statusLine = computed(() => {
   }
   return `You won ${formatEuro(results.totalWinnings)} on a ${formatEuro(results.stake)} stake. Enjoy it: this rarely happens.`
 })
-
-// What the last spin actually cost, to tell it apart from a later re-score
-const spinStake = ref<number | null>(null)
 
 // Results stay hidden, and silent, until the last reel is down
 const onSpinStart = () => {
@@ -495,7 +505,6 @@ const onSettled = (landed: boolean) => {
   setDrawRevealed(true)
   const results = simStore.singleDrawResults
   if (landed && results) {
-    spinStake.value = results.stake
     sounds.result(results.totalWinnings, results.stake)
   }
 }

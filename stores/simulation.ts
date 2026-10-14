@@ -1,9 +1,11 @@
 /**
- * Simulation Store - single draws and Monte Carlo (autoplay) runs
+ * Simulation Store - single draws, Monte Carlo (autoplay) runs and rounds
  *
- * Owns the draw and the run lifecycle. Tickets are owned by the tickets store
- * and read from there, and everything about "how did these tickets do" is
- * derived from the tickets, the draw and the prizes rather than stored.
+ * Owns the draw and the run lifecycle, and the ledger of what was played: one
+ * round per set of tickets, closed when other tickets go on the table. Tickets
+ * are owned by the tickets store and read from there, and everything about
+ * "how did this draw go" is derived from the tickets, the draw and the prizes
+ * rather than stored.
  */
 
 import { defineStore } from 'pinia'
@@ -30,6 +32,12 @@ import {
   type TicketHighlight,
   type WinningNumbers,
 } from '~/utils/drawScoring'
+import {
+  addLedgers,
+  emptyLedger,
+  type Ledger,
+  type Round,
+} from '~/utils/rounds'
 import { useOddsStore } from './odds'
 import { useTicketsStore } from './tickets'
 import {
@@ -91,14 +99,7 @@ export interface SingleDrawState {
   error: string | null
 }
 
-/** Running tally of every draw played this session, by hand or on autoplay */
-export interface SessionLedger {
-  draws: number
-  spent: number
-  won: number
-}
-
-export type { TrajectoryPoint }
+export type { TrajectoryPoint, Ledger, Round }
 
 export interface SimulationState {
   phase: SimulationPhase
@@ -119,12 +120,6 @@ export const useSimulationStore = defineStore('simulation', () => {
     error: null,
   })
 
-  const createEmptyLedger = (): SessionLedger => ({
-    draws: 0,
-    spent: 0,
-    won: 0,
-  })
-
   // State
   const state = ref<SimulationState>({
     phase: 'config',
@@ -137,28 +132,34 @@ export const useSimulationStore = defineStore('simulation', () => {
     singleDraw: createIdleSingleDraw(),
   })
 
-  // What the machine has taken and paid out this session: every spin by hand
-  // and every autoplay run that finished or was stopped
-  const session = ref<SessionLedger>(createEmptyLedger())
+  // What the tickets on the table have taken and paid out so far: every spin
+  // by hand and every autoplay run that finished or was stopped
+  const round = ref<Ledger>(emptyLedger())
 
-  // The autoplay run in flight, not yet settled into the session
-  const runTally = ref<SessionLedger>(createEmptyLedger())
+  // The tickets the round is being played on, named when it first gets played
+  const roundLabel = ref('')
 
-  /** What the cabinet's meters read: the session plus the run still playing */
-  const meter = computed<SessionLedger>(() => ({
-    draws: session.value.draws + runTally.value.draws,
-    spent: session.value.spent + runTally.value.spent,
-    won: session.value.won + runTally.value.won,
-  }))
+  // Rounds played on earlier tickets, oldest first
+  const rounds = ref<Round[]>([])
 
-  /** The run is over: its draws were paid for, so they join the session */
-  const settleRun = (played: SessionLedger = runTally.value) => {
-    session.value = {
-      draws: session.value.draws + played.draws,
-      spent: session.value.spent + played.spent,
-      won: session.value.won + played.won,
-    }
-    runTally.value = createEmptyLedger()
+  // The autoplay run in flight, not yet settled into the round
+  const runTally = ref<Ledger>(emptyLedger())
+
+  /** What the cabinet's meters read: the round plus the run still playing */
+  const meter = computed<Ledger>(() => addLedgers(round.value, runTally.value))
+
+  /** Everything played since the player sat down, over all rounds */
+  const total = computed<Ledger>(() => addLedgers(...rounds.value, meter.value))
+
+  /** The run is over: its draws were paid for, so they join the round */
+  const settleRun = (played: Ledger = runTally.value) => {
+    round.value = addLedgers(round.value, played)
+    runTally.value = emptyLedger()
+  }
+
+  /** The tickets on the table are about to be played: name the round after them */
+  const openRound = () => {
+    if (!roundLabel.value) roundLabel.value = useTicketsStore().ticketSetLabel
   }
 
   // Cumulative paid in / won back over the current autoplay run
@@ -192,10 +193,7 @@ export const useSimulationStore = defineStore('simulation', () => {
       state.value.singleDraw.phase === 'error' && !!state.value.singleDraw.error
   )
 
-  /**
-   * The current draw scored against the tickets on the table. Because it is
-   * derived, swapping or deleting tickets re-scores the same draw by itself.
-   */
+  /** The current draw scored against the tickets on the table */
   const singleDrawResults = computed<SingleDrawResults | null>(() => {
     const { phase, winningNumbers, oddsData } = state.value.singleDraw
     if (phase !== 'results' || !winningNumbers || tickets.value.length === 0) {
@@ -223,32 +221,48 @@ export const useSimulationStore = defineStore('simulation', () => {
 
   // --- Notifications from the tickets store ---
 
-  /** A new set of tickets replaced the old one: a finished run no longer describes them */
+  /** A new set of tickets replaced the old one */
   const ticketsGenerated = () => {
-    if (state.value.phase === 'results' || state.value.phase === 'error') {
-      resetToConfig()
-    }
+    closeRound()
   }
 
-  /** One ticket was removed: a finished run no longer describes the tickets */
+  /** One ticket was removed: what is left is a different set */
   const ticketRemoved = () => {
-    if (state.value.phase === 'results') {
-      resetToConfig()
-    }
+    closeRound()
   }
 
-  /** The user started over: nothing of the old session applies any more */
+  /** The tickets were cleared: nothing played so far applies any more */
   const ticketsReset = () => {
-    cashOut()
+    startOver()
   }
 
-  // --- Session ---
+  // --- Rounds ---
 
-  /** Walk away from the machine: the meters, the draw and the run are cleared, the tickets stay */
-  const cashOut = () => {
+  /**
+   * Other tickets are on the table: the round played on the old ones goes on
+   * the slip, and the meters start again. The draw and the run report belong
+   * to the old tickets, so they go too. A round nobody played leaves no trace.
+   */
+  const closeRound = () => {
     resetToConfig()
     resetSingleDraw()
-    session.value = createEmptyLedger()
+    if (round.value.draws > 0) {
+      rounds.value = [
+        ...rounds.value,
+        { label: roundLabel.value, ...round.value },
+      ]
+    }
+    round.value = emptyLedger()
+    roundLabel.value = ''
+  }
+
+  /** Back to zero: the meters, every round, the draw and the run are cleared, the tickets stay */
+  const startOver = () => {
+    resetToConfig()
+    resetSingleDraw()
+    round.value = emptyLedger()
+    roundLabel.value = ''
+    rounds.value = []
   }
 
   // --- Single draw ---
@@ -295,11 +309,12 @@ export const useSimulationStore = defineStore('simulation', () => {
 
       // The stake is paid on the tickets as they were when the draw ran
       const score = scoreDraw(tickets.value, winningNumbers, oddsData)
-      session.value = {
-        draws: session.value.draws + 1,
-        spent: session.value.spent + score.stake,
-        won: session.value.won + score.totalWinnings,
-      }
+      openRound()
+      round.value = addLedgers(round.value, {
+        draws: 1,
+        spent: score.stake,
+        won: score.totalWinnings,
+      })
     } catch (error: unknown) {
       logger.error('Single draw error:', error)
       state.value.singleDraw = {
@@ -349,6 +364,7 @@ export const useSimulationStore = defineStore('simulation', () => {
 
     // A run replaces the draw on the table: one draw's matches say nothing about it
     resetSingleDraw()
+    openRound()
 
     const runId = ++currentRunId
     state.value = {
@@ -545,11 +561,14 @@ export const useSimulationStore = defineStore('simulation', () => {
   return {
     // State
     state,
-    session,
+    round,
+    roundLabel,
+    rounds,
     trajectory,
 
     // Computed
     meter,
+    total,
     isRunning,
     hasResults,
     hasError,
@@ -566,8 +585,8 @@ export const useSimulationStore = defineStore('simulation', () => {
     ticketRemoved,
     ticketsReset,
 
-    // Session
-    cashOut,
+    // Rounds
+    startOver,
 
     // Monte Carlo actions
     setConfig,

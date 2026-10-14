@@ -29,6 +29,7 @@ import {
   generateLuckyCode,
 } from '~/utils/urlHash'
 import { systemPrice } from '~/utils/pricing'
+import { describeTicketSet } from '~/utils/rounds'
 import { logger } from '~/utils/logger'
 import {
   TICKET_COUNT_MIN,
@@ -66,6 +67,8 @@ export interface TicketsState {
   mode: AppMode
   autoSimulate: boolean
   tickets: Ticket[]
+  /** How the tickets on the table were picked; the config may have moved on since */
+  ticketsMethod: SelectionMethod | null
   config: TicketConfig
   luckyCode: string
   error: string | null
@@ -99,6 +102,7 @@ export const useTicketsStore = defineStore('tickets', () => {
     mode: 'simple',
     autoSimulate: true,
     tickets: [],
+    ticketsMethod: null,
     config: createDefaultConfig(),
     luckyCode: '',
     error: null,
@@ -142,6 +146,11 @@ export const useTicketsStore = defineStore('tickets', () => {
       url: buildLottoBayernUrl(selection.lines),
     }
   })
+
+  // How the slip names a round played on these tickets
+  const ticketSetLabel = computed(() =>
+    describeTicketSet(state.value.tickets, state.value.ticketsMethod)
+  )
 
   const systemCost = computed(() => {
     const { mainCount, euroCount } = state.value.config
@@ -352,6 +361,7 @@ export const useTicketsStore = defineStore('tickets', () => {
 
       // Success - update state
       state.value.tickets = generatedTickets
+      state.value.ticketsMethod = method
       // Update config to match actual tickets only if we received tickets
       if (generatedTickets.length > 0) {
         state.value.config.ticketCount = generatedTickets.length
@@ -367,7 +377,7 @@ export const useTicketsStore = defineStore('tickets', () => {
         ),
       })
 
-      // A finished run no longer describes these tickets
+      // A new set of tickets starts a new round
       simulationStore.ticketsGenerated()
 
       // Update URL to persist configuration
@@ -379,6 +389,10 @@ export const useTicketsStore = defineStore('tickets', () => {
       state.value.error = errorMessage
       state.value.phase = 'error'
       state.value.tickets = []
+      state.value.ticketsMethod = null
+
+      // The tickets that were on the table are gone, and so is their round
+      simulationStore.ticketsGenerated()
 
       // Also add to transient errors for user notification
       addTransientError(
@@ -395,12 +409,13 @@ export const useTicketsStore = defineStore('tickets', () => {
     logger.debug('TicketsStore: Resetting tickets')
 
     state.value.tickets = []
+    state.value.ticketsMethod = null
     state.value.phase = 'fresh'
     state.value.appState = 'FRESH'
     state.value.luckyCode = ''
     state.value.error = null
 
-    // Clear the run, the draw and the session tally
+    // Clear the run, the draw and every round
     simulationStore.ticketsReset()
 
     // Clear URL completely for fresh state
@@ -741,7 +756,7 @@ export const useTicketsStore = defineStore('tickets', () => {
       logger.debug('TicketsStore: No tickets remaining, reset to fresh state')
     }
 
-    // A finished run no longer describes the remaining tickets
+    // Fewer tickets are a different set: their round starts over
     simulationStore.ticketRemoved()
 
     // Update URL to persist configuration changes
@@ -849,6 +864,7 @@ export const useTicketsStore = defineStore('tickets', () => {
     totalPrice,
     stakePerDraw,
     lottoBayernExport,
+    ticketSetLabel,
     systemCost,
     hasFrequencyData,
     hasFrequencyError,

@@ -119,6 +119,49 @@ describe('Tickets Store', () => {
     expect(spyGenerate).toHaveBeenCalledTimes(1)
   })
 
+  it('names the tickets after the method that picked them, not the config edited since', async () => {
+    // @ts-expect-error – global mock
+    global.$fetch = vi.fn().mockResolvedValue([
+      {
+        id: 1,
+        mainNumbers: [1, 2, 3, 4, 5, 6, 7],
+        euroNumbers: [1, 2],
+        linesCount: 21,
+      },
+    ])
+
+    const ticketsStore = useTicketsStore()
+    ticketsStore.updateConfig({
+      mainCount: 7,
+      euroCount: 2,
+      ticketCount: 1,
+      method: 'weighted',
+    })
+    await ticketsStore.generate()
+
+    // The customisation screen writes the config as it is edited
+    ticketsStore.updateConfig({ method: 'favorites' })
+
+    expect(ticketsStore.ticketSetLabel).toBe(
+      'System 7+2 · weighted by past draws'
+    )
+  })
+
+  it('tells the simulation store when a failed generation empties the table', async () => {
+    // @ts-expect-error – global mock
+    global.$fetch = vi.fn().mockRejectedValue(new Error('network down'))
+
+    const ticketsStore = useTicketsStore()
+    const simStore = useSimulationStore()
+    const spyGenerate = vi.spyOn(simStore, 'ticketsGenerated')
+
+    await ticketsStore.generate()
+
+    expect(ticketsStore.state.tickets).toEqual([])
+    expect(ticketsStore.state.ticketsMethod).toBeNull()
+    expect(spyGenerate).toHaveBeenCalledTimes(1)
+  })
+
   it('adds seed when luckyCode is set', async () => {
     const ticketsApiResponse: any[] = []
     // @ts-expect-error – global mock

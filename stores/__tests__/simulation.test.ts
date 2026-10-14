@@ -233,10 +233,10 @@ describe('Simulation Store', () => {
       trajectory: [{ draws, spent: totalCost, won: totalWinnings }],
     })
 
-    it('counts a run while it plays and settles it into the session', async () => {
+    it('counts a run while it plays and settles it into the round', async () => {
       const store = useSimulationStore()
       const run = fakeRun()
-      store.session = { draws: 3, spent: 6, won: 2 }
+      store.round = { draws: 3, spent: 6, won: 2 }
 
       seedTickets(mockTickets)
       const promise = store.startSimulation({ simulationCount: 100 })
@@ -245,13 +245,13 @@ describe('Simulation Store', () => {
       run.progress(snapshotAt(40, 160, 30))
       expect(store.meter).toEqual({ draws: 43, spent: 166, won: 32 })
       // Not settled yet: the run could still be stopped
-      expect(store.session).toEqual({ draws: 3, spent: 6, won: 2 })
+      expect(store.round).toEqual({ draws: 3, spent: 6, won: 2 })
 
       run.settle(finishedRun(100, 400, 90))
       await promise
 
-      expect(store.session).toEqual({ draws: 103, spent: 406, won: 92 })
-      expect(store.meter).toEqual(store.session)
+      expect(store.round).toEqual({ draws: 103, spent: 406, won: 92 })
+      expect(store.meter).toEqual(store.round)
     })
 
     it('keeps the draws played before a run was stopped', async () => {
@@ -266,8 +266,8 @@ describe('Simulation Store', () => {
       store.cancelSimulation()
       await promise
 
-      expect(store.session).toEqual({ draws: 40, spent: 160, won: 30 })
-      expect(store.meter).toEqual(store.session)
+      expect(store.round).toEqual({ draws: 40, spent: 160, won: 30 })
+      expect(store.meter).toEqual(store.round)
     })
 
     it('adds up run after run', async () => {
@@ -283,7 +283,7 @@ describe('Simulation Store', () => {
         await promise
       }
 
-      expect(store.session).toEqual({ draws: 200, spent: 800, won: 180 })
+      expect(store.round).toEqual({ draws: 200, spent: 800, won: 180 })
     })
 
     it('clears the draw on the table when a run starts', async () => {
@@ -302,26 +302,143 @@ describe('Simulation Store', () => {
       expect(store.state.singleDraw.phase).toBe('idle')
       expect(store.singleDrawResults).toBeNull()
     })
+  })
 
-    it('cashing out zeroes the meter and clears the run, but keeps the tickets', async () => {
-      const store = useSimulationStore()
+  describe('rounds', () => {
+    const finishedRun = (
+      draws: number,
+      totalCost: number,
+      totalWinnings: number
+    ): SimulationOutcome => ({
+      result: {
+        totalSimulations: draws,
+        totalCost,
+        totalWinnings,
+      } as SimulationOutcome['result'],
+      trajectory: [{ draws, spent: totalCost, won: totalWinnings }],
+    })
+
+    /** Play one finished autoplay run on the tickets on the table */
+    const playRun = async (
+      store: ReturnType<typeof useSimulationStore>,
+      outcome: SimulationOutcome
+    ) => {
       const run = fakeRun()
-
-      seedTickets(mockTickets)
+      vi.mocked(startSimulationRun).mockClear()
       const promise = store.startSimulation({ simulationCount: 100 })
       await untilRunStarts()
-      run.settle(finishedRun(100, 400, 90))
+      run.settle(outcome)
       await promise
+    }
 
-      store.cashOut()
+    it('puts the round on the slip when new tickets come to the table', async () => {
+      const store = useSimulationStore()
+      const tickets = useTicketsStore()
+      seedTickets(mockTickets)
+      tickets.state.ticketsMethod = 'random'
 
+      await playRun(store, finishedRun(100, 400, 90))
+      store.ticketsGenerated()
+
+      expect(store.rounds).toEqual([
+        { label: '2 tickets · random', draws: 100, spent: 400, won: 90 },
+      ])
       expect(store.meter).toEqual({ draws: 0, spent: 0, won: 0 })
+      expect(store.total).toEqual({ draws: 100, spent: 400, won: 90 })
+      // The report described the old tickets
+      expect(store.state.phase).toBe('config')
+      expect(store.state.results).toBeNull()
+    })
+
+    it('names the round after the tickets it was played on, not the ones that replaced them', async () => {
+      const store = useSimulationStore()
+      seedTickets(mockTickets)
+
+      await playRun(store, finishedRun(100, 400, 90))
+      seedTickets([mockTickets[0]])
+      store.ticketRemoved()
+
+      expect(store.rounds[0]?.label).toBe('2 tickets')
+    })
+
+    it('adds every round and the one on the table into the total', async () => {
+      const store = useSimulationStore()
+      seedTickets(mockTickets)
+
+      await playRun(store, finishedRun(100, 400, 90))
+      store.ticketsGenerated()
+      await playRun(store, finishedRun(100, 200, 50))
+
+      expect(store.rounds).toHaveLength(1)
+      expect(store.meter).toEqual({ draws: 100, spent: 200, won: 50 })
+      expect(store.total).toEqual({ draws: 200, spent: 600, won: 140 })
+    })
+
+    it('leaves no trace of tickets that were never played', () => {
+      const store = useSimulationStore()
+      seedTickets(mockTickets)
+
+      // Generating tickets only to fill them in elsewhere
+      store.ticketsGenerated()
+      store.ticketRemoved()
+      store.ticketsGenerated()
+
+      expect(store.rounds).toEqual([])
+      expect(store.total).toEqual({ draws: 0, spent: 0, won: 0 })
+    })
+
+    it('clears the draw on the table with the round it belongs to', () => {
+      const store = useSimulationStore()
+      seedTickets(mockTickets)
+      store.state.singleDraw = {
+        phase: 'results',
+        winningNumbers: { mainNumbers: [1, 2, 3, 4, 5], euroNumbers: [1, 2] },
+        oddsData: null,
+        error: null,
+      }
+
+      store.ticketRemoved()
+
+      expect(store.state.singleDraw.phase).toBe('idle')
+      expect(store.singleDrawResults).toBeNull()
+    })
+
+    it('keeps a stopped run in the round it was played in', async () => {
+      const store = useSimulationStore()
+      const run = fakeRun()
+      seedTickets(mockTickets)
+
+      const promise = store.startSimulation({ simulationCount: 100 })
+      await untilRunStarts()
+      run.progress(snapshotAt(40, 160, 30))
+      store.cancelSimulation()
+      await promise
+      store.ticketsGenerated()
+
+      expect(store.rounds).toEqual([
+        { label: '2 tickets', draws: 40, spent: 160, won: 30 },
+      ])
+    })
+
+    it('starting over clears the meters and every round, but keeps the tickets', async () => {
+      const store = useSimulationStore()
+      seedTickets(mockTickets)
+
+      await playRun(store, finishedRun(100, 400, 90))
+      store.ticketsGenerated()
+      await playRun(store, finishedRun(100, 200, 50))
+
+      store.startOver()
+
+      expect(store.rounds).toEqual([])
+      expect(store.meter).toEqual({ draws: 0, spent: 0, won: 0 })
+      expect(store.total).toEqual({ draws: 0, spent: 0, won: 0 })
       expect(store.state.phase).toBe('config')
       expect(store.state.results).toBeNull()
       expect(useTicketsStore().state.tickets).toHaveLength(mockTickets.length)
     })
 
-    it('cashing out mid-run stops the run and still ends at zero', async () => {
+    it('starting over mid-run stops the run and still ends at zero', async () => {
       const store = useSimulationStore()
       const run = fakeRun()
 
@@ -330,11 +447,12 @@ describe('Simulation Store', () => {
       await untilRunStarts()
       run.progress(snapshotAt(40, 160, 30))
 
-      store.cashOut()
+      store.startOver()
       await promise
 
       expect(run.cancel).toHaveBeenCalledTimes(1)
       expect(store.meter).toEqual({ draws: 0, spent: 0, won: 0 })
+      expect(store.rounds).toEqual([])
     })
   })
 
